@@ -13,6 +13,12 @@ import org.orekit.propagation.analytical.tle.TLE;
 public final class TleFixtures {
 
     /**
+     * Read once. Every accessor used to reload and reparse the JSON resource, so building
+     * one three-line response read it three times.
+     */
+    private static final ValidationReference REFERENCE = ValidationReference.load();
+
+    /**
      * ISS (NORAD 25544), epoch 2021-02-04T03:28:36.316 UTC.
      *
      * <p>Read from {@code validation/iss-lyon-reference.json} rather than copied here:
@@ -21,27 +27,27 @@ public final class TleFixtures {
      * from a genuinely published TLE, with valid checksums.
      */
     public static TLE iss() {
-        return ValidationReference.load().tle();
+        return REFERENCE.tle();
     }
 
     /** The name as CelesTrak publishes it for this satellite. */
     public static String issName() {
-        return ValidationReference.load().satellite().name();
+        return REFERENCE.satellite().name();
     }
 
     /** NORAD number of the ISS. */
     public static int issNoradId() {
-        return ValidationReference.load().satellite().noradId();
+        return REFERENCE.satellite().noradId();
     }
 
     /** Raw line 1, as it travels over the network. */
     public static String issLine1() {
-        return ValidationReference.load().satellite().tleLine1();
+        return REFERENCE.satellite().tleLine1();
     }
 
     /** Raw line 2. */
     public static String issLine2() {
-        return ValidationReference.load().satellite().tleLine2();
+        return REFERENCE.satellite().tleLine2();
     }
 
     /**

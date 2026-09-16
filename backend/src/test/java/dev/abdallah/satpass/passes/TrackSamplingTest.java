@@ -12,7 +12,9 @@ import dev.abdallah.satpass.domain.TrackPoint;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.orekit.data.DataContext;
 import org.orekit.propagation.analytical.tle.TLE;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * one applied.
  */
 @OrekitTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TrackSamplingTest {
 
     private static final ObserverLocation LYON = new ObserverLocation(45.7578, 4.8320, 170.0);
@@ -52,10 +55,13 @@ class TrackSamplingTest {
     @Autowired
     DataContext dataContext;
 
-    private List<SatellitePass> passes() {
+    private List<SatellitePass> passes;
+
+    @BeforeAll
+    void predictOnce() {
         TLE iss = TleFixtures.iss();
         Instant epoch = iss.getDate().toInstant(dataContext.getTimeScales());
-        return service.predictPasses(iss, LYON, epoch, Duration.ofHours(24), MIN_ELEVATION_DEG);
+        passes = service.predictPasses(iss, LYON, epoch, Duration.ofHours(24), MIN_ELEVATION_DEG);
     }
 
     /**
@@ -64,7 +70,7 @@ class TrackSamplingTest {
      */
     @Test
     void theTrackSpansExactlyThePassAndEndsAtTheElevationThreshold() {
-        assertThat(passes()).isNotEmpty().allSatisfy(pass -> {
+        assertThat(passes).isNotEmpty().allSatisfy(pass -> {
             TrackPoint first = pass.track().getFirst();
             TrackPoint last = pass.track().getLast();
 
@@ -91,7 +97,7 @@ class TrackSamplingTest {
      */
     @Test
     void theCulminationIsOneOfTheTrackPoints() {
-        assertThat(passes()).allSatisfy(pass -> {
+        assertThat(passes).allSatisfy(pass -> {
             TrackPoint apex = pass.track().stream()
                     .filter(point -> point.instant().equals(pass.maxElevationTime()))
                     .findFirst()
@@ -119,7 +125,7 @@ class TrackSamplingTest {
      */
     @Test
     void samplesAreChronologicalAndRegularlySpaced() {
-        assertThat(passes()).allSatisfy(pass -> {
+        assertThat(passes).allSatisfy(pass -> {
             List<TrackPoint> track = pass.track();
             for (int i = 1; i < track.size(); i++) {
                 Duration gap = Duration.between(track.get(i - 1).instant(), track.get(i).instant());
@@ -137,7 +143,7 @@ class TrackSamplingTest {
      */
     @Test
     void theNumberOfSamplesFollowsTheDurationOfThePass() {
-        assertThat(passes()).allSatisfy(pass -> {
+        assertThat(passes).allSatisfy(pass -> {
             long gridPoints = pass.duration().toSeconds() / TRACK_STEP_SECONDS;
             // Interior grid, plus AOS, culmination and LOS, minus the duplicates dropped:
             // we bracket generously rather than reproduce the service's arithmetic here.
@@ -152,7 +158,7 @@ class TrackSamplingTest {
      */
     @Test
     void everySampleCarriesAPlausibleSubSatellitePoint() {
-        assertThat(passes()).allSatisfy(pass -> assertThat(pass.track()).allSatisfy(point -> {
+        assertThat(passes).allSatisfy(pass -> assertThat(pass.track()).allSatisfy(point -> {
             assertThat(point.subPoint().altitudeKm())
                     .as("altitude of the ISS")
                     .isBetween(300.0, 500.0);
@@ -174,7 +180,7 @@ class TrackSamplingTest {
     /** The domain invariant is checked on construction, not merely documented. */
     @Test
     void aPassCannotBeBuiltWithATrackThatDoesNotMatchItsBounds() {
-        SatellitePass pass = passes().getFirst();
+        SatellitePass pass = passes.getFirst();
         List<TrackPoint> amputated = pass.track().subList(1, pass.track().size());
 
         assertThatIllegalArgumentException()

@@ -276,6 +276,10 @@ public class PassPredictionService {
     /**
      * The dates of the regular grid, boundaries and culmination excluded.
      *
+     * <p>Offsets are recomputed as {@code i * step} rather than accumulated: the sum of
+     * forty additions would drift the day the step becomes a request parameter and takes
+     * a value that binary floating point cannot represent exactly.
+     *
      * <p>A grid point falling within {@value #THRESHOLD_SECONDS} s of one of the three
      * remarkable dates is dropped: it would duplicate a point we already know more
      * precisely, and two near-coincident points in an SVG polyline produce joint
@@ -286,8 +290,8 @@ public class PassPredictionService {
         double apexOffset = apex.durationFrom(aos);
 
         List<AbsoluteDate> dates = new ArrayList<>();
-        for (double offset = TRACK_STEP_SECONDS; offset < duration - THRESHOLD_SECONDS;
-                offset += TRACK_STEP_SECONDS) {
+        for (int i = 1; i * TRACK_STEP_SECONDS < duration - THRESHOLD_SECONDS; i++) {
+            double offset = i * TRACK_STEP_SECONDS;
             if (FastMath.abs(offset - apexOffset) <= THRESHOLD_SECONDS) {
                 continue;
             }

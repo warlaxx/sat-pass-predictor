@@ -10,12 +10,22 @@ import dev.abdallah.satpass.domain.SatellitePass;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.orekit.data.DataContext;
 import org.orekit.propagation.analytical.tle.TLE;
 import org.springframework.beans.factory.annotation.Autowired;
 
+/**
+ * The prediction service on the reference TLE.
+ *
+ * <p>The 24-hour window is propagated once for the whole class, not once per test: each
+ * call costs one propagation over the window plus one per pass found. Six tests reading
+ * the same five passes have no reason to pay for thirty propagations.
+ */
 @OrekitTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PassPredictionServiceTest {
 
     private static final ObserverLocation LYON = new ObserverLocation(45.7578, 4.8320, 170.0);
@@ -27,17 +37,20 @@ class PassPredictionServiceTest {
     @Autowired
     DataContext dataContext;
 
+    private TLE iss;
+    private Instant epoch;
+    private List<SatellitePass> passes;
+
     /** Window start: the TLE epoch, where SGP4 is at its most reliable. */
-    private Instant tleEpoch(TLE tle) {
-        return tle.getDate().toInstant(dataContext.getTimeScales());
+    @BeforeAll
+    void predictOnce() {
+        iss = TleFixtures.iss();
+        epoch = iss.getDate().toInstant(dataContext.getTimeScales());
+        passes = service.predictPasses(iss, LYON, epoch, Duration.ofHours(24), MIN_ELEVATION_DEG);
     }
 
     @Test
     void producesAPlausibleNumberOfPassesOverTwentyFourHours() {
-        TLE iss = TleFixtures.iss();
-
-        List<SatellitePass> passes =
-                service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG);
         // The ISS flies over a mid-latitude about 16 times a day, but only a minority of
         // those orbits comes close enough to the observer. Four to six passes above 10
         // degrees is the expected order of magnitude; five is the exact value for this
@@ -47,11 +60,6 @@ class PassPredictionServiceTest {
 
     @Test
     void passesAreOrderedAndDisjoint() {
-        TLE iss = TleFixtures.iss();
-
-        List<SatellitePass> passes =
-                service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG);
-
         assertThat(passes).isSortedAccordingTo((a, b) -> a.aos().compareTo(b.aos()));
         for (int i = 1; i < passes.size(); i++) {
             assertThat(passes.get(i).aos())
@@ -62,11 +70,6 @@ class PassPredictionServiceTest {
 
     @Test
     void everyPassIsPhysicallyCoherent() {
-        TLE iss = TleFixtures.iss();
-
-        List<SatellitePass> passes =
-                service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG);
-
         assertThat(passes).allSatisfy(pass -> {
             assertThat(pass.maxElevationDeg()).isGreaterThanOrEqualTo(MIN_ELEVATION_DEG);
             assertThat(pass.maxElevationTime()).isAfter(pass.aos()).isBefore(pass.los());
@@ -89,32 +92,25 @@ class PassPredictionServiceTest {
      */
     @Test
     void discardsAPassAlreadyUnderwayWhenTheWindowOpens() {
-        TLE iss = TleFixtures.iss();
-        List<SatellitePass> reference =
-                service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG);
-        Instant oneMinuteIntoTheFirstPass = reference.getFirst().aos().plusSeconds(60);
+        Instant oneMinuteIntoTheFirstPass = passes.getFirst().aos().plusSeconds(60);
 
         List<SatellitePass> truncated = service.predictPasses(
                 iss, LYON, oneMinuteIntoTheFirstPass, Duration.ofHours(24), MIN_ELEVATION_DEG);
 
-        assertThat(truncated.getFirst().aos()).isEqualTo(reference.get(1).aos());
+        assertThat(truncated.getFirst().aos()).isEqualTo(passes.get(1).aos());
     }
 
     @Test
     void rejectsAnEmptyWindow() {
-        TLE iss = TleFixtures.iss();
-
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ZERO, MIN_ELEVATION_DEG))
+                .isThrownBy(() -> service.predictPasses(iss, LYON, epoch, Duration.ZERO, MIN_ELEVATION_DEG))
                 .withMessageContaining("window");
     }
 
     @Test
     void rejectsAnUnreachableElevationThreshold() {
-        TLE iss = TleFixtures.iss();
-
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), 90.0))
+                .isThrownBy(() -> service.predictPasses(iss, LYON, epoch, Duration.ofHours(24), 90.0))
                 .withMessageContaining("minimum elevation");
     }
 
