@@ -12,24 +12,23 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 
 /**
- * Le seul test qui demarre l'application entiere.
+ * The only test that starts the whole application.
  *
- * <h2>Pourquoi il existe</h2>
- * Les autres tests tournent sur une tranche de contexte ({@link OrekitTest}) et ne
- * verifient donc plus que l'assemblage reel tient. Or c'est precisement la ce qui a casse
- * au jalon 4 : {@code RestClient.Builder} n'est pas auto-configure par
- * {@code starter-web} dans Spring Boot 4, et le contexte refusait de demarrer. Le code
- * compilait, chaque brique etait juste, et l'application n'aurait pas demarre en
- * production.
+ * <h2>Why it exists</h2>
+ * The other tests run on a context slice ({@link OrekitTest}) and therefore no longer
+ * check that the real assembly holds together. That is precisely what broke at milestone
+ * 4: {@code RestClient.Builder} is not auto-configured by {@code starter-web} in Spring
+ * Boot 4, and the context refused to start. The code compiled, every brick was correct,
+ * and the application would not have started in production.
  *
- * <p>Ce test est donc le complement necessaire du decoupage, pas une redondance. La
- * regle : <strong>un</strong> test demarre tout, et lui seul echoue quand le cablage est
- * casse ; les autres restent lisibles.
+ * <p>This test is therefore the necessary complement to the slicing, not a redundancy.
+ * The rule: <strong>one</strong> test starts everything, and it alone fails when the
+ * wiring is broken; the others stay readable.
  *
- * <h2>Ce qu'il verifie au-dela du demarrage</h2>
- * Que les beans qui portent le comportement sont bien la. Un contexte peut demarrer en
- * ayant silencieusement omis un {@code @Component} — un paquet hors du scan, une
- * condition non remplie — et c'est un echec aussi reel qu'une exception.
+ * <h2>What it checks beyond startup</h2>
+ * That the beans carrying behaviour are actually there. A context can start having
+ * silently omitted a {@code @Component} — a package outside the scan, an unmet condition
+ * — and that is as real a failure as an exception.
  */
 @SpringBootTest
 class ApplicationStartupTest {
