@@ -7,7 +7,7 @@ package dev.abdallah.satpass.tle;
  * <p>A <em>transient</em> error: the store catches it and serves the last known TLE if it
  * has one. It only reaches the caller when there is nothing to degrade to.
  */
-public class TleUnavailableException extends RuntimeException {
+public final class TleUnavailableException extends TleException {
 
     public TleUnavailableException(String message) {
         super(message);

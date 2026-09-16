@@ -10,7 +10,7 @@ import java.time.Duration;
  * pass, and drawing a curve to the degree would be false precision. Better to say we do
  * not know.
  */
-public class TleTooOldException extends RuntimeException {
+public final class TleTooOldException extends TleException {
 
     public TleTooOldException(int noradId, Duration age, Duration maxAge) {
         super("TLE for satellite " + noradId + " is " + age.toHours() + " h old,"

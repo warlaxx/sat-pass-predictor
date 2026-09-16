@@ -1,7 +1,6 @@
 package dev.abdallah.satpass.config;
 
 import java.net.http.HttpClient;
-import java.time.Clock;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,15 +45,5 @@ public class TleClientConfig {
                 .baseUrl(properties.baseUrl())
                 .requestFactory(factory)
                 .build();
-    }
-
-    /**
-     * An injected clock rather than {@code Instant.now()} scattered through the code: the
-     * age of a TLE and the decision to refresh it are business rules, and a rule that
-     * depends on wall-clock time can only be tested by waiting.
-     */
-    @Bean
-    public Clock clock() {
-        return Clock.systemUTC();
     }
 }

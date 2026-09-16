@@ -9,7 +9,7 @@ package dev.abdallah.satpass.tle;
  * TLE: predicting the passes of an object that has finished burning up would be worse
  * than a plain error.
  */
-public class TleNotFoundException extends RuntimeException {
+public final class TleNotFoundException extends TleException {
 
     private final int noradId;
 
