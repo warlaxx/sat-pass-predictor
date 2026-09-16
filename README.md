@@ -55,6 +55,9 @@ au demarrage vaut mieux qu'une erreur obscure au premier calcul.
 
 ## Feuille de route
 
+Detail, jalons et budget temps : [ROADMAP.md](ROADMAP.md).
+
+
 - [x] Chargement des donnees Orekit, teste
 - [ ] Recuperation d'un TLE depuis CelesTrak
 - [ ] Calcul des passages (`TLEPropagator` + `ElevationDetector`)
