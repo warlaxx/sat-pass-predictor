@@ -1,0 +1,23 @@
+:host {
+  display: block;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: system-ui, sans-serif;
+}
+
+header {
+  border-bottom: 1px solid #d7dde3;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+
+  h1 {
+    margin: 0 0 0.25rem;
+    font-size: 1.75rem;
+  }
+
+  p {
+    margin: 0;
+    color: #5a6672;
+  }
+}
