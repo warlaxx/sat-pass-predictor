@@ -30,6 +30,15 @@ import org.springframework.web.client.RestClient;
  *       does not look like a TLE is therefore treated as an outage, not as an answer.</li>
  * </ul>
  *
+ * <h2>Absent is not the same as unusable</h2>
+ * Only the {@code No GP data found} marker means "the catalogue does not have this
+ * object". Everything else that is not a TLE — an empty body, a truncated response, an
+ * HTML page — means "we did not get an answer", and is reported as
+ * {@link TleUnavailableException}. The distinction is not cosmetic: the store treats
+ * {@link TleNotFoundException} as permanent and drops the satellite, so mislabelling a
+ * hiccup would throw away a perfectly good cached TLE and tell the user the satellite
+ * does not exist.
+ *
  * <h2>Validation at retrieval time</h2>
  * A corrupted response must fail at the edge of the system, where we still know why,
  * rather than deep inside a pass computation. Three checks, in this order:
@@ -76,11 +85,18 @@ public class CelestrakTleClient {
         Instant fetchedAt = clock.instant();
 
         String trimmed = body == null ? "" : body.strip();
-        if (trimmed.isEmpty() || trimmed.startsWith(NO_DATA_MARKER)) {
+        if (trimmed.startsWith(NO_DATA_MARKER)) {
             throw new TleNotFoundException(noradId);
         }
+        // An empty body is a failed exchange, not a statement about the catalogue.
+        // Reporting it as "not found" would make the store forget a satellite it holds a
+        // valid TLE for, on the strength of one truncated response.
+        if (trimmed.isEmpty()) {
+            throw new TleUnavailableException(
+                    "CelesTrak returned an empty body for satellite " + noradId);
+        }
 
-        List<String> lines = significantLines(body);
+        List<String> lines = significantLines(trimmed);
         if (lines.size() < 3) {
             throw new TleUnavailableException(
                     "unusable CelesTrak response for satellite " + noradId

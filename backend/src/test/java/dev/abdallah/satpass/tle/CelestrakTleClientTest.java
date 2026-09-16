@@ -108,6 +108,32 @@ class CelestrakTleClientTest {
         server.verify();
     }
 
+    /**
+     * An empty body is an outage, not a statement about the catalogue.
+     *
+     * <p>The distinction decides what the store does next: a not-found is permanent and
+     * makes it drop the satellite, so reporting a truncated response that way would throw
+     * away a perfectly valid cached TLE and tell the user the satellite does not exist.
+     */
+    @Test
+    void treatsAnEmptyBodyAsAnOutageRatherThanAnUnknownSatellite() {
+        respondWith("");
+
+        assertThatExceptionOfType(TleUnavailableException.class)
+                .isThrownBy(() -> client.fetch(25544))
+                .withMessageContaining("empty");
+        server.verify();
+    }
+
+    /** Same reasoning for a body that holds nothing but whitespace. */
+    @Test
+    void treatsABlankBodyAsAnOutage() {
+        respondWith("\r\n   \r\n");
+
+        assertThatExceptionOfType(TleUnavailableException.class)
+                .isThrownBy(() -> client.fetch(25544));
+    }
+
     /** Under heavy load, CelesTrak serves an HTML page, still in 200. */
     @Test
     void treatsAnHtmlPageAsAnOutage() {
