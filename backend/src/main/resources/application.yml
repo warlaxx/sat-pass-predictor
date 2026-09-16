@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: sat-pass-predictor
+
+orekit:
+  # Surchargeable par variable d'environnement (Docker, CI).
+  data-path: ${OREKIT_DATA_PATH:../orekit-data}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
