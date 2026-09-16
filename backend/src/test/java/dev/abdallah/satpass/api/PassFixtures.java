@@ -11,15 +11,15 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Un passage fabrique a la main, sans Orekit.
+ * A pass built by hand, without Orekit.
  *
- * <p>Ces tests portent sur la couche web : la forme du JSON, les codes HTTP, la
- * validation. Y faire tourner une propagation reelle les rendrait lents et les ferait
- * echouer pour des raisons qui ne les concernent pas.
+ * <p>These tests are about the web layer: the shape of the JSON, the status codes, the
+ * validation. Running a real propagation there would make them slow and would fail them
+ * for reasons that are none of their business.
  *
- * <p>Le passage respecte quand meme les invariants de {@link SatellitePass} — premier
- * point a l'AOS, dernier au LOS, sommet present — parce que la construction du DTO s'en
- * sert pour prelever les trois phases.
+ * <p>The pass still honours the {@link SatellitePass} invariants — first point at AOS,
+ * last at LOS, culmination present — because building the DTO relies on them to read out
+ * the three phases.
  */
 final class PassFixtures {
 

@@ -27,11 +27,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * La couche web seule : forme du JSON, codes HTTP, bornes des parametres.
+ * The web layer alone: shape of the JSON, status codes, parameter bounds.
  *
- * <p>{@link PassQueryService} est double. Faire tourner une propagation reelle rendrait
- * ces tests lents et les ferait echouer pour des raisons qui ne les regardent pas — la
- * justesse du calcul est etablie par la reference du jalon 2.
+ * <p>{@link PassQueryService} is a double. Running a real propagation would make these
+ * tests slow and would fail them for reasons that are none of their business — the
+ * correctness of the computation is established by the milestone 2 reference.
  */
 @WebMvcTest(PassController.class)
 class PassControllerTest {
@@ -46,9 +46,9 @@ class PassControllerTest {
     PassQueryService passQueryService;
 
     /**
-     * Le critere de sortie du jalon : la forme documentee dans
-     * {@code docs/maquette-interface.html} est servie telle quelle. Le frontend a ete
-     * dessine contre ce JSON ; tout ecart ici est une rupture de contrat.
+     * The exit criterion of the milestone: the shape documented in
+     * {@code docs/maquette-interface.html} is served as-is. The frontend was designed
+     * against this JSON; any deviation here is a broken contract.
      */
     @Test
     void servesTheDocumentedJsonShape() throws Exception {
@@ -81,9 +81,10 @@ class PassControllerTest {
     }
 
     /**
-     * L'age est calcule par le serveur, depuis l'instant du calcul et l'epoque des
-     * elements. Le laisser au client le rendrait dependant de l'horloge du navigateur,
-     * alors que le bandeau d'incertitude est justement la pour dire une verite objective.
+     * The age is computed by the server, from the instant of the computation and the
+     * epoch of the elements. Leaving it to the client would make it depend on the
+     * browser's clock, when the uncertainty banner exists precisely to state an objective
+     * truth.
      */
     @Test
     void computesTheTleAgeServerSide() throws Exception {
@@ -95,7 +96,7 @@ class PassControllerTest {
                 .andExpect(jsonPath("$.computedAt").value("2026-09-16T13:52:33Z"));
     }
 
-    /** Les trois phases sont prelevees dans la trajectoire : elles portent sa distance. */
+    /** The three phases are read out of the track: they carry its range. */
     @Test
     void theThreePhasesCarryTheRangeFromTheTrack() throws Exception {
         when(passQueryService.findPasses(anyInt(), any(), any(), anyDouble()))
@@ -135,25 +136,25 @@ class PassControllerTest {
         mockMvc.perform(get(QUERY))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.type")
-                        .value("https://github.com/warlaxx/sat-pass-predictor/errors/satellite-inconnu"))
+                        .value("https://github.com/warlaxx/sat-pass-predictor/errors/unknown-satellite"))
                 .andExpect(jsonPath("$.noradId").value(99999));
     }
 
     @Test
     void celestrakOutageWithNothingCachedIsServiceUnavailable() throws Exception {
         when(passQueryService.findPasses(anyInt(), any(), any(), anyDouble()))
-                .thenThrow(new TleUnavailableException("CelesTrak injoignable"));
+                .thenThrow(new TleUnavailableException("CelesTrak unreachable"));
 
         mockMvc.perform(get(QUERY))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(header().string("Retry-After", "300"))
                 .andExpect(jsonPath("$.type")
-                        .value("https://github.com/warlaxx/sat-pass-predictor/errors/tle-indisponible"));
+                        .value("https://github.com/warlaxx/sat-pass-predictor/errors/tle-unavailable"));
     }
 
     /**
-     * Meme code que la panne, mais un {@code type} different : un client doit pouvoir
-     * distinguer « CelesTrak est muet » de « le TLE qu'on a est trop vieux pour servir ».
+     * Same status as the outage, but a different {@code type}: a client must be able to
+     * tell "CelesTrak is silent" from "the TLE we hold is too old to be of use".
      */
     @Test
     void anOverAgedTleHasItsOwnProblemType() throws Exception {
@@ -163,7 +164,7 @@ class PassControllerTest {
         mockMvc.perform(get(QUERY))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.type")
-                        .value("https://github.com/warlaxx/sat-pass-predictor/errors/tle-perime"));
+                        .value("https://github.com/warlaxx/sat-pass-predictor/errors/tle-stale"));
     }
 
     @Test

@@ -17,17 +17,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * La jonction entre le magasin de TLE et le calcul de passages.
+ * The joint between the TLE store and the pass computation.
  *
- * <p>Le point verifie ici n'est verifiable nulle part ailleurs : les <em>deux lignes
- * brutes</em> conservees par le domaine redonnent bien le meme TLE que celui qui a produit
- * la reference du jalon 2. C'est le prix a payer pour que le domaine n'expose aucun type
- * d'Orekit, et ce test est ce qui garantit qu'il est nul.
+ * <p>What is checked here cannot be checked anywhere else: the <em>two raw lines</em> the
+ * domain keeps really do rebuild the same TLE that produced the milestone 2 reference.
+ * That is the price of the domain exposing no Orekit type, and this test is what proves
+ * the price is zero.
  */
 @OrekitTest
 class PassQueryServiceTest {
 
-    /** Epoque du TLE de reference. La fenetre y demarre, la ou SGP4 est le plus fiable. */
+    /** Epoch of the reference TLE. The window starts there, where SGP4 is most reliable. */
     private static final Instant TLE_EPOCH = Instant.parse("2021-02-04T03:28:36.316Z");
 
     private static final ObserverLocation LYON = new ObserverLocation(45.7578, 4.8320, 170.0);
@@ -53,8 +53,8 @@ class PassQueryServiceTest {
         PassPrediction prediction =
                 service.findPasses(25544, LYON, Duration.ofHours(24), 10.0);
 
-        // Cinq passages sur 24 h, exactement comme la reference du jalon 2 : les deux
-        // lignes brutes ont bien reconstruit le meme TLE.
+        // Five passes over 24 h, exactly like the milestone 2 reference: the two raw
+        // lines did rebuild the same TLE.
         assertThat(prediction.passes()).hasSize(5);
         assertThat(prediction.passes().getFirst().aos())
                 .isEqualTo(Instant.parse("2021-02-04T12:16:42.325291143Z"));
@@ -75,8 +75,9 @@ class PassQueryServiceTest {
     }
 
     /**
-     * L'instant du calcul est lu une seule fois et transmis. Sans cela, le debut de fenetre
-     * et l'age du TLE affiche seraient calcules a deux instants differents.
+     * The instant of the computation is read once and carried along. Without that, the
+     * start of the window and the displayed TLE age would be computed at two different
+     * instants.
      */
     @Test
     void readsTheClockOnlyOnceAndPassesItAlong() {

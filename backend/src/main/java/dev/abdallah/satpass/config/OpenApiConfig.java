@@ -7,12 +7,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * En-tete de la documentation OpenAPI.
+ * The header of the OpenAPI documentation.
  *
- * <p>Le reste est deduit du code : chemins, parametres, bornes de validation et schema
- * des reponses viennent des annotations deja presentes sur le controleur et des records
- * du DTO. Une specification ecrite a la main derive du code des le premier refactoring —
- * ici elle ne peut pas.
+ * <p>The rest is derived from the code: paths, parameters, validation bounds and response
+ * schemas all come from the annotations already on the controller and from the DTO
+ * records. A hand-written specification drifts from the code at the first refactoring —
+ * this one cannot.
  */
 @Configuration
 public class OpenApiConfig {
@@ -23,19 +23,19 @@ public class OpenApiConfig {
                 .title("sat-pass-predictor")
                 .version("0.0.1")
                 .description("""
-                        Prediction des passages de satellites au-dessus d'un observateur,
-                        calculee avec Orekit (modele SGP4) a partir des elements orbitaux
-                        publies par CelesTrak.
+                        Prediction of satellite passes over an observer, computed with
+                        Orekit (SGP4 model) from the orbital elements published by
+                        CelesTrak.
 
-                        Toutes les dates sont des instants UTC au format ISO-8601 : le
-                        fuseau de l'utilisateur est un probleme d'affichage.
+                        Every date is a UTC instant in ISO-8601 format: the user's time
+                        zone is a display problem.
 
-                        Les erreurs suivent le format Problem Details (RFC 9457). Leur
-                        champ `type` distingue des causes que le code HTTP confond — une
-                        panne de CelesTrak et un TLE trop ancien renvoient tous deux 503.
+                        Errors follow the Problem Details format (RFC 9457). Their `type`
+                        field separates causes that the HTTP status conflates — a
+                        CelesTrak outage and a stale TLE both answer 503.
 
-                        Le calcul est verifie contre une implementation independante de
-                        SGP4 (Skyfield) ; voir la section Validation du README.""")
+                        The computation is checked against an independent implementation
+                        of SGP4 (Skyfield); see the Validation section of the README.""")
                 .license(new License().name("MIT")));
     }
 }

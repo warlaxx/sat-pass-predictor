@@ -13,17 +13,16 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * Traduction des pannes du domaine en reponses HTTP, au format Problem Details
+ * Translates domain failures into HTTP responses, in the Problem Details format
  * (RFC 9457).
  *
- * <p>Chaque cas a son {@code type}, une URI stable : c'est ce qui permet a un client de
- * distinguer « ce satellite n'existe pas » de « CelesTrak est en panne » sans lire un
- * message en francais. Le code HTTP seul ne suffirait pas — deux causes tres differentes
- * partagent ici le 503.
+ * <p>Each case has its own {@code type}, a stable URI: that is what lets a client tell
+ * "this satellite does not exist" from "CelesTrak is down" without reading a human
+ * message. The HTTP status alone would not do — two very different causes share 503 here.
  *
- * <p>Les exceptions du cadre (parametre manquant, hors bornes, type invalide) ne sont pas
- * traitees ici : {@code spring.mvc.problemdetails.enabled} les fait deja sortir au meme
- * format. Les reprendre a la main dupliquerait un comportement correct.
+ * <p>Framework exceptions (missing parameter, out of bounds, wrong type) are not handled
+ * here: {@code spring.mvc.problemdetails.enabled} already emits them in the same format.
+ * Taking them over by hand would duplicate correct behaviour.
  */
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -32,61 +31,60 @@ public class ApiExceptionHandler {
 
     private static final String TYPE_PREFIX = "https://github.com/warlaxx/sat-pass-predictor/errors/";
 
-    /** Delai suggere avant nouvelle tentative, en secondes, quand CelesTrak flanche. */
+    /** Suggested delay before retrying, in seconds, when CelesTrak falters. */
     private static final String RETRY_AFTER_SECONDS = "300";
 
     @ExceptionHandler(TleNotFoundException.class)
     public ProblemDetail handleNotFound(TleNotFoundException e) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
-        problem.setType(URI.create(TYPE_PREFIX + "satellite-inconnu"));
-        problem.setTitle("Satellite inconnu");
+        problem.setType(URI.create(TYPE_PREFIX + "unknown-satellite"));
+        problem.setTitle("Unknown satellite");
         problem.setProperty("noradId", e.noradId());
         return problem;
     }
 
     /**
-     * 503 et non 502 : le service ne peut pas repondre <em>pour l'instant</em>, et
-     * reessayer a un sens. C'est aussi le seul cas ou le magasin n'avait rien a degrader —
-     * un echec de CelesTrak avec un TLE en memoire ne remonte jamais jusqu'ici.
+     * 503 and not 502: the service cannot answer <em>for now</em>, and retrying makes
+     * sense. It is also the only case where the store had nothing to degrade to — a
+     * CelesTrak failure with a TLE in memory never reaches this far.
      */
     @ExceptionHandler(TleUnavailableException.class)
     public org.springframework.http.ResponseEntity<ProblemDetail> handleUnavailable(
             TleUnavailableException e) {
-        log.warn("CelesTrak indisponible et aucun TLE en memoire : {}", e.getMessage());
+        log.warn("CelesTrak unavailable and no TLE in memory: {}", e.getMessage());
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
-                "Aucun TLE disponible pour ce satellite : CelesTrak est injoignable et rien"
-                        + " n'a encore ete recupere.");
-        problem.setType(URI.create(TYPE_PREFIX + "tle-indisponible"));
-        problem.setTitle("Elements orbitaux indisponibles");
+                "No TLE available for this satellite: CelesTrak is unreachable and nothing"
+                        + " has been fetched yet.");
+        problem.setType(URI.create(TYPE_PREFIX + "tle-unavailable"));
+        problem.setTitle("Orbital elements unavailable");
         return org.springframework.http.ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS)
                 .body(problem);
     }
 
     /**
-     * Un TLE existe, mais son epoque est trop ancienne pour que la prediction ait un sens.
-     * Repondre 200 avec une courbe au degre pres serait de la fausse precision ; c'est
-     * pour cela que ce cas a son propre {@code type} malgre un code identique au
-     * precedent.
+     * A TLE exists, but its epoch is too old for the prediction to mean anything.
+     * Answering 200 with a curve to the degree would be false precision; that is why this
+     * case has its own {@code type} despite sharing a status code with the previous one.
      */
     @ExceptionHandler(TleTooOldException.class)
     public ProblemDetail handleTooOld(TleTooOldException e) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.SERVICE_UNAVAILABLE, e.getMessage());
-        problem.setType(URI.create(TYPE_PREFIX + "tle-perime"));
-        problem.setTitle("Elements orbitaux trop anciens");
+        problem.setType(URI.create(TYPE_PREFIX + "tle-stale"));
+        problem.setTitle("Orbital elements too old");
         return problem;
     }
 
     /**
-     * Les invariants du domaine — seuil d'elevation inatteignable, observateur
-     * impossible — sont des erreurs de la requete, pas du serveur.
+     * Domain invariants — an unreachable elevation threshold, an impossible observer —
+     * are errors in the request, not in the server.
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException e) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
-        problem.setType(URI.create(TYPE_PREFIX + "requete-invalide"));
-        problem.setTitle("Requete invalide");
+        problem.setType(URI.create(TYPE_PREFIX + "invalid-request"));
+        problem.setTitle("Invalid request");
         return problem;
     }
 }

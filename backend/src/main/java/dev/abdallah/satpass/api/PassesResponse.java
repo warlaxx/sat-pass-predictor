@@ -8,20 +8,20 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Le contrat de l'API, en entier, dans un seul fichier.
+ * The whole API contract, in one file.
  *
- * <p>Ces types sont deliberement separes du domaine. Un record du domaine change quand la
- * physique ou le calcul l'exigent ; un DTO change quand le client l'exige. Les confondre
- * revient a publier chaque refactoring interne comme une rupture d'API — et a s'interdire
- * de renommer un champ du domaine parce qu'un navigateur le lit.
+ * <p>These types are deliberately kept apart from the domain. A domain record changes
+ * when the physics or the computation demands it; a DTO changes when the client demands
+ * it. Merging the two means publishing every internal refactoring as a breaking API
+ * change — and never being able to rename a domain field because a browser reads it.
  *
- * <p>La forme suivie est celle documentee dans {@code docs/maquette-interface.html},
- * section « Ce que l'API doit renvoyer ». Elle a ete figee avant l'ecriture du frontend,
- * pour que celui-ci n'ait rien a negocier.
+ * <p>The shape is the one documented in {@code docs/maquette-interface.html}, section
+ * "What the API must return". It was frozen before the frontend was written, so that the
+ * frontend has nothing to negotiate.
  *
- * <p>Toutes les dates sont des {@link Instant} UTC, serialises en ISO-8601. Le fuseau de
- * l'utilisateur est un probleme d'affichage : le resoudre ici obligerait le serveur a
- * connaitre le navigateur, et rendrait deux reponses identiques incomparables.
+ * <p>Every date is a UTC {@link Instant}, serialised as ISO-8601. The user's time zone is
+ * a display problem: solving it here would force the server to know the browser, and
+ * would make two identical responses incomparable.
  */
 public record PassesResponse(SatelliteDto satellite,
                              TleDto tle,
@@ -52,12 +52,12 @@ public record PassesResponse(SatelliteDto satellite,
     }
 
     /**
-     * L'age est calcule ici une fois, au lieu d'etre laisse au client.
+     * The age is computed here, once, rather than left to the client.
      *
-     * <p>Le bandeau d'incertitude de l'interface en depend, et un client qui le
-     * recalculerait depuis {@code epoch} et sa propre horloge afficherait un age faux des
-     * que celle-ci derive. Les deux lignes brutes accompagnent le tout : elles rendent la
-     * reponse verifiable ailleurs, sans quoi rien ne permet de controler le calcul.
+     * <p>The interface's uncertainty banner depends on it, and a client recomputing it
+     * from {@code epoch} and its own clock would show a wrong age as soon as that clock
+     * drifts. The two raw lines come along: they make the response checkable elsewhere,
+     * without which nothing lets anyone verify the computation.
      */
     public record TleDto(Instant epoch,
                          long ageSeconds,
@@ -77,12 +77,12 @@ public record PassesResponse(SatelliteDto satellite,
                           List<TrackPointDto> track) {
 
         /**
-         * Les trois phases sont <em>prelevees dans la trajectoire</em>, pas recalculees.
+         * The three phases are <em>read out of the track</em>, not recomputed.
          *
-         * <p>Le jalon 3 garantit que le premier point est l'AOS, le dernier le LOS, et que
-         * le sommet y figure. S'en servir donne des distances exactes aux trois instants
-         * sans une seule propagation supplementaire ; les recalculer produirait des
-         * valeurs legerement differentes de celles de la courbe affichee juste a cote.
+         * <p>Milestone 3 guarantees that the first point is AOS, the last is LOS, and the
+         * culmination is among them. Using them gives exact ranges at the three instants
+         * without a single extra propagation; recomputing would produce values slightly
+         * different from the curve drawn right next to them.
          */
         static PassDto from(SatellitePass pass) {
             List<TrackPoint> track = pass.track();
@@ -92,7 +92,7 @@ public record PassesResponse(SatelliteDto satellite,
                     .filter(point -> point.instant().equals(pass.maxElevationTime()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException(
-                            "sommet absent de la trajectoire du passage de " + pass.aos()));
+                            "culmination missing from the track of the pass starting at " + pass.aos()));
 
             return new PassDto(
                     PhaseDto.from(aos),

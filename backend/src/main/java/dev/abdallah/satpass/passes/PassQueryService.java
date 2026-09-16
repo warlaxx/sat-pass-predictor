@@ -12,17 +12,16 @@ import org.orekit.propagation.analytical.tle.TLE;
 import org.springframework.stereotype.Service;
 
 /**
- * Assemble les deux moities du backend : le TLE du magasin et le calcul de passages.
+ * Joins the two halves of the backend: the TLE from the store and the pass computation.
  *
- * <p>C'est ici, et nulle part ailleurs, que les deux lignes d'un {@link TleSnapshot}
- * redeviennent un {@code TLE} d'Orekit. La couche web ne connait donc aucun type
- * d'Orekit, et le magasin n'en expose aucun : l'invariant du jalon 3 tient de bout en
- * bout.
+ * <p>This is where, and nowhere else, the two lines of a {@link TleSnapshot} become an
+ * Orekit {@code TLE} again. The web layer therefore knows no Orekit type, and the store
+ * exposes none: the milestone 3 invariant holds end to end.
  *
- * <p>La fenetre de recherche demarre a l'instant courant, lu une seule fois et transmis
- * dans le resultat. Relire l'horloge plus loin donnerait un debut de fenetre et un age
- * de TLE calcules a deux instants differents — un ecart minuscule, et un JSON qui ne se
- * recoupe pas.
+ * <p>The search window starts at the current instant, read once and carried into the
+ * result. Reading the clock again further down would compute the start of the window and
+ * the age of the TLE at two different instants — a minuscule gap, and a JSON response
+ * that does not add up.
  */
 @Service
 public class PassQueryService {
