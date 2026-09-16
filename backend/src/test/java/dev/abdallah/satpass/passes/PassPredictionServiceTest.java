@@ -1,0 +1,158 @@
+package dev.abdallah.satpass.passes;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.within;
+
+import dev.abdallah.satpass.TleFixtures;
+import dev.abdallah.satpass.domain.ObserverLocation;
+import dev.abdallah.satpass.domain.SatellitePass;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.orekit.data.DataContext;
+import org.orekit.propagation.analytical.tle.TLE;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class PassPredictionServiceTest {
+
+    private static final ObserverLocation LYON = new ObserverLocation(45.7578, 4.8320, 170.0);
+    private static final double MIN_ELEVATION_DEG = 10.0;
+
+    @Autowired
+    PassPredictionService service;
+
+    @Autowired
+    DataContext dataContext;
+
+    /** Debut de fenetre : l'epoque du TLE, la ou SGP4 est le plus fiable. */
+    private Instant tleEpoch(TLE tle) {
+        return tle.getDate().toInstant(dataContext.getTimeScales());
+    }
+
+    @Test
+    void producesAPlausibleNumberOfPassesOverTwentyFourHours() {
+        TLE iss = TleFixtures.iss();
+
+        List<SatellitePass> passes =
+                service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG);
+
+        // L'ISS survole une latitude moyenne environ 16 fois par jour, mais seule une
+        // minorite de ces orbites passe assez pres de l'observateur. Quatre a six
+        // passages au-dessus de 10 degres est l'ordre de grandeur attendu ; cinq est
+        // la valeur exacte pour ce TLE, donc un ancrage de non-regression.
+        assertThat(passes).hasSize(5);
+    }
+
+    @Test
+    void passesAreOrderedAndDisjoint() {
+        TLE iss = TleFixtures.iss();
+
+        List<SatellitePass> passes =
+                service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG);
+
+        assertThat(passes).isSortedAccordingTo((a, b) -> a.aos().compareTo(b.aos()));
+        for (int i = 1; i < passes.size(); i++) {
+            assertThat(passes.get(i).aos())
+                    .as("le passage %d commence apres la fin du precedent", i)
+                    .isAfter(passes.get(i - 1).los());
+        }
+    }
+
+    @Test
+    void everyPassIsPhysicallyCoherent() {
+        TLE iss = TleFixtures.iss();
+
+        List<SatellitePass> passes =
+                service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG);
+
+        assertThat(passes).allSatisfy(pass -> {
+            assertThat(pass.maxElevationDeg()).isGreaterThanOrEqualTo(MIN_ELEVATION_DEG);
+            assertThat(pass.maxElevationTime()).isAfter(pass.aos()).isBefore(pass.los());
+
+            // Une orbite basse traverse le ciel en quelques minutes. Une duree de
+            // plusieurs heures signalerait une confusion de repere ou d'echelle de temps.
+            assertThat(pass.duration())
+                    .isGreaterThan(Duration.ofSeconds(30))
+                    .isLessThan(Duration.ofMinutes(15));
+
+            assertThat(pass.aosAzimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
+            assertThat(pass.maxElevationAzimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
+            assertThat(pass.losAzimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
+        });
+    }
+
+    /**
+     * Ancrage de non-regression sur le premier passage.
+     *
+     * <p>Ces valeurs ont ete confrontees a Skyfield, une implementation independante de
+     * SGP4 : aux dates produites ici, Skyfield calcule une elevation de 10 degres a
+     * 0,13 millidegre pres. La tolerance de la seconde retenue ci-dessous n'est donc pas
+     * une marge d'erreur physique, mais une marge de securite face aux evolutions
+     * futures d'Orekit ou du jeu de donnees EOP. La justification formelle de la
+     * tolerance relevera du jalon 2.
+     */
+    @Test
+    void firstPassMatchesTheValidatedReference() {
+        TLE iss = TleFixtures.iss();
+
+        SatellitePass first = service
+                .predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG)
+                .getFirst();
+
+        assertThat(first.aos())
+                .isCloseTo(Instant.parse("2021-02-04T12:16:42.325Z"), within(1, ChronoUnit.SECONDS));
+        assertThat(first.los())
+                .isCloseTo(Instant.parse("2021-02-04T12:23:16.131Z"), within(1, ChronoUnit.SECONDS));
+        assertThat(first.maxElevationDeg()).isCloseTo(50.62, within(0.05));
+        assertThat(first.aosAzimuthDeg()).isCloseTo(221.7, within(0.5));
+        assertThat(first.losAzimuthDeg()).isCloseTo(68.9, within(0.5));
+    }
+
+    /**
+     * Un passage deja commence a l'ouverture de la fenetre est ecarte, plutot que
+     * renvoye avec un AOS invente au bord de la fenetre.
+     */
+    @Test
+    void discardsAPassAlreadyUnderwayWhenTheWindowOpens() {
+        TLE iss = TleFixtures.iss();
+        List<SatellitePass> reference =
+                service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG);
+
+        Instant oneMinuteIntoTheFirstPass = reference.getFirst().aos().plusSeconds(60);
+
+        List<SatellitePass> truncated = service.predictPasses(
+                iss, LYON, oneMinuteIntoTheFirstPass, Duration.ofHours(24), MIN_ELEVATION_DEG);
+
+        assertThat(truncated.getFirst().aos()).isEqualTo(reference.get(1).aos());
+    }
+
+    @Test
+    void rejectsAnEmptyWindow() {
+        TLE iss = TleFixtures.iss();
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ZERO, MIN_ELEVATION_DEG))
+                .withMessageContaining("fenetre");
+    }
+
+    @Test
+    void rejectsAnUnreachableElevationThreshold() {
+        TLE iss = TleFixtures.iss();
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), 90.0))
+                .withMessageContaining("elevation minimale");
+    }
+
+    @Test
+    void rejectsAnImpossibleLatitude() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ObserverLocation(91.0, 4.8320, 170.0))
+                .withMessageContaining("latitude");
+    }
+}
