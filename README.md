@@ -55,12 +55,19 @@ cd frontend && npm test
 ```
 
 La validation croisee avec Skyfield est un script separe, volontairement hors de la CI
-(voir [Validation](#validation)) :
+(voir [Validation](#validation)). Il tourne dans son propre environnement virtuel, pour ne
+dependre ni du `python` par defaut du poste ni d'une installation globale :
 
 ```bash
-pip install skyfield
-python3 scripts/validate-against-skyfield.py
+python3 -m venv .venv-validation
+.venv-validation/bin/pip install skyfield
+.venv-validation/bin/python scripts/validate-against-skyfield.py
 ```
+
+Skyfield exige Python 3. Un `pip install` lance sous un Python 2 encore actif — via pyenv,
+par exemple — echoue a la compilation de `sgp4` avec une `SyntaxError` dans son `setup.py` :
+le message pointe vers sgp4, la cause est l'interpreteur. `python3 -m pip --version` dit
+lequel est reellement utilise.
 
 ## Donnees Orekit
 

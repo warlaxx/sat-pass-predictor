@@ -8,6 +8,10 @@ target/
 !**/maven-wrapper.jar
 .mvn/wrapper/maven-wrapper.jar
 
+# Python (environnement du script de validation)
+.venv*/
+__pycache__/
+
 # Node / Angular
 node_modules/
 dist/
