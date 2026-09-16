@@ -165,7 +165,7 @@ public class PassPredictionService {
         propagator.propagate(start, end);
 
         List<PassBoundaries> boundaries =
-                assemblePasses(horizonCrossings.getLoggedEvents(), elevationExtrema.getLoggedEvents());
+                assemblePasses(horizonCrossings.getLoggedEvents(), elevationExtrema.getLoggedEvents(), site);
 
         List<SatellitePass> passes = new ArrayList<>(boundaries.size());
         for (PassBoundaries pass : boundaries) {
@@ -193,7 +193,8 @@ public class PassPredictionService {
      * the propagation; we do not lean on that implicit guarantee and sort them.
      */
     private List<PassBoundaries> assemblePasses(List<EventsLogger.LoggedEvent> crossings,
-                                                List<EventsLogger.LoggedEvent> extrema) {
+                                                List<EventsLogger.LoggedEvent> extrema,
+                                                TopocentricFrame site) {
 
         List<EventsLogger.LoggedEvent> ordered = new ArrayList<>(crossings);
         ordered.sort(Comparator.comparing(EventsLogger.LoggedEvent::getDate));
@@ -208,7 +209,7 @@ public class PassPredictionService {
                 aosState = event.getState();
             } else if (aosState != null) {
                 SpacecraftState losState = event.getState();
-                SpacecraftState apex = findApex(aosState.getDate(), losState.getDate(), extrema);
+                SpacecraftState apex = findApex(aosState.getDate(), losState.getDate(), extrema, site);
                 passes.add(new PassBoundaries(aosState, apex, losState));
                 aosState = null;
             }
@@ -349,15 +350,21 @@ public class PassPredictionService {
      * above it in between: Rolle's theorem guarantees such a maximum exists. Failing to
      * find one signals a detection step that is too coarse, not an exotic orbit — hence
      * the outright failure rather than a plausible but wrong fallback value.
+     *
+     * <p>Rolle guarantees existence, not uniqueness, and the logged events are not sorted
+     * by us: we therefore take the <em>highest</em> extremum in the interval, not the
+     * first one the list happens to hold. With a single maximum — the normal case — the
+     * two are the same; the day a pass has two, the one that matters is the higher one.
      */
     private SpacecraftState findApex(AbsoluteDate aos,
                                      AbsoluteDate los,
-                                     List<EventsLogger.LoggedEvent> extrema) {
+                                     List<EventsLogger.LoggedEvent> extrema,
+                                     TopocentricFrame site) {
         return extrema.stream()
                 .filter(event -> !event.isIncreasing())
                 .filter(event -> event.getDate().compareTo(aos) >= 0 && event.getDate().compareTo(los) <= 0)
                 .map(EventsLogger.LoggedEvent::getState)
-                .findFirst()
+                .max(Comparator.comparingDouble(state -> trackingCoordinates(state, site).getElevation()))
                 .orElseThrow(() -> new IllegalStateException(
                         "no elevation maximum found between " + aos + " and " + los
                                 + " — the detection step (" + MAX_CHECK_SECONDS + " s) is too coarse"));
