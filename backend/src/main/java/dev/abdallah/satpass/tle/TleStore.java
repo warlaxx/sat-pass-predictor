@@ -12,38 +12,38 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * Point d'acces unique aux TLE : dernier element connu par satellite, rafraichi
- * a la demande.
+ * The single entry point to TLEs: the latest known elements per satellite, refreshed on
+ * demand.
  *
- * <h2>Pourquoi ce n'est pas un cache a TTL</h2>
- * La roadmap disait « cache Caffeine, TTL 2 h », et exigeait deux lignes plus bas qu'un
- * CelesTrak injoignable n'empeche pas l'application de fonctionner. Les deux ne tiennent
- * pas ensemble : avec une expiration a 2 h, la premiere requete arrivee a 2 h 01 pendant
- * une panne de CelesTrak ne trouve plus rien et ne peut que renvoyer une erreur.
+ * <h2>Why this is not a TTL cache</h2>
+ * The roadmap said "Caffeine cache, 2 h TTL", and two lines further down required that an
+ * unreachable CelesTrak must not stop the application from working. The two do not hold
+ * together: with a 2 h expiry, the first request arriving at 2 h 01 during a CelesTrak
+ * outage finds nothing and can only return an error.
  *
- * <p>D'ou l'inversion : <strong>rien n'expire</strong>. Les 2 h ne declenchent plus une
- * eviction mais une <em>tentative</em> de rafraichissement. Si elle reussit, le snapshot
- * est remplace ; si elle echoue, l'ancien est servi avec son age reel, et c'est
- * l'interface qui previent l'utilisateur. Un TLE de trois jours reste exploitable —
- * moins precis, pas faux — et c'est precisement ce que le projet cherche a montrer.
- * Caffeine sert donc de magasin <em>borne</em> ({@code maximumSize}), pas de cache.
+ * <p>Hence the inversion: <strong>nothing expires</strong>. The two hours no longer
+ * trigger an eviction but an <em>attempt</em> to refresh. If it succeeds, the snapshot is
+ * replaced; if it fails, the old one is served with its real age, and it is the interface
+ * that warns the user. A three-day-old TLE is still usable — less accurate, not wrong —
+ * and that is precisely what this project sets out to show. Caffeine is therefore a
+ * <em>bounded</em> store ({@code maximumSize}), not a cache.
  *
- * <h2>Les deux limites</h2>
+ * <h2>Two limits</h2>
  * <ul>
- *   <li>{@link TleTooOldException} au-dela de {@code tle.max-age} : la degradation
- *       s'arrete la ou la prediction cesse d'avoir un sens.</li>
- *   <li>{@link TleNotFoundException} n'est jamais degradee, et <em>oublie</em> le
- *       satellite. Un objet qui disparait du catalogue est le plus souvent rentre dans
- *       l'atmosphere ; continuer a propager son dernier TLE afficherait les passages
- *       d'un satellite qui n'existe plus.</li>
+ *   <li>{@link TleTooOldException} past {@code tle.max-age}: degradation stops where
+ *       prediction stops making sense.</li>
+ *   <li>{@link TleNotFoundException} is never degraded, and <em>forgets</em> the
+ *       satellite. An object that disappears from the catalogue has most likely
+ *       re-entered; going on propagating its last TLE would display the passes of a
+ *       satellite that no longer exists.</li>
  * </ul>
  *
- * <h2>Un seul appel reseau par satellite</h2>
- * Le rafraichissement se fait dans {@code asMap().compute(...)}, atomique par cle chez
- * Caffeine : dix requetes simultanees sur l'ISS donnent un appel a CelesTrak, pas dix —
- * ce que la documentation de CelesTrak demande explicitement. Contrepartie assumee : un
- * appel reseau a lieu sous le verrou de la cle. Il est borne par les timeouts du client
- * (quelques secondes), et seuls les appelants du <em>meme</em> satellite attendent.
+ * <h2>One network call per satellite</h2>
+ * Refreshing happens inside {@code asMap().compute(...)}, which Caffeine makes atomic per
+ * key: ten concurrent requests for the ISS produce one call to CelesTrak, not ten.
+ * Accepted trade-off: a network call happens while holding the key's lock. It is bounded
+ * by the client's timeouts (a few seconds), and only callers for the <em>same</em>
+ * satellite wait.
  */
 @Component
 public class TleStore {
@@ -65,11 +65,11 @@ public class TleStore {
     }
 
     /**
-     * Le TLE le plus recent dont on dispose pour ce satellite.
+     * The most recent TLE we have for this satellite.
      *
-     * @throws TleNotFoundException    numero absent du catalogue de CelesTrak.
-     * @throws TleUnavailableException CelesTrak injoignable et aucun TLE anterieur.
-     * @throws TleTooOldException      le seul TLE disponible est trop vieux pour servir.
+     * @throws TleNotFoundException    number absent from CelesTrak's catalogue.
+     * @throws TleUnavailableException CelesTrak unreachable and no earlier TLE held.
+     * @throws TleTooOldException      the only available TLE is too old to be of use.
      */
     public TleSnapshot get(int noradId) {
         TleSnapshot snapshot = store.asMap().compute(noradId, (id, existing) -> {
@@ -79,12 +79,12 @@ public class TleStore {
             try {
                 return client.fetch(id);
             } catch (TleNotFoundException e) {
-                return null; // Caffeine retire l'entree : le satellite est sorti du catalogue.
+                return null; // Caffeine removes the entry: the satellite left the catalogue.
             } catch (TleUnavailableException e) {
                 if (existing == null) {
                     throw e;
                 }
-                log.warn("CelesTrak indisponible pour {} ({}) — TLE du {} conserve",
+                log.warn("CelesTrak unavailable for {} ({}) — keeping the TLE fetched at {}",
                         id, e.getMessage(), existing.fetchedAt());
                 return existing;
             }

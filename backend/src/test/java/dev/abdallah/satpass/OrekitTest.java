@@ -11,31 +11,31 @@ import java.lang.annotation.Target;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
- * Tranche de contexte pour les tests de calcul orbital : {@code orekit-data} charge et le
- * service de prediction, rien d'autre.
+ * Context slice for orbital computation tests: {@code orekit-data} loaded and the
+ * prediction service, nothing else.
  *
- * <h2>Pourquoi pas {@code @SpringBootTest} nu</h2>
- * {@code @SpringBootTest} sans {@code classes} demarre <em>toute</em> l'application. Au
- * jalon 4, un bean HTTP mal cable a fait echouer 26 tests repartis sur cinq classes dont
- * aucune ne touche au reseau, et la cause reelle etait noyee : une seule ligne disait
- * « Failed to load », les vingt-cinq autres « failure threshold exceeded ». Un test doit
- * echouer pour ce qu'il teste, sinon il ne diagnostique rien.
+ * <h2>Why not a bare {@code @SpringBootTest}</h2>
+ * {@code @SpringBootTest} without {@code classes} starts the <em>whole</em> application.
+ * At milestone 4, one badly wired HTTP bean failed 26 tests across five classes, none of
+ * which touches the network, and the real cause was buried: a single line said "Failed to
+ * load", the other twenty-five said "failure threshold exceeded". A test must fail for
+ * what it tests, otherwise it diagnoses nothing.
  *
- * <p>En nommant les classes de configuration, le contexte ne contient plus que ce dont
- * ces tests ont besoin : une panne de cablage ailleurs ne les concerne plus. Effet de
- * bord appreciable — les cinq classes partagent un seul contexte, mis en cache une fois.
+ * <p>By naming the configuration classes, the context holds only what these tests need: a
+ * wiring failure elsewhere no longer concerns them. Welcome side effect — the five
+ * classes share a single context, cached once.
  *
- * <h2>Ce que {@code @SpringBootTest(classes = ...)} garde</h2>
- * Le chargement d'{@code application.yml} et la liaison relachee des
- * {@code @ConfigurationProperties}. {@code @ContextConfiguration} nu les perdrait, et
- * {@code orekit.data-path} ne serait plus resolu. {@code WebEnvironment.NONE} evite en
- * plus de monter un contexte web dont aucun de ces tests n'a l'usage.
+ * <h2>What {@code @SpringBootTest(classes = ...)} keeps</h2>
+ * The loading of {@code application.yml} and the relaxed binding of
+ * {@code @ConfigurationProperties}. A bare {@code @ContextConfiguration} would lose them,
+ * and {@code orekit.data-path} would no longer resolve. {@code WebEnvironment.NONE} also
+ * avoids standing up a web context none of these tests has any use for.
  *
- * <h2>La contrepartie, et comment elle est couverte</h2>
- * Plus aucun de ces tests ne verifie que l'application reelle demarre. C'est exactement
- * le defaut qu'aurait laisse passer le bug du jalon 4. {@link ApplicationStartupTest} est
- * la pour ca, et lui seul : un test qui demarre tout, qui echoue seul, et dont le message
- * designe le bean fautif.
+ * <h2>The trade-off, and how it is covered</h2>
+ * None of these tests checks any more that the real application starts. That is exactly
+ * the defect the milestone 4 bug would have slipped through. {@link ApplicationStartupTest}
+ * exists for that, and it alone: one test that starts everything, that fails on its own,
+ * and whose message names the offending bean.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

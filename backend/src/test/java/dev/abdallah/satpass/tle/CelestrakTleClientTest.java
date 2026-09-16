@@ -24,18 +24,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
 /**
- * Le client face a ce que CelesTrak renvoie vraiment.
+ * The client against what CelesTrak really returns.
  *
- * <p>Aucun appel reseau : {@link MockRestServiceServer} intercepte les requetes. Un test
- * qui interrogerait CelesTrak echouerait le jour ou le service est lent, et ses
- * assertions changeraient a chaque republication de TLE — plusieurs fois par jour.
+ * <p>No network call: {@link MockRestServiceServer} intercepts the requests. A test that
+ * queried CelesTrak would fail the day the service is slow, and its assertions would
+ * change on every republication of a TLE — several times a day.
  *
- * <p>Le contexte Spring n'est charge que pour {@link DataContext} : la conversion de
- * l'epoque d'un TLE en {@link Instant} passe par les echelles de temps d'Orekit, donc
- * par {@code orekit-data}.
+ * <p>The Spring context is loaded only for {@link DataContext}: converting a TLE's epoch
+ * into an {@link Instant} goes through Orekit's time scales, hence through
+ * {@code orekit-data}.
  */
 @OrekitTest
 class CelestrakTleClientTest {
@@ -84,18 +85,18 @@ class CelestrakTleClientTest {
 
         TleSnapshot snapshot = client.fetch(25544);
 
-        // Champ d'epoque du TLE de reference : 21035.14486477, soit le 35e jour de 2021
-        // a 0,14486477 jour. L'ecart avec fetchedAt est tout l'interet du champ : l'age
-        // d'un TLE se compte depuis son epoque, pas depuis l'appel HTTP.
+        // Epoch field of the reference TLE: 21035.14486477, that is the 35th day of 2021
+        // at 0.14486477 day. The gap with fetchedAt is the whole point of the field: the
+        // age of a TLE counts from its epoch, not from the HTTP call.
         assertThat(snapshot.epoch())
                 .isCloseTo(Instant.parse("2021-02-04T03:28:36.316Z"), within(1, ChronoUnit.MILLIS));
         assertThat(snapshot.epoch()).isBefore(snapshot.fetchedAt());
     }
 
     /**
-     * Le piege principal de l'API GP : un numero inconnu ne donne pas un 404 mais un 200
-     * dont le corps est une phrase en anglais. Un client qui ne regarde que le code HTTP
-     * essaierait de parser « No GP data found » comme un TLE.
+     * The main trap of the GP API: an unknown number does not give a 404 but a 200 whose
+     * body is an English sentence. A client that only looks at the HTTP status would try
+     * to parse "No GP data found" as a TLE.
      */
     @Test
     void treatsTheNoGpDataBodyAsAnUnknownSatellite() {
@@ -107,7 +108,7 @@ class CelestrakTleClientTest {
         server.verify();
     }
 
-    /** Sous forte charge, CelesTrak sert une page HTML, toujours en 200. */
+    /** Under heavy load, CelesTrak serves an HTML page, still in 200. */
     @Test
     void treatsAnHtmlPageAsAnOutage() {
         respondWith("<html><body>Service temporarily unavailable</body></html>");
@@ -117,9 +118,9 @@ class CelestrakTleClientTest {
     }
 
     /**
-     * Le numero renvoye est verifie contre celui demande. Sans ce controle, une reponse
-     * mise en cache par un intermediaire pour un autre satellite produirait des passages
-     * parfaitement plausibles — et faux.
+     * The returned number is checked against the requested one. Without that check, a
+     * response cached by an intermediary for another satellite would produce perfectly
+     * plausible passes — and wrong ones.
      */
     @Test
     void refusesAResponseForAnotherSatellite() {
@@ -132,9 +133,9 @@ class CelestrakTleClientTest {
     }
 
     /**
-     * Une ligne alteree en transit doit echouer a la recuperation, pas au milieu d'une
-     * propagation SGP4. Orekit ne verifie pas la somme de controle a la construction :
-     * ce TLE corrompu lui passe sans broncher, c'est le client qui le refuse.
+     * A line altered in transit must fail at retrieval, not in the middle of an SGP4
+     * propagation. Orekit does not verify the checksum on construction: this corrupted
+     * TLE goes through it without complaint, and it is the client that refuses it.
      */
     @Test
     void refusesLinesWhoseChecksumDoesNotMatch() {
@@ -156,7 +157,7 @@ class CelestrakTleClientTest {
 
         assertThatExceptionOfType(TleUnavailableException.class)
                 .isThrownBy(() -> client.fetch(25544))
-                .withCauseInstanceOf(org.springframework.web.client.ResourceAccessException.class);
+                .withCauseInstanceOf(ResourceAccessException.class);
     }
 
     @Test

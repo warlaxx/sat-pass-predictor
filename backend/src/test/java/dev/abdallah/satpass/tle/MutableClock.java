@@ -7,11 +7,11 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 
 /**
- * Horloge que le test avance a la main.
+ * A clock the test advances by hand.
  *
- * <p>Les regles a verifier ici — « retenter au-dela de deux heures », « refuser au-dela
- * de sept jours » — sont des regles sur le temps. Les tester avec l'heure murale
- * reviendrait a attendre, ou a baisser les seuils jusqu'a ne plus tester les vrais.
+ * <p>The rules under test here — "retry past two hours", "refuse past seven days" — are
+ * rules about time. Testing them against the wall clock would mean either waiting, or
+ * lowering the thresholds until the real ones are no longer tested.
  */
 final class MutableClock extends Clock {
 

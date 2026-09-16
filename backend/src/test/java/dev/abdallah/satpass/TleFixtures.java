@@ -4,51 +4,50 @@ import dev.abdallah.satpass.validation.ValidationReference;
 import org.orekit.propagation.analytical.tle.TLE;
 
 /**
- * Jeux d'elements orbitaux figes pour les tests.
+ * Frozen orbital elements for the tests.
  *
- * <p>Un TLE fige, jamais telecharge : un test qui depend du reseau n'est pas un test,
- * c'est une alerte de supervision deguisee. Il echouerait un jour ou CelesTrak est
- * lent, et ses resultats changeraient a chaque execution puisque les TLE sont
- * republies plusieurs fois par jour.
+ * <p>A frozen TLE, never downloaded: a test that depends on the network is not a test, it
+ * is a monitoring alert in disguise. It would fail the day CelesTrak is slow, and its
+ * results would change on every run since TLEs are republished several times a day.
  */
 public final class TleFixtures {
 
     /**
-     * ISS (NORAD 25544), epoque 2021-02-04T03:28:36.316 UTC.
+     * ISS (NORAD 25544), epoch 2021-02-04T03:28:36.316 UTC.
      *
-     * <p>Lu depuis {@code validation/iss-lyon-reference.json} plutot que recopie ici :
-     * le meme TLE sert au test de non-regression Java et au script de validation
-     * Python, et deux copies finiraient par diverger. Le TLE provient du jeu de tests
-     * d'Orekit, donc d'un TLE reellement publie, sommes de controle valides.
+     * <p>Read from {@code validation/iss-lyon-reference.json} rather than copied here:
+     * the same TLE feeds the Java regression test and the Python validation script, and
+     * two copies would end up diverging. The TLE comes from Orekit's own test data, hence
+     * from a genuinely published TLE, with valid checksums.
      */
     public static TLE iss() {
         return ValidationReference.load().tle();
     }
 
-    /** Le nom tel que CelesTrak le publie pour ce satellite. */
+    /** The name as CelesTrak publishes it for this satellite. */
     public static String issName() {
         return ValidationReference.load().satellite().name();
     }
 
-    /** Numero NORAD de l'ISS. */
+    /** NORAD number of the ISS. */
     public static int issNoradId() {
         return ValidationReference.load().satellite().noradId();
     }
 
-    /** Ligne 1 brute, telle qu'elle circule sur le reseau. */
+    /** Raw line 1, as it travels over the network. */
     public static String issLine1() {
         return ValidationReference.load().satellite().tleLine1();
     }
 
-    /** Ligne 2 brute. */
+    /** Raw line 2. */
     public static String issLine2() {
         return ValidationReference.load().satellite().tleLine2();
     }
 
     /**
-     * Une reponse de CelesTrak reconstituee a l'identique : nom complete par des espaces
-     * jusqu'a 24 caracteres, fins de ligne CRLF, ligne vide finale. Les tests qui ne
-     * reproduisent pas ces details valident un format qui n'existe pas.
+     * A CelesTrak response reconstructed exactly: name padded with spaces up to 24
+     * characters, CRLF line endings, trailing empty line. Tests that do not reproduce
+     * those details validate a format that does not exist.
      */
     public static String celestrakThreeLineResponse() {
         return String.format("%-24s", issName()) + "\r\n" + issLine1() + "\r\n" + issLine2() + "\r\n";

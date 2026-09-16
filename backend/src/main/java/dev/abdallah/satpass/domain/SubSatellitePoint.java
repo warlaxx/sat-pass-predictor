@@ -1,27 +1,27 @@
 package dev.abdallah.satpass.domain;
 
 /**
- * Point au sol a la verticale du satellite, en coordonnees geodesiques WGS84.
+ * The point on the ground directly below the satellite, in WGS84 geodetic coordinates.
  *
- * <p>Type du domaine plutot que le {@code GeodeticPoint} d'Orekit : le domaine ne
- * connait pas Orekit, et ce point part tel quel dans le JSON de l'API puis dans le
- * globe du frontend. Exposer le type d'Orekit aurait fait de sa serialisation — angles
- * en radians, champs derives — un contrat public involontaire.
+ * <p>A domain type rather than Orekit's {@code GeodeticPoint}: the domain does not know
+ * about Orekit, and this point travels as-is into the API's JSON and then into the
+ * frontend's globe. Exposing Orekit's type would have turned its serialisation — angles
+ * in radians, derived fields — into an unintended public contract.
  *
- * <p>Longitude dans [-180, 180], comme la projection ITRF la produit : c'est aussi la
- * convention des donnees Natural Earth utilisees par le globe.
+ * <p>Longitude in [-180, 180], as the ITRF projection produces it; that is also the
+ * convention of the Natural Earth data the globe uses.
  */
 public record SubSatellitePoint(double latitudeDeg, double longitudeDeg, double altitudeKm) {
 
     public SubSatellitePoint {
         if (latitudeDeg < -90.0 || latitudeDeg > 90.0) {
-            throw new IllegalArgumentException("latitude hors de [-90, 90] : " + latitudeDeg);
+            throw new IllegalArgumentException("latitude outside [-90, 90]: " + latitudeDeg);
         }
         if (longitudeDeg < -180.0 || longitudeDeg > 180.0) {
-            throw new IllegalArgumentException("longitude hors de [-180, 180] : " + longitudeDeg);
+            throw new IllegalArgumentException("longitude outside [-180, 180]: " + longitudeDeg);
         }
         if (!Double.isFinite(altitudeKm)) {
-            throw new IllegalArgumentException("altitude non finie : " + altitudeKm);
+            throw new IllegalArgumentException("altitude is not finite: " + altitudeKm);
         }
     }
 }

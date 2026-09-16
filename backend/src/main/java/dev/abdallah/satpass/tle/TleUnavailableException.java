@@ -1,11 +1,11 @@
 package dev.abdallah.satpass.tle;
 
 /**
- * CelesTrak n'a pas pu etre interroge, ou a repondu quelque chose d'inexploitable :
- * timeout, coupure reseau, 5xx, HTML d'une page d'erreur a la place du TLE.
+ * CelesTrak could not be reached, or answered something unusable: timeout, network
+ * failure, 5xx, an HTML error page instead of a TLE, an empty body.
  *
- * <p>Erreur <em>transitoire</em> : le magasin la rattrape et sert le dernier TLE connu
- * s'il en a un. Elle ne remonte a l'appelant que lorsqu'il n'y a rien a degrader.
+ * <p>A <em>transient</em> error: the store catches it and serves the last known TLE if it
+ * has one. It only reaches the caller when there is nothing to degrade to.
  */
 public class TleUnavailableException extends RuntimeException {
 

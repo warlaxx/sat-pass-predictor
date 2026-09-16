@@ -1,4 +1,4 @@
-# Donnees Orekit : telechargees via scripts/fetch-orekit-data.sh
+# Orekit data: downloaded by scripts/fetch-orekit-data.sh, never committed.
 orekit-data/
 
 # Java / Maven
@@ -8,7 +8,7 @@ target/
 !**/maven-wrapper.jar
 .mvn/wrapper/maven-wrapper.jar
 
-# Python (environnement du script de validation)
+# Python (environment of the validation script)
 .venv*/
 __pycache__/
 

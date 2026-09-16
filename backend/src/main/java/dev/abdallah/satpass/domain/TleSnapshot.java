@@ -4,29 +4,28 @@ import java.time.Duration;
 import java.time.Instant;
 
 /**
- * Un TLE tel qu'il a ete recupere, avec de quoi juger de sa fraicheur.
+ * A TLE as it was retrieved, with what is needed to judge how fresh it is.
  *
- * <h2>Pourquoi les deux lignes brutes et pas un {@code TLE} d'Orekit</h2>
- * Le domaine n'importe aucun type d'Orekit (decide au jalon 3). Les deux lignes sont
- * de toute facon la forme canonique : c'est ce que CelesTrak publie, c'est ce que le
- * JSON de l'API renvoie, et c'est ce qu'un utilisateur recopie pour verifier ailleurs.
- * Le {@code TLE} d'Orekit est reconstruit a la volee dans la couche de propagation ;
- * le parsing coute quelques microsecondes, negligeable devant une propagation SGP4 sur
- * 24 h.
+ * <h2>Why the two raw lines and not an Orekit {@code TLE}</h2>
+ * The domain imports no Orekit type (decided at milestone 3). The two lines are the
+ * canonical form anyway: it is what CelesTrak publishes, what the API's JSON returns,
+ * and what a user copies to check the result elsewhere. Orekit's {@code TLE} is rebuilt
+ * on the fly in the propagation layer; parsing costs a few microseconds, negligible next
+ * to a 24 h SGP4 propagation.
  *
- * <h2>Deux ages, deux usages</h2>
+ * <h2>Two ages, two uses</h2>
  * <ul>
- *   <li>{@link #ageSinceEpoch} — le temps ecoule depuis l'epoque des elements. C'est
- *       <em>l'age physique</em> : l'erreur de SGP4 croit avec lui, de l'ordre du
- *       kilometre par jour en orbite basse. C'est ce que le bandeau d'incertitude de
- *       l'interface affiche.</li>
- *   <li>{@link #ageSinceFetch} — le temps ecoule depuis l'appel reseau. C'est
- *       <em>l'age operationnel</em> : il decide seulement s'il faut retenter CelesTrak.
- *       Un TLE recupere il y a une minute peut tres bien avoir une epoque vieille de
- *       deux jours si le satellite n'a pas ete re-observe.</li>
+ *   <li>{@link #ageSinceEpoch} — time elapsed since the epoch of the elements. This is
+ *       the <em>physical</em> age: SGP4's error grows with it, on the order of a
+ *       kilometre a day in low Earth orbit. It is what the interface's uncertainty
+ *       banner shows.</li>
+ *   <li>{@link #ageSinceFetch} — time elapsed since the network call. This is the
+ *       <em>operational</em> age: it only decides whether to call CelesTrak again. A TLE
+ *       fetched a minute ago may perfectly well have an epoch two days old, if the
+ *       satellite has not been re-observed since.</li>
  * </ul>
- * Les confondre est l'erreur classique : un cache qui expire au bout de deux heures
- * croit garantir une precision qu'il ne controle pas.
+ * Confusing the two is the classic mistake: a cache that expires after two hours believes
+ * it guarantees an accuracy it does not control.
  */
 public record TleSnapshot(int noradId,
                           String name,
@@ -36,47 +35,47 @@ public record TleSnapshot(int noradId,
                           Instant fetchedAt,
                           String source) {
 
-    /** Longueur d'une ligne de TLE, fixee par le format a colonnes de la NORAD. */
+    /** Length of a TLE line, fixed by NORAD's column-based format. */
     private static final int LINE_LENGTH = 69;
 
     public TleSnapshot {
         if (noradId <= 0) {
-            throw new IllegalArgumentException("numero NORAD invalide : " + noradId);
+            throw new IllegalArgumentException("invalid NORAD number: " + noradId);
         }
         requireTleLine(line1, 1);
         requireTleLine(line2, 2);
         if (epoch == null) {
-            throw new IllegalArgumentException("epoque manquante");
+            throw new IllegalArgumentException("epoch is missing");
         }
         if (fetchedAt == null) {
-            throw new IllegalArgumentException("date de recuperation manquante");
+            throw new IllegalArgumentException("fetch date is missing");
         }
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("nom de satellite manquant");
+            throw new IllegalArgumentException("satellite name is missing");
         }
         if (source == null || source.isBlank()) {
-            throw new IllegalArgumentException("source manquante");
+            throw new IllegalArgumentException("source is missing");
         }
     }
 
     private static void requireTleLine(String line, int expectedNumber) {
         if (line == null || line.length() != LINE_LENGTH) {
             throw new IllegalArgumentException(
-                    "ligne " + expectedNumber + " : " + LINE_LENGTH + " caracteres attendus, recu "
+                    "line " + expectedNumber + ": expected " + LINE_LENGTH + " characters, got "
                             + (line == null ? "null" : line.length()));
         }
         if (line.charAt(0) != (char) ('0' + expectedNumber)) {
             throw new IllegalArgumentException(
-                    "ligne " + expectedNumber + " : ne commence pas par '" + expectedNumber + "'");
+                    "line " + expectedNumber + ": does not start with '" + expectedNumber + "'");
         }
     }
 
-    /** Age physique des elements : duree ecoulee depuis leur epoque. Peut etre negatif. */
+    /** Physical age of the elements: time elapsed since their epoch. May be negative. */
     public Duration ageSinceEpoch(Instant now) {
         return Duration.between(epoch, now);
     }
 
-    /** Age operationnel : duree ecoulee depuis l'appel reseau qui a produit ce snapshot. */
+    /** Operational age: time elapsed since the network call that produced this snapshot. */
     public Duration ageSinceFetch(Instant now) {
         return Duration.between(fetchedAt, now);
     }

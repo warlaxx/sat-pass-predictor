@@ -18,13 +18,14 @@ import org.orekit.propagation.analytical.tle.TLE;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * Jalon 3 — la trajectoire echantillonnee.
+ * Milestone 3 — the sampled track.
  *
- * <p>Ces tests portent sur la <em>forme</em> de la polyligne, pas sur des valeurs figees :
- * la justesse physique des positions est etablie ailleurs, par la reference du jalon 2 et
- * sa validation Skyfield. Ce qui est verifie ici est ce dont l'interface depend et qu'un
- * refactoring casserait sans bruit — que la courbe commence a l'AOS, finisse au LOS,
- * passe par le sommet, et que le pas annonce soit celui applique.
+ * <p>These tests are about the <em>shape</em> of the polyline, not about frozen values:
+ * the physical correctness of the positions is established elsewhere, by the milestone 2
+ * reference and its Skyfield validation. What is checked here is what the interface
+ * depends on and what a refactoring would break without a sound — that the curve starts
+ * at AOS, ends at LOS, goes through the culmination, and that the announced step is the
+ * one applied.
  */
 @OrekitTest
 class TrackSamplingTest {
@@ -32,16 +33,16 @@ class TrackSamplingTest {
     private static final ObserverLocation LYON = new ObserverLocation(45.7578, 4.8320, 170.0);
     private static final double MIN_ELEVATION_DEG = 10.0;
 
-    /** Doit rester egal a {@code PassPredictionService.TRACK_STEP_SECONDS}. */
+    /** Must stay equal to {@code PassPredictionService.TRACK_STEP_SECONDS}. */
     private static final long TRACK_STEP_SECONDS = 10L;
 
     /**
-     * Tolerance angulaire, en degres.
+     * Angular tolerance, in degrees.
      *
-     * <p>Calibree sur la precision de la recherche de racine (1 ms) et sur la vitesse
-     * angulaire de l'ISS au voisinage de l'horizon, environ 0,1 degre par seconde :
-     * l'ecart attendu est de l'ordre de 1e-4 degre. Un millieme de degre laisse un ordre
-     * de grandeur de marge sans rien laisser passer de significatif.
+     * <p>Calibrated on the accuracy of the root search (1 ms) and on the angular velocity
+     * of the ISS near the horizon, about 0.1 degree per second: the expected discrepancy
+     * is on the order of 1e-4 degree. A thousandth of a degree leaves an order of
+     * magnitude of margin without letting anything significant through.
      */
     private static final double ELEVATION_TOLERANCE_DEG = 1.0e-3;
 
@@ -58,8 +59,8 @@ class TrackSamplingTest {
     }
 
     /**
-     * Critere de sortie du jalon 3 : la polyligne couvre exactement le passage, et ses
-     * deux extremites sont au seuil d'elevation demande.
+     * Exit criterion of milestone 3: the polyline spans exactly the pass, and both of its
+     * ends sit at the requested elevation threshold.
      */
     @Test
     void theTrackSpansExactlyThePassAndEndsAtTheElevationThreshold() {
@@ -67,26 +68,26 @@ class TrackSamplingTest {
             TrackPoint first = pass.track().getFirst();
             TrackPoint last = pass.track().getLast();
 
-            assertThat(first.instant()).as("premier point = AOS").isEqualTo(pass.aos());
-            assertThat(last.instant()).as("dernier point = LOS").isEqualTo(pass.los());
+            assertThat(first.instant()).as("first point = AOS").isEqualTo(pass.aos());
+            assertThat(last.instant()).as("last point = LOS").isEqualTo(pass.los());
 
             assertThat(first.elevationDeg())
-                    .as("elevation a l'AOS")
+                    .as("elevation at AOS")
                     .isCloseTo(MIN_ELEVATION_DEG, within(ELEVATION_TOLERANCE_DEG));
             assertThat(last.elevationDeg())
-                    .as("elevation au LOS")
+                    .as("elevation at LOS")
                     .isCloseTo(MIN_ELEVATION_DEG, within(ELEVATION_TOLERANCE_DEG));
         });
     }
 
     /**
-     * Le sommet tombe sur la courbe.
+     * The culmination falls on the curve.
      *
-     * <p>Sans cette garantie, l'interface dessinerait le marqueur du sommet a cote de la
-     * trajectoire : pres du zenith l'ISS gagne plusieurs degres d'elevation en quelques
-     * secondes, et le sommet, trouve par annulation de la derivee, ne tombe pas sur un
-     * multiple de {@value #TRACK_STEP_SECONDS} s. C'est un defaut visible a l'oeil, donc
-     * un test.
+     * <p>Without that guarantee the interface would draw the culmination marker beside
+     * the track: near the zenith the ISS gains several degrees of elevation in a few
+     * seconds, and the culmination, found by zeroing the derivative, does not fall on a
+     * multiple of {@value #TRACK_STEP_SECONDS} s. It is a flaw visible to the eye, hence
+     * a test.
      */
     @Test
     void theCulminationIsOneOfTheTrackPoints() {
@@ -95,26 +96,26 @@ class TrackSamplingTest {
                     .filter(point -> point.instant().equals(pass.maxElevationTime()))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError(
-                            "le sommet " + pass.maxElevationTime() + " ne figure pas dans la trajectoire"));
+                            "culmination " + pass.maxElevationTime() + " is not in the track"));
 
             assertThat(apex.elevationDeg())
-                    .as("le sommet de la courbe est le maximum annonce")
+                    .as("the top of the curve is the announced maximum")
                     .isCloseTo(pass.maxElevationDeg(), within(ELEVATION_TOLERANCE_DEG));
 
             assertThat(pass.track())
-                    .as("aucun point de la trajectoire ne depasse ce maximum")
+                    .as("no point of the track goes above that maximum")
                     .allSatisfy(point -> assertThat(point.elevationDeg())
                             .isLessThanOrEqualTo(pass.maxElevationDeg() + ELEVATION_TOLERANCE_DEG));
         });
     }
 
     /**
-     * Le pas applique est celui annonce : points chronologiques, jamais separes de plus du
-     * pas nominal, jamais confondus.
+     * The applied step is the announced one: points in chronological order, never further
+     * apart than the nominal step, never coincident.
      *
-     * <p>Deux points a quelques microsecondes d'intervalle ne sont pas un detail
-     * esthetique : un segment de longueur nulle dans une polyligne SVG produit des
-     * artefacts de jointure, et la lecture continue de la barre de transport sauterait.
+     * <p>Two points a few microseconds apart are not a cosmetic detail: a zero-length
+     * segment in an SVG polyline produces joint artefacts, and the playback of the
+     * transport bar would jump.
      */
     @Test
     void samplesAreChronologicalAndRegularlySpaced() {
@@ -123,7 +124,7 @@ class TrackSamplingTest {
             for (int i = 1; i < track.size(); i++) {
                 Duration gap = Duration.between(track.get(i - 1).instant(), track.get(i).instant());
                 assertThat(gap)
-                        .as("intervalle entre les points %d et %d", i - 1, i)
+                        .as("interval between points %d and %d", i - 1, i)
                         .isGreaterThan(Duration.ofMillis(1))
                         .isLessThanOrEqualTo(Duration.ofSeconds(TRACK_STEP_SECONDS));
             }
@@ -131,46 +132,46 @@ class TrackSamplingTest {
     }
 
     /**
-     * Le nombre de points suit la duree du passage, puisque le pas est fixe. C'est la
-     * contrepartie assumee du choix : on la teste plutot que de la subir.
+     * The number of points follows the duration of the pass, since the step is fixed.
+     * That is the accepted trade-off of the choice: we test it rather than suffer it.
      */
     @Test
     void theNumberOfSamplesFollowsTheDurationOfThePass() {
         assertThat(passes()).allSatisfy(pass -> {
             long gridPoints = pass.duration().toSeconds() / TRACK_STEP_SECONDS;
-            // Grille interieure, plus AOS, sommet et LOS, moins les doublons ecartes :
-            // on encadre largement plutot que de reproduire l'arithmetique du service ici.
+            // Interior grid, plus AOS, culmination and LOS, minus the duplicates dropped:
+            // we bracket generously rather than reproduce the service's arithmetic here.
             assertThat(pass.track().size()).isBetween((int) gridPoints, (int) gridPoints + 4);
         });
     }
 
     /**
-     * Le point sous-satellite est plausible : une orbite basse, ni un point au sol ni un
-     * satellite geostationnaire. Une confusion de repere — ITRF pris pour TEME — se
-     * verrait ici, sous la forme d'une latitude depassant l'inclinaison de l'orbite.
+     * The sub-satellite point is plausible: a low Earth orbit, neither a point on the
+     * ground nor a geostationary satellite. A frame confusion — ITRF taken for TEME —
+     * would show up here, as a latitude exceeding the inclination of the orbit.
      */
     @Test
     void everySampleCarriesAPlausibleSubSatellitePoint() {
         assertThat(passes()).allSatisfy(pass -> assertThat(pass.track()).allSatisfy(point -> {
             assertThat(point.subPoint().altitudeKm())
-                    .as("altitude de l'ISS")
+                    .as("altitude of the ISS")
                     .isBetween(300.0, 500.0);
             assertThat(point.subPoint().latitudeDeg())
-                    .as("l'ISS ne depasse pas l'inclinaison de son orbite, 51,6 degres")
+                    .as("the ISS never exceeds its orbital inclination, 51.6 degrees")
                     .isBetween(-52.0, 52.0);
             assertThat(point.subPoint().longitudeDeg()).isBetween(-180.0, 180.0);
 
-            // A 10 degres d'elevation l'ISS est a environ 1 500 km ; au zenith, a son
-            // altitude. Hors de cet intervalle, la geometrie du passage est fausse.
+            // At 10 degrees of elevation the ISS is about 1500 km away; at the zenith, at
+            // its altitude. Outside that range, the geometry of the pass is wrong.
             assertThat(point.rangeKm()).isBetween(300.0, 1800.0);
 
             assertThat(point.illuminated())
-                    .as("le calcul d'eclipse arrive au jalon 10 ; d'ici la, le champ est neutre")
+                    .as("the eclipse computation arrives at milestone 10; until then the field is neutral")
                     .isFalse();
         }));
     }
 
-    /** L'invariant du domaine est verifie a la construction, pas seulement documente. */
+    /** The domain invariant is checked on construction, not merely documented. */
     @Test
     void aPassCannotBeBuiltWithATrackThatDoesNotMatchItsBounds() {
         SatellitePass pass = passes().getFirst();

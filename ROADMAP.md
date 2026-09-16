@@ -1,287 +1,298 @@
 # Roadmap
 
-Budget réel : **~4 h/semaine**. Chaque jalon est conçu pour tenir dans 1 à 2 semaines,
-être poussé seul et être démontrable seul. Aucun jalon ne dépend d'un jalon futur pour
-avoir du sens : si le projet s'arrête au jalon 4, ce qui est en ligne reste cohérent.
+Real budget: **~4 h/week**. Every milestone is designed to fit in 1 to 2 weeks, to be
+pushed on its own and to be demonstrable on its own. No milestone depends on a future one
+to make sense: if the project stops at milestone 4, what is online stays coherent.
 
-Cible : version présentable **fin novembre 2026**, mi-décembre avec de la marge.
+Target: a presentable version by **end of November 2026**, mid-December with slack.
 
-> Jalons 0 à 2 faits. Il reste ≈ 32 h, soit 8 semaines pleines au rythme de 4 h.
-> L'ajout du globe 3D et le découpage plus fin du frontend coûtent une dizaine d'heures
-> de plus que la roadmap initiale. C'est un coût assumé, pas un glissement : autant
-> l'écrire que le découvrir en décembre.
+> Milestones 0 to 4 are done. About 29 h remain, that is 7 full weeks at 4 h/week.
+> Adding the 3D globe and splitting the frontend more finely cost about ten hours more
+> than the initial roadmap. That is an accepted cost, not a slip: better written down than
+> discovered in December.
 
-L'interface a une **maquette validée** (16/09/2026) qui sert de référence pour les
-jalons 5 à 7 : `docs/maquette-interface.html`, ouvrable directement dans un navigateur.
-
----
-
-## ✅ Jalon 0 — Socle (fait)
-
-Monorepo, Spring Boot 4.1.1 / Java 25, Orekit 13.1.8, Angular 22, chargement des
-données Orekit testé, CI GitHub Actions.
+The interface has a **validated mockup** (16/09/2026) that serves as the reference for
+milestones 6 to 8: `docs/maquette-interface.html`, which opens directly in a browser.
 
 ---
 
-## ✅ Jalon 1 — Calculer un passage (fait)
+## Milestone 0 — Foundations (done)
 
-Le cœur du projet. Tout le reste n'est que de la plomberie autour.
+Monorepo, Spring Boot 4.1.1 / Java 25, Orekit 13.1.8, Angular 22, Orekit data loading
+tested, GitHub Actions CI.
 
-- `TLEPropagator.selectExtrapolator(tle)` à partir d'un TLE de l'ISS **codé en dur**
-  (pas d'appel réseau dans les tests).
-- Site d'observation : `OneAxisEllipsoid` (WGS84, frame ITRF) + `GeodeticPoint` (Lyon)
+---
+
+## Milestone 1 — Computing a pass (done)
+
+The heart of the project. Everything else is plumbing around it.
+
+- `TLEPropagator.selectExtrapolator(tle)` from a **hard-coded** ISS TLE (no network call
+  in the tests).
+- Observation site: `OneAxisEllipsoid` (WGS84, ITRF frame) + `GeodeticPoint` (Lyon)
   → `TopocentricFrame`.
-- `ElevationDetector` (seuil 10°) + `EventsLogger` sur une propagation de 24 h.
-- Sortie : une liste de `SatellitePass` (AOS, LOS, durée, élévation max, azimuts).
+- `ElevationDetector` (10° threshold) + `EventsLogger` over a 24 h propagation.
+- Output: a list of `SatellitePass` (AOS, LOS, duration, maximum elevation, azimuths).
 
-**Piège connu** : un TLE s'exprime dans le repère **TEME**, pas dans GCRF ni ITRF.
-Orekit gère la conversion, mais tu dois savoir l'expliquer — c'est une question
-d'entretien quasi certaine.
-
----
-
-## ✅ Jalon 2 — Validation croisée (fait)
-
-Comparaison à Skyfield, implémentation Python indépendante de SGP4. Tolérances retenues,
-justifiées, et écart résiduel expliqué dans la section « Validation » du README. Script
-reproductible dans `scripts/`.
-
-C'est ce jalon qui sépare ce dépôt des centaines de clones — et il est fait avant le
-reste, pas à la fin.
-
-**Reste ouvert** : Skyfield et Orekit implémentent *le même modèle*. Leur accord prouve
-que l'implémentation et la chaîne de repères sont correctes ; il ne dit rien de l'écart
-au ciel réel, dominé par l'âge du TLE. Une comparaison à Heavens-Above répondrait à
-l'autre question. Les passages de référence pour Lyon (16–25 septembre 2026) sont déjà
-relevés dans `docs/maquette-interface.html` si tu veux la mener.
+**Known trap**: a TLE is expressed in the **TEME** frame, not in GCRF nor ITRF. Orekit
+handles the conversion, but you have to be able to explain it.
 
 ---
 
-## ✅ Jalon 3 — Échantillonnage de la trajectoire (fait)
+## Milestone 2 — Cross-validation (done)
 
-`SatellitePass` exposait trois instants (AOS, culmination, LOS). Les deux vues de
-l'interface ont besoin d'une **polyligne**, pas de trois points. C'est fait avant que
-l'API ne soit publiée, pour ne pas avoir à reprendre ensuite le service, le DTO, les
-tests et un contrat déjà en ligne.
+Comparison with Skyfield, an independent Python implementation of SGP4. Tolerances chosen,
+justified, and the residual discrepancy explained in the "Validation" section of the
+README. Reproducible script in `scripts/`.
 
-- `TrackPoint(instant, azimuthDeg, elevationDeg, rangeKm, subPoint, illuminated)` et
-  `List<TrackPoint> track` dans `SatellitePass`.
-- `SubSatellitePoint(latitudeDeg, longitudeDeg, altitudeKm)` — **type du domaine, pas le
-  `GeodeticPoint` d'Orekit**. Écart assumé par rapport au plan initial : le domaine
-  n'importe pas Orekit, et ce point part tel quel dans le JSON du jalon 5 puis dans le
-  globe du jalon 8. Exposer le type d'Orekit aurait fait de sa sérialisation — angles en
-  radians, champs dérivés — un contrat public involontaire.
-- Calcul en **deux passes** : une propagation sur toute la fenêtre pour les bornes
-  (détecteurs d'événements, recherche de racine, précision à la milliseconde), puis une
-  propagation par passage sur [AOS, LOS] avec un `OrekitStepHandler` qui prélève les
-  échantillons *à l'intérieur* des pas d'intégration. Jamais un `propagate()` par point.
-- `subPoint` par projection ITRF côté Orekit. **Jamais recalculé côté navigateur.**
-- `illuminated` renvoyé à `false` jusqu'au jalon 10.
+This is the milestone that separates this repository from the hundreds of clones — and it
+comes before the rest, not at the end.
 
-**Décision : pas fixe de 10 s**, et non nombre de points fixe par passage. Les instants
-tombent sur des multiples ronds depuis l'AOS, donc directement lisibles comme étiquettes
-horaires sur la carte du ciel ; la densité de points dit quelque chose de vrai (un
-passage long a plus de points parce qu'il dure plus longtemps) ; et la règle tient en une
-phrase, ce que « 60 points » ne fait pas — il faudrait expliquer pourquoi 60.
-Contrepartie assumée : un passage rasant de 50 s ne donne que 4 points intermédiaires et
-sa courbe est visiblement anguleuse.
-
-**AOS, sommet et LOS ne sont pas interpolés** : ils sont construits depuis les
-`SpacecraftState` déjà produits par la recherche de racine, puis insérés dans la
-polyligne. Conséquence visible : le marqueur du sommet tombe *sur* la courbe. Sans cela
-il flotterait à côté — près du zénith l'ISS gagne plusieurs degrés d'élévation en
-quelques secondes, et le sommet ne tombe jamais sur un multiple de 10 s.
-
-**Critère de sortie atteint** : `TrackSamplingTest` vérifie que le premier et le dernier
-point coïncident avec l'AOS et le LOS et que l'élévation y vaut le seuil à 1e-3 degré
-près, que le sommet figure dans la trajectoire, que les points sont chronologiques et
-espacés d'au plus 10 s, et que chaque point sous-satellite est plausible pour une orbite
-basse inclinée à 51,6°.
+**Still open**: Skyfield and Orekit implement *the same model*. Their agreement proves
+that the implementation and the chain of frames are correct; it says nothing about the gap
+to the real sky, which is dominated by the age of the TLE. A comparison against
+Heavens-Above would answer the other question. Reference passes for Lyon (16–25 September
+2026) are already recorded in `docs/maquette-interface.html` if you want to run it.
 
 ---
 
-## ✅ Jalon 4 — Récupération des TLE (fait)
+## Milestone 3 — Track sampling (done)
 
-Un TLE figé suffisait pour valider le calcul ; il ne suffit pas pour une application.
-CelesTrak republie les éléments de l'ISS plusieurs fois par jour, et c'est leur âge —
-pas le modèle — qui domine l'écart au ciel réel.
+`SatellitePass` exposed three instants (AOS, culmination, LOS). Both views of the
+interface need a **polyline**, not three points. This is done before the API is published,
+so as not to have to revisit the service, the DTO, the tests and a contract already
+online.
 
-- `TleSnapshot(noradId, name, line1, line2, epoch, fetchedAt, source)` dans le domaine.
-- `CelestrakTleClient` : `RestClient` vers l'API GP (`CATNR`, `FORMAT=TLE`), timeouts
-  explicites, validation par Orekit **à la récupération**.
-- `TleStore` : magasin borné du dernier TLE connu par satellite.
-- 15 tests, aucun appel réseau (`MockRestServiceServer`, horloge injectée).
+- `TrackPoint(instant, azimuthDeg, elevationDeg, rangeKm, subPoint, illuminated)` and
+  `List<TrackPoint> track` in `SatellitePass`.
+- `SubSatellitePoint(latitudeDeg, longitudeDeg, altitudeKm)` — **a domain type, not
+  Orekit's `GeodeticPoint`**. An accepted departure from the initial plan: the domain does
+  not import Orekit, and this point travels as-is into the milestone 5 JSON and then into
+  the milestone 8 globe. Exposing Orekit's type would have turned its serialisation —
+  angles in radians, derived fields — into an unintended public contract.
+- Computation in **two passes**: one propagation over the whole window for the boundaries
+  (event detectors, root finding, millisecond accuracy), then one propagation per pass
+  over [AOS, LOS] with an `OrekitStepHandler` taking samples *inside* the integration
+  steps. Never a `propagate()` per point.
+- `subPoint` from an ITRF projection on the Orekit side. **Never recomputed in the
+  browser.**
+- `illuminated` pinned to `false` until milestone 10.
 
-**Décision : ce n'est pas un cache à TTL.** La consigne initiale disait « Caffeine,
-TTL 2 h » et exigeait deux lignes plus bas qu'un CelesTrak injoignable n'empêche pas
-l'application de fonctionner. Les deux ne tiennent pas ensemble : avec une expiration à
-2 h, la première requête arrivée à 2 h 01 pendant une panne ne trouve plus rien. D'où
-l'inversion — **rien n'expire** ; les 2 h déclenchent une *tentative* de
-rafraîchissement, et son échec laisse le snapshot précédent en place avec son âge réel.
-Caffeine sert de magasin borné (`maximumSize`), pas de cache. Contrepartie assumée :
-c'est un écart explicite à la consigne, et il faut donc savoir l'expliquer.
+**Decision: a fixed 10 s step**, not a fixed number of points per pass. The instants fall
+on round multiples from AOS, so they read directly as time labels on the sky chart; the
+density of points says something true (a long pass has more points because it lasts
+longer); and the rule fits in one sentence, which "60 points" does not — you would have to
+explain why 60. Accepted trade-off: a grazing 50 s pass only gets 4 interior points and
+its curve is visibly angular.
 
-**Deux âges, jamais confondus.** L'âge *depuis l'époque* est physique : l'erreur de SGP4
-croît avec lui, de l'ordre du kilomètre par jour en orbite basse, et c'est lui qu'affiche
-le bandeau d'incertitude. L'âge *depuis la récupération* est opérationnel : il décide
-seulement s'il faut rappeler CelesTrak. Un cache qui expire au bout de deux heures croit
-garantir une précision qu'il ne contrôle pas.
+**AOS, culmination and LOS are not interpolated**: they are built from the
+`SpacecraftState` objects the root search already produced, then inserted into the
+polyline. Visible consequence: the culmination marker falls *on* the curve. Without that
+it would float beside it — near the zenith the ISS gains several degrees of elevation in a
+few seconds, and the culmination never falls on a multiple of 10 s.
 
-**Deux limites à la dégradation.** Au-delà de `tle.max-age` (7 jours d'époque), la
-prédiction est refusée plutôt qu'affichée au degré près — de la fausse précision. Et un
-satellite absent du catalogue (`TleNotFoundException`) n'est **jamais** dégradé : il est
-oublié du magasin. Un objet qui disparaît de CelesTrak est le plus souvent rentré dans
-l'atmosphère, et propager son dernier TLE afficherait les passages d'un satellite qui
-n'existe plus.
-
-**Deux pièges de l'API GP**, tous deux encodés dans les tests : un numéro NORAD inconnu
-répond **200 avec le corps `No GP data found`**, pas 404 ; et sous charge CelesTrak sert
-une page HTML, toujours en 200. Tout corps qui ne ressemble pas à un TLE est donc traité
-comme une panne. Le numéro renvoyé est en outre vérifié contre celui demandé : sans ce
-contrôle, une réponse mise en cache par un intermédiaire pour un autre satellite
-produirait des passages parfaitement plausibles — et faux.
-
-**Un seul appel réseau par satellite.** Le rafraîchissement passe par
-`asMap().compute(...)`, atomique par clé chez Caffeine : dix requêtes simultanées sur
-l'ISS donnent un appel, pas dix, ce que la documentation de CelesTrak demande
-explicitement. Contrepartie assumée : l'appel réseau a lieu sous le verrou de la clé —
-borné par les timeouts, et seuls les appelants du *même* satellite attendent.
-
-**Découpage des contextes de test, fait dans la foulée.** Le premier `verify` de ce
-jalon a fait échouer 26 tests sur cinq classes dont aucune ne touche au réseau : toutes
-étaient en `@SpringBootTest` nu, donc toutes démarraient l'application entière, donc
-toutes tombaient avec le bean HTTP mal câblé. Un test doit échouer pour ce qu'il teste.
-Elles passent désormais par `@OrekitTest`, une tranche nommant `OrekitConfig` et
-`PassPredictionService` — un seul contexte, mis en cache, sans couche web.
-
-La contrepartie est réelle : plus rien ne vérifiait alors que l'application *réelle*
-démarre, or c'est exactement le défaut qui venait de passer à travers. D'où
-`ApplicationStartupTest`, seul test à tout démarrer, qui vérifie en plus que les beans
-porteurs de comportement sont présents — un contexte peut démarrer en ayant silencieusement
-omis un `@Component`. Un test démarre tout et échoue seul ; les autres restent lisibles.
-
-Corollaire découvert au passage : `DataContext.getDefault()` est un singleton de JVM, pas
-un bean. Avec deux contextes Spring dans la même JVM, `addProvider` empilait deux
-fournisseurs sur les mêmes fichiers EOP. `OrekitConfig` fait maintenant
-`clearProviders()` d'abord — l'enregistrement est idempotent.
-
-**Critère de sortie atteint** : `CelestrakTleClientTest` couvre la réponse nominale,
-`No GP data found`, une page HTML, un mauvais numéro NORAD, une somme de contrôle
-altérée, un timeout et un 500. `TleStoreTest` couvre la fenêtre de rafraîchissement, le
-repli sur le dernier TLE connu, l'absence de repli au premier appel, l'oubli d'un
-satellite retiré du catalogue, la limite d'âge dure et la fusion des appels concurrents.
+**Exit criterion met**: `TrackSamplingTest` checks that the first and last points coincide
+with AOS and LOS and that the elevation there equals the threshold to within 1e-3 degree,
+that the culmination is in the track, that the points are chronological and no more than
+10 s apart, and that every sub-satellite point is plausible for a low Earth orbit inclined
+at 51.6°.
 
 ---
 
-## Jalon 5 — API REST (≈ 4 h · 1 semaine)
+## Milestone 4 — TLE retrieval (done)
+
+A frozen TLE was enough to validate the computation; it is not enough for an application.
+CelesTrak republishes the ISS elements several times a day, and it is their age — not the
+model — that dominates the gap to the real sky.
+
+- `TleSnapshot(noradId, name, line1, line2, epoch, fetchedAt, source)` in the domain.
+- `CelestrakTleClient`: `RestClient` to the GP API (`CATNR`, `FORMAT=TLE`), explicit
+  timeouts, validation by Orekit **at retrieval time**.
+- `TleStore`: a bounded store of the last known TLE per satellite.
+- Tests with no network call at all (`MockRestServiceServer`, injected clock).
+
+**Decision: this is not a TTL cache.** The initial brief said "Caffeine, 2 h TTL" and
+required, two lines further down, that an unreachable CelesTrak must not stop the
+application from working. The two do not hold together: with a 2 h expiry, the first
+request arriving at 2 h 01 during an outage finds nothing. Hence the inversion — **nothing
+expires**; the two hours trigger an *attempt* to refresh, and its failure leaves the
+previous snapshot in place with its real age. Caffeine acts as a bounded store
+(`maximumSize`), not as a cache. Accepted trade-off: this is an explicit departure from
+the brief, so it has to be explainable.
+
+**Two ages, never confused.** The age *since the epoch* is physical: SGP4's error grows
+with it, on the order of a kilometre a day in low Earth orbit, and it is what the
+uncertainty banner displays. The age *since retrieval* is operational: it only decides
+whether to call CelesTrak back. A cache that expires after two hours believes it
+guarantees an accuracy it does not control.
+
+**Two limits to degradation.** Past `tle.max-age` (7 days of epoch), the prediction is
+refused rather than displayed to the degree — that would be false precision. And a
+satellite absent from the catalogue (`TleNotFoundException`) is **never** degraded: it is
+forgotten by the store. An object that disappears from CelesTrak has most likely re-entered
+the atmosphere, and propagating its last TLE would display the passes of a satellite that
+no longer exists.
+
+**Absent is not the same as unusable.** Only the `No GP data found` marker means "the
+catalogue does not have this object". An empty body, a truncated response or an HTML page
+mean "we did not get an answer", and are reported as a transient outage. The distinction
+is not cosmetic: a not-found is permanent and makes the store drop the satellite, so
+mislabelling one hiccup would throw away a perfectly valid cached TLE and tell the user
+the satellite does not exist.
+
+**Two traps of the GP API**, both encoded in the tests: an unknown NORAD number answers
+**200 with the body `No GP data found`**, not 404; and under load CelesTrak serves an HTML
+page, still in 200. Any body that does not look like a TLE is therefore treated as an
+outage. The returned number is also checked against the requested one: without that check,
+a response cached by an intermediary for another satellite would produce perfectly
+plausible passes — and wrong ones.
+
+**One network call per satellite.** Refreshing goes through `asMap().compute(...)`, which
+Caffeine makes atomic per key: ten concurrent requests for the ISS produce one call, not
+ten, which CelesTrak's documentation explicitly asks for. Accepted trade-off: the network
+call happens while holding the key's lock — bounded by the timeouts, and only callers for
+the *same* satellite wait.
+
+**A backoff after a failure.** A failed refresh leaves the snapshot, and therefore its
+fetch date, unchanged; the staleness test stays true, so without a backoff every incoming
+request during an outage would call CelesTrak again — exactly what the paragraph above
+sets out to avoid. Each entry therefore remembers its last *attempt*, not just its last
+success, and no new attempt happens before `tle.retry-after`.
+
+**Splitting the test contexts, done in the same breath.** The first `verify` of this
+milestone failed 26 tests across five classes, none of which touches the network: all were
+on a bare `@SpringBootTest`, so all started the whole application, so all fell over the
+badly wired HTTP bean. A test must fail for what it tests. They now go through
+`@OrekitTest`, a slice naming `OrekitConfig` and `PassPredictionService` — a single
+context, cached, with no web layer.
+
+The trade-off is real: nothing then checked that the *real* application starts, which is
+exactly the defect that had just slipped through. Hence `ApplicationStartupTest`, the only
+test that starts everything, which also checks that the beans carrying behaviour are
+present — a context can start having silently omitted a `@Component`. One test starts
+everything and fails alone; the others stay readable.
+
+A corollary found along the way: `DataContext.getDefault()` is a JVM singleton, not a
+bean. With two Spring contexts in the same JVM, `addProvider` was stacking two providers
+over the same EOP files. `OrekitConfig` now calls `clearProviders()` first — registration
+is idempotent.
+
+**Exit criterion met**: `CelestrakTleClientTest` covers the nominal response,
+`No GP data found`, an empty body, an HTML page, a wrong NORAD number, an altered
+checksum, a timeout and a 500. `TleStoreTest` covers the refresh window, the backoff after
+a failure, falling back to the last known TLE, the absence of a fallback on the first
+call, forgetting a satellite removed from the catalogue, the hard age limit and the
+collapsing of concurrent calls.
+
+---
+
+## Milestone 5 — REST API (≈ 4 h · 1 week)
 
 - `GET /api/passes?noradId=25544&lat=45.75&lon=4.85&altitude=200&hours=48&minElevation=10`
-- DTO en `Instant` ISO-8601 UTC. Le fuseau est un problème d'affichage, pas de calcul.
-- La réponse porte `tle` (époque, âge, source, date de récupération), `observer`,
-  `minElevationDeg` et la liste des passages avec leur `track`.
-- Validation Jakarta + `@RestControllerAdvice` (erreurs au format Problem Details, RFC 9457).
-- Tests `@WebMvcTest`, documentation springdoc-openapi.
+- DTOs in ISO-8601 UTC `Instant`. Time zones are a display problem, not a computation one.
+- The response carries `tle` (epoch, age, source, fetch date), `observer`,
+  `minElevationDeg` and the list of passes with their `track`.
+- Jakarta validation + `@RestControllerAdvice` (errors as Problem Details, RFC 9457).
+- `@WebMvcTest` tests, springdoc-openapi documentation.
 
-**Critère de sortie** : le JSON documenté dans `docs/maquette-interface.html`
-(section « Ce que l'API doit renvoyer ») est servi tel quel.
-
----
-
-## Jalon 6 — Frontend : socle et liste (≈ 6 h · 1,5 semaine)
-
-Référence visuelle : `docs/maquette-interface.html`. **La maquette est la cible visuelle
-et comportementale, pas un gabarit à copier** : le DOM y est construit en JavaScript
-impératif, ce qui n'a pas sa place dans un composant Angular.
-
-- Jetons de design dans `styles.scss` (variables CSS) : palette sombre unique, échelle
-  de couleur par élévation, trois rôles typographiques IBM Plex. Toute donnée numérique
-  en `IBM Plex Mono` avec `font-variant-numeric: tabular-nums`.
-- Composants `standalone`, `OnPush`, état par **signals**, application **zoneless**.
-- `httpResource` pour l'appel API, avec ses trois états réellement dessinés
-  (chargement / erreur / vide) — pas de spinner infini.
-- Formulaire : satellite, position, fenêtre, élévation minimale. Géolocalisation
-  navigateur en option, saisie manuelle toujours possible.
-- `TleBannerComponent` : époque, âge, dérive attendue, incertitude sur l'AOS.
-- `PassTableComponent` : heure locale **et** UTC, durée, élévation max, azimuts en
-  cardinaux. Lignes focusables et activables au clavier.
-- `PassRibbonComponent` : une barre par passage, hauteur = élévation maximale.
+**Exit criterion**: the JSON documented in `docs/maquette-interface.html` (section "What
+the API must return") is served as-is.
 
 ---
 
-## Jalon 7 — Carte du ciel (≈ 5 h · 1,5 semaine)
+## Milestone 6 — Frontend: shell and list (≈ 6 h · 1.5 weeks)
 
-La vue qui répond à « où lever les yeux depuis Lyon ». **Aucune dépendance externe** :
-SVG rendu par le template Angular à partir de `computed()`.
+Visual reference: `docs/maquette-interface.html`. **The mockup is the visual and
+behavioural target, not a template to copy**: its DOM is built in imperative JavaScript,
+which has no place in an Angular component.
 
-- Disque polaire : bord = horizon, centre = zénith, nord en haut. Cercles à 30° et 60°,
-  cercle pointillé au seuil de 10°, cardinaux à l'extérieur.
-- Trajectoire tracée depuis `track` : trait plein tant que le satellite est éclairé,
-  pointillé ensuite. Repères et étiquettes horaires toutes les minutes.
-- `TransportBarComponent` : une **horloge unique** pour toute la page,
-  `t ∈ [0, 2]` porté par un signal, lecture / pause / curseur, et lecture continue de
-  l'heure, de l'azimut, de l'élévation, de la distance et de l'état d'éclairement.
-- `requestAnimationFrame`, jamais `setInterval`. Respect de `prefers-reduced-motion`.
-- Équivalent textuel accessible : le tableau des passages, avec un `<caption>` qui le dit.
-
-C'est l'image qui sert de GIF de démo dans le README. Elle vaut plus que trois
-paragraphes de description.
-
----
-
-## Jalon 8 — Globe 3D (≈ 6 h · 2 semaines)
-
-La vue qui répond à « où est l'ISS, et qui d'autre la voit ». Complémentaire de la carte
-du ciel : l'une est en repère topocentrique, l'autre en repère terrestre.
-
-**Condition non négociable : le globe ne calcule rien.** Il rend ce que l'API renvoie.
-Aucune propagation côté navigateur, aucun `satellite.js` — sinon la question « qui fait
-le calcul faisant autorité ? » ruine tout le projet.
-
-- three.js (r128, UMD). Sphère, trait de côte Natural Earth 110 m, graticule, halo.
-- Éclairage par une `DirectionalLight` à la direction du Soleil → le **terminateur
-  jour/nuit** apparaît tout seul, et explique visuellement pourquoi le passage est visible.
-- Trace au sol depuis `subPoint`, découpée en portion éclairée et portion dans l'ombre.
-- **Cercle de visibilité** autour du point sous-satellite :
-  `acos(Re/(Re+h)·cos(10°)) − 10°` ≈ 12,5°, soit ~1 390 km.
-- Marqueur de l'observateur, ligne de visée pendant le passage, rotation à la souris
-  (pointer events — `OrbitControls` n'est pas dans le bundle UMD).
-- **Repli obligatoire** si three.js ne charge pas : message explicite dans le cadre, et
-  le reste de la page reste utilisable. C'est précisément pour ça que la carte du ciel
-  n'a aucune dépendance.
+- Design tokens in `styles.scss` (CSS variables): a single dark palette, a colour scale by
+  elevation, three IBM Plex typographic roles. Every numeric value in `IBM Plex Mono` with
+  `font-variant-numeric: tabular-nums`.
+- `standalone` components, `OnPush`, state through **signals**, **zoneless** application.
+- `httpResource` for the API call, with its three states actually drawn (loading / error /
+  empty) — no infinite spinner.
+- Form: satellite, position, window, minimum elevation. Browser geolocation optional,
+  manual entry always possible.
+- `TleBannerComponent`: epoch, age, expected drift, uncertainty on AOS.
+- `PassTableComponent`: local time **and** UTC, duration, maximum elevation, azimuths as
+  compass points. Rows focusable and activatable from the keyboard.
+- `PassRibbonComponent`: one bar per pass, height = maximum elevation.
 
 ---
 
-## Jalon 9 — Mise en vitrine (≈ 4 h · 1 semaine)
+## Milestone 7 — Sky chart (≈ 5 h · 1.5 weeks)
 
-- Dockerfile multi-étapes + `docker-compose.yml` (téléchargement d'`orekit-data`
-  au build, pas au runtime).
-- README : GIF de démo, schéma d'architecture, badge CI.
-- Section « Modèle physique » : repères (TEME / GCRF / ITRF), échelles de temps
-  (UTC / TAI / UT1), limites de SGP4, rôle des EOP.
+The view that answers "where do I look up from Lyon". **No external dependency**: SVG
+rendered by the Angular template from `computed()`.
 
----
+- Polar disc: edge = horizon, centre = zenith, north at the top. Circles at 30° and 60°, a
+  dashed circle at the 10° threshold, compass points outside.
+- Track drawn from `track`: solid while the satellite is lit, dashed after that. Tick
+  marks and time labels every minute.
+- `TransportBarComponent`: a **single clock** for the whole page, `t ∈ [0, 2]` carried by
+  a signal, play / pause / scrubber, and a continuous readout of time, azimuth, elevation,
+  range and illumination state.
+- `requestAnimationFrame`, never `setInterval`. Honour `prefers-reduced-motion`.
+- Accessible text equivalent: the pass table, with a `<caption>` that says so.
 
-## Jalon 10 — Différenciation (optionnel, mais c'est là qu'est la valeur)
-
-- **Passages visibles à l'œil nu** : satellite éclairé par le Soleil + observateur
-  dans le noir. Nécessite la position du Soleil et la détection d'éclipse. C'est
-  la fonctionnalité qui transforme « encore un tracker » en « quelqu'un qui a
-  compris la dynamique ».
-  Le champ `illuminated` existe depuis le jalon 3 ; ici il cesse de valoir `false`,
-  et les deux vues s'allument sans changer une ligne de frontend.
-- Cache des TLE en PostgreSQL — à ce stade seulement, quand le besoin est réel.
-- Plusieurs satellites, prochaine fenêtre favorable sur 7 jours.
+This is the image that serves as the demo GIF in the README. It is worth more than three
+paragraphs of description.
 
 ---
 
-## Limites assumées
+## Milestone 8 — 3D globe (≈ 6 h · 2 weeks)
 
-Ces choix sont volontaires et doivent être défendus, pas cachés :
+The view that answers "where is the ISS, and who else can see it". Complementary to the
+sky chart: one is in a topocentric frame, the other in a terrestrial frame.
 
-- **SGP4 uniquement.** Le modèle dérive au-delà de quelques jours ; la fenêtre de
-  prévision est donc bornée. C'est la bonne réponse pour des TLE, pas une limite subie.
-- **Pas de réfraction atmosphérique** sous 5° d'élévation au MVP.
-- **Pas de base de données** tant qu'un besoin réel ne l'impose pas.
-- **Thème sombre unique** au frontend : l'usage réel est nocturne. C'est un choix, pas
-  une économie de travail.
-- **Le frontend ne calcule aucune orbite.** Ni la carte du ciel, ni le globe.
+**Non-negotiable condition: the globe computes nothing.** It renders what the API returns.
+No propagation in the browser, no `satellite.js` — otherwise the question "which side does
+the authoritative computation?" ruins the whole project.
+
+- three.js (r128, UMD). Sphere, Natural Earth 110 m coastline, graticule, halo.
+- Lighting by a `DirectionalLight` pointing along the Sun direction → the **day/night
+  terminator** appears on its own, and visually explains why the pass is visible.
+- Ground track from `subPoint`, split into a lit portion and a shadowed portion.
+- **Visibility circle** around the sub-satellite point:
+  `acos(Re/(Re+h)·cos(10°)) − 10°` ≈ 12.5°, about 1390 km.
+- Observer marker, line of sight during the pass, mouse rotation (pointer events —
+  `OrbitControls` is not in the UMD bundle).
+- **Mandatory fallback** if three.js fails to load: an explicit message in the frame, and
+  the rest of the page stays usable. That is precisely why the sky chart has no dependency.
+
+---
+
+## Milestone 9 — Showcase pass (≈ 4 h · 1 week)
+
+- Multi-stage Dockerfile + `docker-compose.yml` (`orekit-data` downloaded at build time,
+  not at runtime).
+- README: demo GIF, architecture diagram, CI badge.
+- "Physical model" section: frames (TEME / GCRF / ITRF), time scales (UTC / TAI / UT1),
+  limitations of SGP4, role of the EOP.
+
+---
+
+## Milestone 10 — Differentiation (optional, but this is where the value is)
+
+- **Naked-eye visible passes**: satellite lit by the Sun while the observer is in the
+  dark. Requires the Sun's position and eclipse detection. This is the feature that turns
+  "yet another tracker" into "someone who understood the dynamics".
+  The `illuminated` field has existed since milestone 3; here it stops being `false`, and
+  both views light up without changing a line of frontend code.
+- TLE cache in PostgreSQL — at this stage only, when the need is real.
+- Several satellites, next favourable window over 7 days.
+
+---
+
+## Accepted limitations
+
+These choices are deliberate and are to be defended, not hidden:
+
+- **SGP4 only.** The model drifts beyond a few days; the forecast window is therefore
+  bounded. That is the right answer for TLEs, not a limitation suffered.
+- **No atmospheric refraction** below 5° of elevation in the MVP.
+- **No database** until a real need calls for one.
+- **A single dark theme** in the frontend: the real use is at night. That is a choice, not
+  saved effort.
+- **The frontend computes no orbit.** Neither the sky chart nor the globe.

@@ -5,21 +5,21 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Un passage visible : la portion de trajectoire pendant laquelle le satellite reste
- * au-dessus de l'elevation minimale demandee par l'observateur.
+ * A visible pass: the stretch of track during which the satellite stays above the
+ * minimum elevation the observer asked for.
  *
- * <p>Toutes les dates sont des {@link Instant} UTC. Le fuseau horaire est un probleme
- * d'affichage, jamais de calcul : il n'entre dans le projet qu'au frontend.
+ * <p>Every date is a UTC {@link Instant}. Time zones are a display problem, never a
+ * computation problem: they enter the project only at the frontend.
  *
- * <p>Les azimuts sont en degres dans [0, 360), comptes depuis le Nord vers l'Est
- * (convention de {@code TopocentricFrame} d'Orekit). AOS = <i>acquisition of signal</i>,
- * LOS = <i>loss of signal</i> : le vocabulaire des stations sol, repris ici parce que
- * c'est celui qu'emploient les gens a qui ce projet est destine.
+ * <p>Azimuths are in degrees in [0, 360), measured from North towards East (the
+ * convention of Orekit's {@code TopocentricFrame}). AOS stands for <i>acquisition of
+ * signal</i>, LOS for <i>loss of signal</i>: ground-station vocabulary, used here because
+ * it is the vocabulary of the people this project is aimed at.
  *
- * <p>{@code track} est la meme trajectoire, echantillonnee. Les trois instants ci-dessus
- * sont ce qu'on lit dans un tableau ; {@code track} est ce qu'on trace. Le premier point
- * est l'AOS, le dernier le LOS, et le sommet y figure : les trois dates que l'interface
- * etiquette tombent donc sur la courbe, jamais a cote.
+ * <p>{@code track} is the same pass, sampled. The three instants above are what you read
+ * in a table; {@code track} is what you draw. The first point is AOS, the last is LOS,
+ * and the culmination is one of them: the three dates the interface labels therefore
+ * fall <em>on</em> the curve, never beside it.
  */
 public record SatellitePass(
         Instant aos,
@@ -33,25 +33,25 @@ public record SatellitePass(
 
     public SatellitePass {
         if (aos == null || maxElevationTime == null || los == null) {
-            throw new IllegalArgumentException("dates du passage manquantes");
+            throw new IllegalArgumentException("pass dates are missing");
         }
         if (!los.isAfter(aos)) {
-            throw new IllegalArgumentException("LOS (" + los + ") doit suivre AOS (" + aos + ")");
+            throw new IllegalArgumentException("LOS (" + los + ") must follow AOS (" + aos + ")");
         }
         if (maxElevationTime.isBefore(aos) || maxElevationTime.isAfter(los)) {
             throw new IllegalArgumentException(
-                    "le maximum d'elevation (" + maxElevationTime + ") doit tomber entre AOS et LOS");
+                    "culmination (" + maxElevationTime + ") must fall between AOS and LOS");
         }
         if (track == null || track.size() < 2) {
-            throw new IllegalArgumentException("un passage sans trajectoire echantillonnee n'est pas tracable");
+            throw new IllegalArgumentException("a pass without a sampled track cannot be drawn");
         }
-        // La copie defensive protege l'invariant verifie juste apres : sans elle,
-        // l'appelant pourrait vider la liste une fois le record construit.
+        // The defensive copy protects the invariant checked right after: without it, the
+        // caller could empty the list once the record is built.
         track = List.copyOf(track);
         if (!track.getFirst().instant().equals(aos) || !track.getLast().instant().equals(los)) {
             throw new IllegalArgumentException(
-                    "la trajectoire doit commencer a l'AOS (" + aos + ") et finir au LOS (" + los + "), "
-                            + "elle va de " + track.getFirst().instant() + " a " + track.getLast().instant());
+                    "the track must start at AOS (" + aos + ") and end at LOS (" + los + "), "
+                            + "it runs from " + track.getFirst().instant() + " to " + track.getLast().instant());
         }
     }
 

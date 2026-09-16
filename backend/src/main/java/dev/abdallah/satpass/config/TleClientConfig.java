@@ -9,25 +9,25 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 /**
- * Cablage du client HTTP vers CelesTrak.
+ * Wiring of the HTTP client to CelesTrak.
  *
- * <p>Le {@link RestClient} est construit ici plutot que dans le client lui-meme : les
- * tests lui injectent un {@code RestClient} branche sur {@code MockRestServiceServer},
- * sans avoir a neutraliser une fabrique de requetes deja posee.
+ * <p>The {@link RestClient} is built here rather than inside the client itself: tests
+ * inject a {@code RestClient} bound to {@code MockRestServiceServer}, without having to
+ * undo a request factory that is already in place.
  *
- * <p>Il part de {@code RestClient.builder()} et non du {@code RestClient.Builder}
- * auto-configure : dans Spring Boot 4, cette auto-configuration vit dans un module
- * separe que {@code starter-web} ne tire pas. Plutot que d'ajouter une dependance pour
- * un unique client dont on regle deja tout a la main, on le construit sans elle. A
- * savoir si un second client apparait : il n'heritera d'aucun reglage commun.
+ * <p>It starts from {@code RestClient.builder()} and not from the auto-configured
+ * {@code RestClient.Builder}: in Spring Boot 4 that auto-configuration lives in a
+ * separate module which {@code starter-web} does not pull in. Rather than add a
+ * dependency for a single client whose every setting we spell out anyway, we build it
+ * without one. Worth knowing if a second client appears: it will inherit no shared
+ * defaults.
  *
- * <p>Les deux timeouts sont explicites, et vivent a deux endroits differents parce que
- * ce sont deux choses differentes : l'etablissement de la connexion appartient au
- * {@link HttpClient} du JDK, la lecture de la reponse a la fabrique de Spring. Sans eux,
- * les defauts sont infinis : un CelesTrak qui accepte la connexion puis ne repond jamais
- * immobiliserait des threads du serveur, et la « degradation propre » du magasin ne se
- * declencherait jamais — elle tiendrait entierement a la bonne volonte du service
- * distant.
+ * <p>Both timeouts are explicit, and they live in two different places because they are
+ * two different things: establishing the connection belongs to the JDK
+ * {@link HttpClient}, reading the response to Spring's request factory. Left alone, both
+ * default to infinite: a CelesTrak that accepts the connection and then never answers
+ * would tie up server threads, and the store's graceful degradation would never kick in —
+ * it would rest entirely on the remote service's goodwill.
  */
 @Configuration
 @EnableConfigurationProperties(TleProperties.class)
@@ -49,9 +49,9 @@ public class TleClientConfig {
     }
 
     /**
-     * Horloge injectee plutot que {@code Instant.now()} disperse dans le code : l'age
-     * d'un TLE et le declenchement d'un rafraichissement sont des regles metier, et une
-     * regle qui depend de l'heure murale ne se teste qu'en attendant.
+     * An injected clock rather than {@code Instant.now()} scattered through the code: the
+     * age of a TLE and the decision to refresh it are business rules, and a rule that
+     * depends on wall-clock time can only be tested by waiting.
      */
     @Bean
     public Clock clock() {

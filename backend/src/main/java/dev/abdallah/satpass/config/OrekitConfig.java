@@ -9,24 +9,31 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Enregistre orekit-data dans le contexte de donnees par defaut d'Orekit.
+ * Registers orekit-data in Orekit's default data context.
  *
- * <p>Sans ces fichiers, le premier appel a TimeScalesFactory.getUTC() leve une
- * OrekitException ("no IERS UTC-TAI history data loaded"). On echoue donc au
- * demarrage, avec un message explicite, plutot qu'au premier calcul.
+ * <p>Without those files, the first call to TimeScalesFactory.getUTC() raises an
+ * OrekitException ("no IERS UTC-TAI history data loaded"). We therefore fail at startup,
+ * with an explicit message, rather than at the first computation.
  *
- * <h2>Enregistrement idempotent</h2>
- * {@link DataContext#getDefault()} est un singleton de JVM, pas un bean : son
- * gestionnaire de fournisseurs survit au contexte Spring qui l'a rempli. Un simple
- * {@code addProvider} empilerait donc un fournisseur de plus a chaque contexte cree dans
- * la meme JVM — plusieurs contextes de test, un redemarrage a chaud — et les memes
- * fichiers EOP seraient presentes deux fois aux chargeurs d'Orekit.
+ * <h2>Idempotent registration</h2>
+ * {@link DataContext#getDefault()} is a JVM singleton, not a bean: its provider manager
+ * outlives the Spring context that filled it. A plain {@code addProvider} would stack one
+ * more provider for every context created in the same JVM — several test contexts, a hot
+ * restart — and the same EOP files would be handed twice to Orekit's loaders.
  *
- * <p>D'ou le {@code clearProviders()} prealable : l'etat final est le meme quel que soit
- * le nombre d'appels, un fournisseur pointant sur le repertoire configure. C'est correct
- * ici parce que cette application est la seule a configurer Orekit ; ca cesserait de
- * l'etre le jour ou une autre source de donnees s'ajouterait, et il faudrait alors
- * enregistrer les fournisseurs au meme endroit plutot que de partir du defaut global.
+ * <p>Hence the {@code clearProviders()} beforehand: the end state is the same however
+ * many times this runs, one provider pointing at the configured directory. That is
+ * correct here because this application is the only thing configuring Orekit.
+ *
+ * <h2>Why the global context at all</h2>
+ * Orekit does accept an explicit {@code DataContext} on most of its entry points, and
+ * owning a private {@link LazyLoadedDataContext} would avoid mutating a JVM singleton
+ * altogether. It is not free: every call site would then have to thread the context
+ * through — {@code new TLE(line1, line2, ...)}, {@code TLEPropagator.selectExtrapolator},
+ * frame and time-scale lookups — and any library code falling back on the default would
+ * silently read no data at all. The day a second data source appears, that is the change
+ * to make; until then the global context is the smaller of the two evils, and it is
+ * documented rather than implicit.
  */
 @Configuration
 @EnableConfigurationProperties(OrekitProperties.class)
@@ -37,8 +44,8 @@ public class OrekitConfig {
         File dir = properties.dataPath().toFile();
         if (!dir.isDirectory()) {
             throw new IllegalStateException(
-                    "orekit-data introuvable : " + dir.getAbsolutePath()
-                            + " — lance d'abord scripts/fetch-orekit-data.sh");
+                    "orekit-data not found: " + dir.getAbsolutePath()
+                            + " — run scripts/fetch-orekit-data.sh first");
         }
         LazyLoadedDataContext context = DataContext.getDefault();
         context.getDataProvidersManager().clearProviders();

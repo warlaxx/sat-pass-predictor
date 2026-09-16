@@ -23,12 +23,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Le magasin de TLE : quand il rappelle CelesTrak, et ce qu'il fait quand CelesTrak ne
- * repond pas.
+ * The TLE store: when it calls CelesTrak back, and what it does when CelesTrak does not
+ * answer.
  *
- * <p>Pas de contexte Spring, pas de reseau : le client est double, l'horloge est
- * avancee a la main. Les regles verifiees ici sont des regles de decision, pas du
- * calcul orbital.
+ * <p>No Spring context, no network: the client is a double, the clock is advanced by
+ * hand. The rules checked here are decision rules, not orbital computation.
  */
 class TleStoreTest {
 
@@ -55,7 +54,7 @@ class TleStoreTest {
                 Duration.ofSeconds(3), Duration.ofSeconds(5), REFRESH_AFTER, MAX_AGE, 500);
     }
 
-    /** Un snapshot dont l'epoque et la date de recuperation sont choisies par le test. */
+    /** A snapshot whose epoch and fetch date are chosen by the test. */
     private static TleSnapshot snapshot(Instant epoch, Instant fetchedAt) {
         return new TleSnapshot(ISS, TleFixtures.issName(), TleFixtures.issLine1(),
                 TleFixtures.issLine2(), epoch, fetchedAt, "celestrak");
@@ -89,15 +88,15 @@ class TleStoreTest {
     }
 
     /**
-     * Le coeur de la decision de conception : la fenetre de deux heures declenche une
-     * tentative, pas une eviction. Avec un cache a TTL, ce test ne pourrait pas passer —
-     * il n'y aurait plus rien a servir.
+     * The heart of the design decision: the two-hour window triggers an attempt, not an
+     * eviction. With a TTL cache this test could not pass — there would be nothing left
+     * to serve.
      */
     @Test
     void keepsServingTheLastKnownTleWhenCelestrakIsDown() {
         when(client.fetch(ISS))
                 .thenReturn(snapshot(EPOCH, START))
-                .thenThrow(new TleUnavailableException("CelesTrak injoignable"));
+                .thenThrow(new TleUnavailableException("CelesTrak unreachable"));
 
         store.get(ISS);
         clock.advance(Duration.ofHours(6));
@@ -107,18 +106,18 @@ class TleStoreTest {
         assertThat(served.ageSinceEpoch(clock.instant())).isGreaterThan(Duration.ofHours(6));
     }
 
-    /** Degrader suppose avoir quelque chose a degrader. */
+    /** Degrading assumes there is something to degrade to. */
     @Test
     void failsWhenCelestrakIsDownAndNothingWasEverFetched() {
-        when(client.fetch(ISS)).thenThrow(new TleUnavailableException("CelesTrak injoignable"));
+        when(client.fetch(ISS)).thenThrow(new TleUnavailableException("CelesTrak unreachable"));
 
         assertThatExceptionOfType(TleUnavailableException.class).isThrownBy(() -> store.get(ISS));
     }
 
     /**
-     * Un satellite retire du catalogue est le plus souvent rentre dans l'atmosphere.
-     * Servir son dernier TLE afficherait les passages d'un objet qui n'existe plus : la
-     * degradation s'arrete ici, et l'entree est oubliee.
+     * A satellite removed from the catalogue has most likely re-entered the atmosphere.
+     * Serving its last TLE would display the passes of an object that no longer exists:
+     * degradation stops here, and the entry is forgotten.
      */
     @Test
     void forgetsASatelliteThatLeavesTheCatalogue() {
@@ -130,21 +129,21 @@ class TleStoreTest {
         clock.advance(REFRESH_AFTER);
 
         assertThatExceptionOfType(TleNotFoundException.class).isThrownBy(() -> store.get(ISS));
-        // L'entree a bien disparu : l'appel suivant redemande a CelesTrak au lieu de
-        // resservir l'ancien TLE, meme avant la fin de la fenetre de rafraichissement.
+        // The entry is really gone: the next call asks CelesTrak again instead of serving
+        // the old TLE, even before the end of the refresh window.
         assertThatExceptionOfType(TleNotFoundException.class).isThrownBy(() -> store.get(ISS));
         verify(client, times(3)).fetch(ISS);
     }
 
     /**
-     * La degradation a une limite, et elle porte sur l'epoque des elements, pas sur la
-     * date de l'appel HTTP : c'est l'age physique qui fait diverger SGP4.
+     * Degradation has a limit, and it bears on the epoch of the elements, not on the date
+     * of the HTTP call: it is the physical age that makes SGP4 diverge.
      */
     @Test
     void refusesATleWhoseElementsAreOlderThanTheHardLimit() {
         when(client.fetch(ISS))
                 .thenReturn(snapshot(EPOCH, START))
-                .thenThrow(new TleUnavailableException("CelesTrak injoignable"));
+                .thenThrow(new TleUnavailableException("CelesTrak unreachable"));
 
         store.get(ISS);
         clock.advance(MAX_AGE);
@@ -153,9 +152,9 @@ class TleStoreTest {
     }
 
     /**
-     * CelesTrak demande explicitement de ne pas marteler son API. Dix requetes
-     * simultanees sur le meme satellite doivent donner un appel, pas dix : c'est ce que
-     * garantit l'atomicite par cle de {@code asMap().compute}.
+     * CelesTrak explicitly asks callers not to hammer its API. Ten concurrent requests
+     * for the same satellite must produce one call, not ten: that is what the per-key
+     * atomicity of {@code asMap().compute} guarantees.
      */
     @Test
     void collapsesConcurrentRequestsForTheSameSatelliteIntoOneCall() throws Exception {
@@ -166,7 +165,7 @@ class TleStoreTest {
 
         when(client.fetch(anyInt())).thenAnswer(invocation -> {
             fetches.incrementAndGet();
-            Thread.sleep(50); // laisse le temps aux autres appelants d'arriver
+            Thread.sleep(50); // gives the other callers time to arrive
             return snapshot(EPOCH, START);
         });
 

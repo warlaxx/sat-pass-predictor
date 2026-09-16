@@ -27,7 +27,7 @@ class PassPredictionServiceTest {
     @Autowired
     DataContext dataContext;
 
-    /** Debut de fenetre : l'epoque du TLE, la ou SGP4 est le plus fiable. */
+    /** Window start: the TLE epoch, where SGP4 is at its most reliable. */
     private Instant tleEpoch(TLE tle) {
         return tle.getDate().toInstant(dataContext.getTimeScales());
     }
@@ -38,11 +38,10 @@ class PassPredictionServiceTest {
 
         List<SatellitePass> passes =
                 service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG);
-
-        // L'ISS survole une latitude moyenne environ 16 fois par jour, mais seule une
-        // minorite de ces orbites passe assez pres de l'observateur. Quatre a six
-        // passages au-dessus de 10 degres est l'ordre de grandeur attendu ; cinq est
-        // la valeur exacte pour ce TLE, donc un ancrage de non-regression.
+        // The ISS flies over a mid-latitude about 16 times a day, but only a minority of
+        // those orbits comes close enough to the observer. Four to six passes above 10
+        // degrees is the expected order of magnitude; five is the exact value for this
+        // TLE, hence a regression anchor.
         assertThat(passes).hasSize(5);
     }
 
@@ -56,7 +55,7 @@ class PassPredictionServiceTest {
         assertThat(passes).isSortedAccordingTo((a, b) -> a.aos().compareTo(b.aos()));
         for (int i = 1; i < passes.size(); i++) {
             assertThat(passes.get(i).aos())
-                    .as("le passage %d commence apres la fin du precedent", i)
+                    .as("pass %d starts after the previous one ends", i)
                     .isAfter(passes.get(i - 1).los());
         }
     }
@@ -72,8 +71,8 @@ class PassPredictionServiceTest {
             assertThat(pass.maxElevationDeg()).isGreaterThanOrEqualTo(MIN_ELEVATION_DEG);
             assertThat(pass.maxElevationTime()).isAfter(pass.aos()).isBefore(pass.los());
 
-            // Une orbite basse traverse le ciel en quelques minutes. Une duree de
-            // plusieurs heures signalerait une confusion de repere ou d'echelle de temps.
+            // A low Earth orbit crosses the sky in a few minutes. A duration of several
+            // hours would signal a confusion of frame or of time scale.
             assertThat(pass.duration())
                     .isGreaterThan(Duration.ofSeconds(30))
                     .isLessThan(Duration.ofMinutes(15));
@@ -85,15 +84,14 @@ class PassPredictionServiceTest {
     }
 
     /**
-     * Un passage deja commence a l'ouverture de la fenetre est ecarte, plutot que
-     * renvoye avec un AOS invente au bord de la fenetre.
+     * A pass already under way when the window opens is discarded, rather than returned
+     * with an AOS invented at the edge of the window.
      */
     @Test
     void discardsAPassAlreadyUnderwayWhenTheWindowOpens() {
         TLE iss = TleFixtures.iss();
         List<SatellitePass> reference =
                 service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG);
-
         Instant oneMinuteIntoTheFirstPass = reference.getFirst().aos().plusSeconds(60);
 
         List<SatellitePass> truncated = service.predictPasses(
@@ -108,7 +106,7 @@ class PassPredictionServiceTest {
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ZERO, MIN_ELEVATION_DEG))
-                .withMessageContaining("fenetre");
+                .withMessageContaining("window");
     }
 
     @Test
@@ -117,7 +115,7 @@ class PassPredictionServiceTest {
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> service.predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), 90.0))
-                .withMessageContaining("elevation minimale");
+                .withMessageContaining("minimum elevation");
     }
 
     @Test

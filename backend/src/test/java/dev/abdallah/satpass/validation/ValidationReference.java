@@ -11,17 +11,15 @@ import org.orekit.propagation.analytical.tle.TLE;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Reference de non-regression partagee entre le test Java et le script Python.
+ * The regression reference shared by the Java test and the Python script.
  *
- * <p>Le fichier {@value #RESOURCE} est l'unique source de verite du projet : il porte le
- * TLE, l'observateur, la fenetre et les passages attendus. Le test Java verifie
- * qu'Orekit le reproduit ; {@code scripts/validate-against-skyfield.py} verifie que
- * son contenu est physiquement correct, en le confrontant a une implementation
- * independante de SGP4.
+ * <p>{@value #RESOURCE} is the project's single source of truth: it carries the TLE, the
+ * observer, the window and the expected passes. The Java test checks that Orekit
+ * reproduces it; {@code scripts/validate-against-skyfield.py} checks that its contents
+ * are physically correct, by confronting it with an independent implementation of SGP4.
  *
- * <p>Deux fichiers auraient signifie deux verites : on aurait pu corriger l'une en
- * laissant l'autre mentir. Ici, modifier la reference invalide immediatement les deux
- * controles.
+ * <p>Two files would have meant two truths: one could have been fixed while the other
+ * kept lying. Here, changing the reference invalidates both checks at once.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ValidationReference(
@@ -59,11 +57,11 @@ public record ValidationReference(
     public static ValidationReference load() {
         try (InputStream stream = ValidationReference.class.getResourceAsStream(RESOURCE)) {
             if (stream == null) {
-                throw new IllegalStateException("reference absente du classpath : " + RESOURCE);
+                throw new IllegalStateException("reference missing from the classpath: " + RESOURCE);
             }
             return new ObjectMapper().readValue(stream, ValidationReference.class);
         } catch (IOException e) {
-            throw new IllegalStateException("reference illisible : " + RESOURCE, e);
+            throw new IllegalStateException("unreadable reference: " + RESOURCE, e);
         }
     }
 

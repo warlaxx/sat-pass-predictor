@@ -2,48 +2,48 @@
 
 [![CI](https://github.com/warlaxx/sat-pass-predictor/actions/workflows/ci.yml/badge.svg)](https://github.com/warlaxx/sat-pass-predictor/actions/workflows/ci.yml)
 
-Calcul et visualisation des passages de satellites au-dessus d'un point donne.
-Backend Java / Spring Boot avec [Orekit](https://www.orekit.org/), frontend Angular.
+Computing and visualising satellite passes over a given point on Earth.
+Java / Spring Boot backend with [Orekit](https://www.orekit.org/), Angular frontend.
 
-> Projet d'apprentissage oriente ecosysteme spatial : propagation SGP4 a partir de TLE,
-> reperes et echelles de temps, detection d'evenements de visibilite.
+> A learning project aimed at the space ecosystem: SGP4 propagation from TLEs, reference
+> frames and time scales, visibility event detection.
 
 ## Stack
 
-| Brique    | Choix                                   |
+| Piece     | Choice                                  |
 |-----------|-----------------------------------------|
 | Backend   | Java 25, Spring Boot 4.1.1, Maven       |
-| Dynamique | Orekit 13.1.8                           |
+| Dynamics  | Orekit 13.1.8                           |
 | Frontend  | Angular 22 (standalone, signals, SCSS)  |
-| TLE       | API GP de CelesTrak                     |
+| TLEs      | CelesTrak GP API                        |
 
-## Prerequis
+## Prerequisites
 
-- **JDK 25** — Le projet compile en `release 25`, un JDK plus ancien echoue avec
+- **JDK 25** — the project compiles with `release 25`; an older JDK fails with
   `release version 25 not supported`.
 
   ```bash
   brew install openjdk@25
-  # Les JDK Homebrew sont keg-only : sans ce lien, /usr/libexec/java_home ne les voit pas.
+  # Homebrew JDKs are keg-only: without this link, /usr/libexec/java_home cannot see them.
   sudo ln -sfn /opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk \
                /Library/Java/JavaVirtualMachines/openjdk-25.jdk
   export JAVA_HOME=$(/usr/libexec/java_home -v 25)
   ```
 
-- **Maven 3.9+** (`brew install maven`) pour la premiere generation du wrapper.
-  Ensuite, `./mvnw` suffit.
+- **Maven 3.9+** (`brew install maven`) to generate the wrapper the first time.
+  After that, `./mvnw` is enough.
 - **Node 22 LTS**
 
-## Demarrage
+## Getting started
 
 ```bash
-# 1. Donnees Orekit (sauts de seconde, EOP, ephemerides) — ~100 Mo, non commitees
+# 1. Orekit data (leap seconds, EOP, ephemerides) — ~100 MB, not committed
 ./scripts/fetch-orekit-data.sh
 
 # 2. Backend (http://localhost:8080)
 cd backend && mvn spring-boot:run
 
-# 3. Frontend (http://localhost:4200, /api proxifie vers 8080)
+# 3. Frontend (http://localhost:4200, /api proxied to 8080)
 cd frontend && npm install && npm start
 ```
 
@@ -54,9 +54,9 @@ cd backend  && mvn verify
 cd frontend && npm test
 ```
 
-La validation croisee avec Skyfield est un script separe, volontairement hors de la CI
-(voir [Validation](#validation)). Il tourne dans son propre environnement virtuel, pour ne
-dependre ni du `python` par defaut du poste ni d'une installation globale :
+The cross-validation against Skyfield is a separate script, deliberately kept out of CI
+(see [Validation](#validation)). It runs in its own virtual environment, so that it
+depends neither on the machine's default `python` nor on a global installation:
 
 ```bash
 python3 -m venv .venv-validation
@@ -64,129 +64,127 @@ python3 -m venv .venv-validation
 .venv-validation/bin/python scripts/validate-against-skyfield.py
 ```
 
-Skyfield exige Python 3. Un `pip install` lance sous un Python 2 encore actif — via pyenv,
-par exemple — echoue a la compilation de `sgp4` avec une `SyntaxError` dans son `setup.py` :
-le message pointe vers sgp4, la cause est l'interpreteur. `python3 -m pip --version` dit
-lequel est reellement utilise.
+Skyfield requires Python 3. A `pip install` run under a still-active Python 2 — through
+pyenv, for instance — fails while compiling `sgp4` with a `SyntaxError` in its `setup.py`:
+the message points at sgp4, the cause is the interpreter. `python3 -m pip --version` says
+which one is really in use.
 
-## Donnees Orekit
+## Orekit data
 
-Orekit a besoin d'un jeu de donnees externe (historique UTC-TAI, parametres
-d'orientation terrestre IERS, modeles de gravite). Sans lui, le premier appel a
-`TimeScalesFactory.getUTC()` echoue. Ces fichiers sont volumineux et mis a jour
-regulierement : ils ne sont pas commites, mais telecharges par
-`scripts/fetch-orekit-data.sh` et charges au demarrage via `OrekitConfig`.
-Le chemin est configurable par `OREKIT_DATA_PATH`.
+Orekit needs an external data set (UTC-TAI history, IERS Earth orientation parameters,
+gravity models). Without it, the first call to `TimeScalesFactory.getUTC()` fails. Those
+files are large and updated regularly: they are not committed, but downloaded by
+`scripts/fetch-orekit-data.sh` and loaded at startup by `OrekitConfig`. The path is
+configurable through `OREKIT_DATA_PATH`.
 
-L'application refuse de demarrer si le repertoire est absent : un echec explicite
-au demarrage vaut mieux qu'une erreur obscure au premier calcul.
+The application refuses to start if the directory is missing: an explicit failure at
+startup beats an obscure error at the first computation.
 
 ## Validation
 
-Un calcul de mecanique spatiale qui n'est compare a rien n'est pas un calcul, c'est une
-opinion. Le projet s'appuie donc sur deux controles distincts, qui ne prouvent pas la meme
-chose et dont aucun ne remplace l'autre.
+An astrodynamics computation that is compared to nothing is not a computation, it is an
+opinion. The project therefore rests on two distinct checks, which do not prove the same
+thing and neither of which replaces the other.
 
-**Un fichier de reference unique.**
-`backend/src/test/resources/validation/iss-lyon-reference.json` porte le TLE, l'observateur,
-la fenetre et les passages attendus. Il est lu par le test Java *et* par le script Python.
-Deux fichiers auraient signifie deux verites, dont l'une aurait pu mentir sans bruit.
+**A single reference file.**
+`backend/src/test/resources/validation/iss-lyon-reference.json` carries the TLE, the
+observer, the window and the expected passes. It is read by the Java test *and* by the
+Python script. Two files would have meant two truths, one of which could have lied
+without a sound.
 
-**Controle 1 — non-regression (Java, dans la CI).**
-`PassPredictionReferenceTest` verifie qu'Orekit reproduit la reference. Il surveille la
-derive : une montee de version, un rafraichissement des donnees IERS, une refonte du
-service. Il ne dit rien de la justesse : un calcul faux figerait une reference fausse,
-que ce test defendrait ensuite fidelement.
+**Check 1 — regression (Java, in CI).**
+`PassPredictionReferenceTest` verifies that Orekit reproduces the reference. It watches
+for drift: a version bump, a refresh of the IERS data, a rewrite of the service. It says
+nothing about correctness: a wrong computation would freeze a wrong reference, which this
+test would then defend faithfully.
 
-**Controle 2 — justesse (Python, hors CI).**
-`scripts/validate-against-skyfield.py` confronte la meme reference a
-[Skyfield](https://rhodesmill.org/skyfield/), une implementation de SGP4 ecrite en Python,
-sans lien de code avec Orekit.
+**Check 2 — correctness (Python, outside CI).**
+`scripts/validate-against-skyfield.py` confronts the same reference with
+[Skyfield](https://rhodesmill.org/skyfield/), an implementation of SGP4 written in Python,
+sharing no code with Orekit.
 
-La comparaison naive — demander ses passages a Skyfield et comparer les dates — donne des
-ecarts allant jusqu'a une seconde, sans dire lequel des deux a tort : le `find_events` de
-Skyfield est documente comme precis a la seconde. Le script procede donc a l'envers : il
-prend les dates produites par Orekit et demande a Skyfield **quelle elevation et quel
-azimut il calcule a ces instants precis**. Si Orekit a raison, Skyfield doit retrouver
-exactement le seuil aux bornes du passage.
+The naive comparison — asking Skyfield for its passes and comparing dates — gives
+discrepancies of up to a second, without saying which of the two is wrong: Skyfield's
+`find_events` is documented as accurate to the second. The script therefore works the
+other way round: it takes the dates produced by Orekit and asks Skyfield **what elevation
+and azimuth it computes at those exact instants**. If Orekit is right, Skyfield must find
+exactly the threshold at the boundaries of the pass.
 
-Quatre controles : les bornes, le sommet (valeur et caractere de maximum local), les trois
-azimuts, et l'exhaustivite — ce dernier etant le seul capable de detecter un passage
-*manque* par le pas de detection de 60 s d'Orekit.
+Four checks: the boundaries, the culmination (its value and the fact that it is a local
+maximum), the three azimuths, and completeness — the last one being the only check able to
+detect a pass *missed* by Orekit's 60 s detection step.
 
-### Tolerances retenues, et pourquoi
+### Tolerances, and why
 
-| Grandeur | Ecart mesure | Tolerance | Marge |
+| Quantity | Measured discrepancy | Tolerance | Margin |
 |---|---|---|---|
-| Elevation (Orekit vs Skyfield) | 0,53 millidegre | 10 millidegres | x19 |
-| Azimut (Orekit vs Skyfield) | 2,0 millidegres | 20 millidegres | x10 |
-| Dates (non-regression Java) | 0 | 1 s | — |
-| Angles (non-regression Java) | 0 | 0,1 degre | — |
+| Elevation (Orekit vs Skyfield) | 0.53 millidegree | 10 millidegrees | x19 |
+| Azimuth (Orekit vs Skyfield) | 2.0 millidegrees | 20 millidegrees | x10 |
+| Dates (Java regression) | 0 | 1 s | — |
+| Angles (Java regression) | 0 | 0.1 degree | — |
 
-Les tolerances de non-regression ne sont pas des marges d'erreur physiques : elles
-absorbent une evolution interne d'Orekit, pas une erreur de modele, qui serait de
-plusieurs ordres de grandeur superieure. Reperes utiles : au voisinage de l'AOS, l'ISS
-gagne environ 0,1 degre d'elevation par seconde — un ecart d'une seconde et un ecart de
-0,1 degre decrivent donc le meme evenement.
+The regression tolerances are not physical error margins: they absorb an internal change
+in Orekit, not a model error, which would be several orders of magnitude larger. Useful
+landmarks: near AOS, the ISS gains about 0.1 degree of elevation per second — a
+one-second discrepancy and a 0.1-degree discrepancy therefore describe the same event.
 
-### Ce que cette validation ne prouve pas
+### What this validation does not prove
 
-Skyfield et Orekit implementent **le meme modele**, SGP4. Leur accord etablit que
-l'implementation et la chaine de reperes de ce projet sont correctes. Il ne dit rien de
-l'ecart au ciel reel, domine par l'age du TLE : en orbite basse, SGP4 derive de l'ordre de
-1 a 3 km par jour, davantage pendant une tempete geomagnetique. C'est une limite du modele,
-assumee, et la raison pour laquelle la fenetre de prevision est bornee a quelques jours.
+Skyfield and Orekit implement **the same model**, SGP4. Their agreement establishes that
+this project's implementation and chain of frames are correct. It says nothing about the
+gap to the real sky, which is dominated by the age of the TLE: in low Earth orbit, SGP4
+drifts by roughly 1 to 3 km per day, more during a geomagnetic storm. That is a limitation
+of the model, accepted, and the reason the forecast window is bounded to a few days.
 
-Une comparaison a Heavens-Above repondrait a l'autre question. Elle a ete ecartee
-volontairement : son ecart melange l'erreur du TLE, la refraction et les conventions
-d'affichage du site, et ne serait donc pas interpretable.
+A comparison against Heavens-Above would answer the other question. It was deliberately
+set aside: its discrepancy mixes the TLE error, refraction and the site's own display
+conventions, and would therefore not be interpretable.
 
-### Pourquoi le script Python n'est pas dans la CI
+### Why the Python script is not in CI
 
-Il exigerait Python et Skyfield dans le workflow pour verifier un fichier qui ne change
-pas. La justesse de la reference est etablie une fois ; c'est sa derive qui doit etre
-surveillee en continu, et le test Java s'en charge. Le script est a relancer a la main
-chaque fois que la reference change — c'est precisement ce que le commentaire en tete du
-fichier JSON demande.
+It would require Python and Skyfield in the workflow, to check a file that does not
+change. The correctness of the reference is established once; it is its drift that must be
+watched continuously, and the Java test takes care of that. The script is to be re-run by
+hand whenever the reference changes — which is exactly what the comment at the top of the
+JSON file asks for.
 
-## Feuille de route
+## Roadmap
 
-Detail, jalons et budget temps : [ROADMAP.md](ROADMAP.md).
+Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 
+- [x] Orekit data loading, tested
+- [x] Pass computation (`TLEPropagator` + `ElevationDetector`)
+- [x] Cross-validation against an independent SGP4 implementation (Skyfield)
+- [x] Track sampling (`track`, `OrekitStepHandler`, fixed 10 s step)
+- [x] TLE retrieval from CelesTrak (last known TLE, age exposed)
+- [ ] REST API `/api/passes`
+- [ ] Frontend: shell, pass list, TLE age banner
+- [ ] Polar sky chart (SVG, no dependency)
+- [ ] 3D globe: ground track, visibility circle, terminator
+- [ ] Docker Compose, showcase pass
+- [ ] Naked-eye visible passes, TLE cache (PostgreSQL)
 
-- [x] Chargement des donnees Orekit, teste
-- [x] Calcul des passages (`TLEPropagator` + `ElevationDetector`)
-- [x] Validation croisee avec une implementation independante de SGP4 (Skyfield)
-- [x] Echantillonnage de la trajectoire (`track`, `OrekitStepHandler`, pas fixe de 10 s)
-- [x] Recuperation d'un TLE depuis CelesTrak (dernier TLE connu, age expose)
-- [ ] API REST `/api/passes`
-- [ ] Frontend : socle, liste des passages, bandeau d'age du TLE
-- [ ] Carte du ciel polaire (SVG, sans dependance)
-- [ ] Globe 3D : trace au sol, cercle de visibilite, terminateur
-- [ ] Docker Compose, mise en vitrine
-- [ ] Passages visibles a l'oeil nu, cache des TLE (PostgreSQL)
+Validated interface mockup: [docs/maquette-interface.html](docs/maquette-interface.html)
+(open it in a browser).
 
-Maquette d'interface validee : [docs/maquette-interface.html](docs/maquette-interface.html)
-(a ouvrir dans un navigateur).
+## How this repository was written
 
-## Methode de travail
+Part of the code in this repository was written with the assistance of Claude
+(Anthropic): the commits concerned carry a `Co-Authored-By` trailer. Better said here
+than left for the reader to discover in `git log`.
 
-Une partie du code de ce depot a ete ecrite avec l'assistance de Claude (Anthropic) : les
-commits concernes portent un trailer `Co-Authored-By`. Autant le dire ici plutot que de
-laisser le lecteur le decouvrir dans `git log`.
+What that covers, concretely:
 
-Ce que cela recouvre concretement :
+- Code and tests were written with assistance, then **run and confronted with an
+  independent reference** before being committed. The [Validation](#validation) section
+  describes the procedure; anyone can reproduce it with two commands.
+- Non-trivial technical decisions are documented in the code, with their rationale and
+  their trade-off: the 60 s detection step instead of the 600 s default, the
+  `ContinueOnEvent` handler without which only one pass would be detected, the elevation
+  maximum as a *decreasing* event of the derivative, the exclusion of passes truncated by
+  the edges of the window.
+- The limitations of the model are written down rather than passed over in silence: SGP4
+  drift, no refraction below 5 degrees, the real reach of the validation.
 
-- Le code et les tests ont ete rediges avec assistance, puis **executes et confrontes a
-  une reference independante** avant d'etre commites. La section [Validation](#validation)
-  decrit la procedure ; elle est reproductible par n'importe qui avec deux commandes.
-- Les decisions techniques non triviales sont documentees dans le code, avec leur
-  justification et leur contrepartie : le pas de detection de 60 s au lieu des 600 s par
-  defaut, le gestionnaire d'evenement `ContinueOnEvent` sans lequel un seul passage serait
-  detecte, le maximum d'elevation comme evenement *decroissant* de la derivee, l'exclusion
-  des passages tronques par les bords de la fenetre.
-- Les limites du modele sont ecrites noir sur blanc plutot que passees sous silence :
-  derive de SGP4, absence de refraction sous 5 degres, portee reelle de la validation.
-
-Un outil qui ecrit du code ne dispense pas de savoir le defendre. Cette section existe
-pour que ce depot soit juge sur ce qu'il demontre, pas sur ce qu'il dissimule.
+A tool that writes code does not excuse you from being able to defend it. This section
+exists so that the repository is judged on what it demonstrates, not on what it hides.

@@ -31,74 +31,71 @@ import org.orekit.utils.TrackingCoordinates;
 import org.springframework.stereotype.Service;
 
 /**
- * Calcule les passages d'un satellite au-dessus d'un observateur, a partir d'un TLE.
+ * Computes the passes of a satellite over an observer, from a TLE.
  *
- * <h2>Chaine de reperes</h2>
- * SGP4 restitue la position du satellite dans TEME (<i>True Equator, Mean Equinox</i>),
- * un repere quasi inertiel propre au modele, pas un repere standard de l'IERS.
- * L'observateur, lui, est fixe dans ITRF, qui tourne avec la croute terrestre.
- * Orekit fait la conversion TEME -> ITRF a chaque date en s'appuyant sur les parametres
- * d'orientation terrestre charges depuis {@code orekit-data} ; c'est pour cela que
- * l'application refuse de demarrer sans eux.
+ * <h2>Chain of frames</h2>
+ * SGP4 returns the satellite's position in TEME (<i>True Equator, Mean Equinox</i>), a
+ * quasi-inertial frame specific to the model, not a standard IERS frame. The observer, on
+ * the other hand, is fixed in ITRF, which rotates with the Earth's crust. Orekit performs
+ * the TEME to ITRF conversion at each date using the Earth orientation parameters loaded
+ * from {@code orekit-data}; that is why the application refuses to start without them.
  *
- * <h2>Deux passes de calcul</h2>
+ * <h2>Two computation passes</h2>
  * <ol>
- *   <li>Une propagation sur toute la fenetre, avec detecteurs d'evenements, qui donne
- *       les <em>bornes</em> de chaque passage : AOS, sommet, LOS. Ces trois dates sont
- *       obtenues par recherche de racine, pas par echantillonnage — c'est ce qui les
- *       rend precises a la milliseconde.</li>
- *   <li>Une propagation par passage, sur [AOS, LOS], qui remplit la polyligne. Un
- *       {@link OrekitStepHandler} y preleve les echantillons <em>a l'interieur</em> des
- *       pas d'integration, sans relancer une propagation par point.</li>
+ *   <li>One propagation over the whole window, with event detectors, giving the
+ *       <em>boundaries</em> of each pass: AOS, culmination, LOS. Those three dates come
+ *       from root finding, not from sampling — which is what makes them accurate to the
+ *       millisecond.</li>
+ *   <li>One propagation per pass, over [AOS, LOS], filling the polyline. An
+ *       {@link OrekitStepHandler} takes samples <em>inside</em> the integration steps,
+ *       without restarting a propagation per point.</li>
  * </ol>
  *
- * <h2>Limites assumees</h2>
+ * <h2>Accepted limitations</h2>
  * <ul>
- *   <li>Aucune correction de refraction atmospherique : sous 5 degres d'elevation,
- *       l'atmosphere releve l'image du satellite d'environ 0,1 degre. En deca de ce
- *       seuil, l'elevation renvoyee ici est geometrique, pas apparente.</li>
- *   <li>Les evenements sont cherches par pas de {@value #MAX_CHECK_SECONDS} s : un
- *       passage plus court que cette duree peut echapper a la detection. En orbite
- *       basse, seuls des passages rasants — quelques dixiemes de degre au-dessus du
- *       seuil — sont concernes.</li>
- *   <li>Un passage deja commence a l'ouverture de la fenetre, ou encore en cours a sa
- *       fermeture, est ecarte : ses AOS ou LOS sont hors de l'intervalle calcule, et
- *       renvoyer une duree tronquee serait un mensonge silencieux.</li>
- *   <li>{@code illuminated} vaut {@code false} sur tous les points jusqu'au jalon 10.
- *       Le champ existe deja pour ne pas casser le contrat d'API le jour ou le calcul
- *       d'eclipse arrive.</li>
+ *   <li>No atmospheric refraction correction: below 5 degrees of elevation, the
+ *       atmosphere lifts the satellite's apparent image by about 0.1 degree. Under that
+ *       threshold, the elevation returned here is geometric, not apparent.</li>
+ *   <li>Events are searched with a step of {@value #MAX_CHECK_SECONDS} s: a pass shorter
+ *       than that may escape detection. In low Earth orbit, only grazing passes — a few
+ *       tenths of a degree above the threshold — are affected.</li>
+ *   <li>A pass already under way when the window opens, or still under way when it
+ *       closes, is discarded: its AOS or LOS falls outside the computed interval, and
+ *       returning a truncated duration would be a silent lie.</li>
+ *   <li>{@code illuminated} is {@code false} on every point until milestone 10. The field
+ *       exists already so that the API contract does not break the day the eclipse
+ *       computation arrives.</li>
  * </ul>
  */
 @Service
 public class PassPredictionService {
 
     /**
-     * Pas maximal entre deux evaluations de la fonction de detection, en secondes.
+     * Maximum step between two evaluations of the detection function, in seconds.
      *
-     * <p>Orekit cherche les changements de signe sur une grille de ce pas, puis affine
-     * par recherche de racine. Le defaut d'Orekit (600 s) est cale sur des orbites
-     * hautes : en orbite basse, un passage entier dure 5 a 10 minutes et serait
-     * regulierement saute. 60 s laisse plusieurs points d'echantillonnage par passage.
+     * <p>Orekit looks for sign changes on a grid of this step, then refines by root
+     * finding. Orekit's default (600 s) is tuned for high orbits: in low Earth orbit, a
+     * whole pass lasts 5 to 10 minutes and would regularly be skipped. 60 s leaves
+     * several sampling points per pass.
      */
     private static final double MAX_CHECK_SECONDS = 60.0;
 
-    /** Precision de la recherche de racine sur la date d'un evenement, en secondes. */
+    /** Accuracy of the root search on the date of an event, in seconds. */
     private static final double THRESHOLD_SECONDS = 1.0e-3;
 
     /**
-     * Pas d'echantillonnage de la trajectoire, en secondes.
+     * Track sampling step, in seconds.
      *
-     * <p>Pas <em>fixe</em>, et non nombre de points fixe par passage. Trois raisons :
-     * les instants tombent sur des multiples ronds depuis l'AOS, donc lisibles tels
-     * quels comme etiquettes horaires sur la carte du ciel ; la densite de points dit
-     * quelque chose de vrai — un passage long a plus de points parce qu'il dure plus
-     * longtemps ; et la regle tient en une phrase, ce qu'un nombre de points fixe ne
-     * fait pas ("60 points" oblige a expliquer pourquoi 60).
+     * <p>A <em>fixed step</em>, not a fixed number of points per pass. Three reasons: the
+     * instants fall on round multiples from AOS, so they read as time labels on the sky
+     * chart as they are; the density of points says something true — a long pass has more
+     * points because it lasts longer; and the rule fits in one sentence, which a fixed
+     * point count does not ("60 points" forces you to explain why 60).
      *
-     * <p>Contrepartie assumee : un passage rasant de 50 s ne donne que 4 points
-     * intermediaires et sa courbe est visiblement anguleuse. C'est le cas ou il y a le
-     * moins a voir, et la borne basse reste correcte — AOS, sommet et LOS sont toujours
-     * presents, quelle que soit la duree.
+     * <p>Accepted trade-off: a grazing 50 s pass only gets 4 interior points and its
+     * curve is visibly angular. That is the case with the least to see, and the lower
+     * bound stays correct — AOS, culmination and LOS are always present, whatever the
+     * duration.
      */
     private static final double TRACK_STEP_SECONDS = 10.0;
 
@@ -107,7 +104,7 @@ public class PassPredictionService {
 
     public PassPredictionService(DataContext dataContext) {
         this.dataContext = dataContext;
-        // simpleEOP = false : on veut les corrections IERS completes, pas un modele degrade.
+        // simpleEOP = false: we want the full IERS corrections, not a degraded model.
         this.earth = new OneAxisEllipsoid(
                 Constants.WGS84_EARTH_EQUATORIAL_RADIUS,
                 Constants.WGS84_EARTH_FLATTENING,
@@ -115,13 +112,14 @@ public class PassPredictionService {
     }
 
     /**
-     * @param tle             elements orbitaux du satellite (jamais reinterpretes hors de SGP4)
-     * @param observer        position de l'observateur au sol
-     * @param windowStart     debut de la fenetre de recherche
-     * @param window          duree de la fenetre
-     * @param minElevationDeg elevation minimale, en degres, au-dessus de laquelle on
-     *                        considere le satellite visible
-     * @return les passages complets contenus dans la fenetre, tries par AOS croissant
+     * @param tle             orbital elements of the satellite (never reinterpreted
+     *                        outside SGP4)
+     * @param observer        position of the ground observer
+     * @param windowStart     start of the search window
+     * @param window          duration of the window
+     * @param minElevationDeg minimum elevation, in degrees, above which the satellite is
+     *                        considered visible
+     * @return the complete passes contained in the window, sorted by increasing AOS
      */
     public List<SatellitePass> predictPasses(TLE tle,
                                              ObserverLocation observer,
@@ -130,10 +128,10 @@ public class PassPredictionService {
                                              double minElevationDeg) {
 
         if (window.isNegative() || window.isZero()) {
-            throw new IllegalArgumentException("la fenetre de recherche doit etre positive : " + window);
+            throw new IllegalArgumentException("the search window must be positive: " + window);
         }
         if (minElevationDeg < 0.0 || minElevationDeg >= 90.0) {
-            throw new IllegalArgumentException("elevation minimale hors de [0, 90) : " + minElevationDeg);
+            throw new IllegalArgumentException("minimum elevation outside [0, 90): " + minElevationDeg);
         }
 
         TimeScale utc = dataContext.getTimeScales().getUTC();
@@ -143,9 +141,9 @@ public class PassPredictionService {
         TopocentricFrame site = topocentricFrameFor(observer);
         TLEPropagator propagator = TLEPropagator.selectExtrapolator(tle);
 
-        // Deux detecteurs, deux journaux. Le premier donne les bornes du passage,
-        // le second le sommet — qu'Orekit trouve par annulation de la derivee de
-        // l'elevation, ce qui est plus precis et plus honnete qu'un echantillonnage.
+        // Two detectors, two logs. The first gives the boundaries of the pass, the second
+        // its culmination — which Orekit finds by zeroing the derivative of the
+        // elevation, more accurate and more honest than sampling.
         EventsLogger horizonCrossings = new EventsLogger();
         EventsLogger elevationExtrema = new EventsLogger();
 
@@ -153,8 +151,8 @@ public class PassPredictionService {
                 .withConstantElevation(FastMath.toRadians(minElevationDeg))
                 .withMaxCheck(MAX_CHECK_SECONDS)
                 .withThreshold(THRESHOLD_SECONDS)
-                // Sans ceci, le gestionnaire par defaut arrete la propagation au premier
-                // coucher detecte et on ne verrait qu'un seul passage.
+                // Without this, the default handler stops the propagation at the first
+                // detected set and we would only ever see one pass.
                 .withHandler(new ContinueOnEvent());
 
         ElevationExtremumDetector extrema = new ElevationExtremumDetector(site)
@@ -184,15 +182,15 @@ public class PassPredictionService {
         return new TopocentricFrame(earth, point, "observer");
     }
 
-    /** Les trois etats remarquables d'un passage, avant mise en forme. */
+    /** The three remarkable states of a pass, before formatting. */
     private record PassBoundaries(SpacecraftState aos, SpacecraftState apex, SpacecraftState los) {
     }
 
     /**
-     * Apparie les levers et les couchers en passages, et rattache a chacun son sommet.
+     * Pairs rises with sets into passes, and attaches its culmination to each one.
      *
-     * <p>Les evenements d'un {@code EventsLogger} sont deja dans l'ordre chronologique
-     * de la propagation ; on ne s'appuie pas sur cette garantie implicite et on trie.
+     * <p>The events of an {@code EventsLogger} already come in the chronological order of
+     * the propagation; we do not lean on that implicit guarantee and sort them.
      */
     private List<PassBoundaries> assemblePasses(List<EventsLogger.LoggedEvent> crossings,
                                                 List<EventsLogger.LoggedEvent> extrema) {
@@ -205,8 +203,8 @@ public class PassPredictionService {
 
         for (EventsLogger.LoggedEvent event : ordered) {
             if (event.isIncreasing()) {
-                // Un lever alors qu'on en attendait un coucher : impossible en pratique,
-                // mais on repart du plus recent plutot que d'empiler un etat incoherent.
+                // A rise where a set was expected: impossible in practice, but we restart
+                // from the most recent one rather than stack an inconsistent state.
                 aosState = event.getState();
             } else if (aosState != null) {
                 SpacecraftState losState = event.getState();
@@ -214,9 +212,9 @@ public class PassPredictionService {
                 passes.add(new PassBoundaries(aosState, apex, losState));
                 aosState = null;
             }
-            // Un coucher sans lever = passage commence avant la fenetre : ignore.
+            // A set without a rise = a pass that started before the window: ignored.
         }
-        // Un lever sans coucher = passage encore en cours a la fin de la fenetre : ignore.
+        // A rise without a set = a pass still under way at the end of the window: ignored.
 
         return passes;
     }
@@ -238,18 +236,17 @@ public class PassPredictionService {
     }
 
     /**
-     * Echantillonne la trajectoire entre AOS et LOS.
+     * Samples the track between AOS and LOS.
      *
-     * <p>Les trois points remarquables ne sont pas interpoles : ils sont construits a
-     * partir des {@code SpacecraftState} que la recherche de racine a deja produits.
-     * C'est a la fois plus precis et plus sur — les dates du premier point, du sommet et
-     * du dernier point sont alors, au bit pres, celles du passage lui-meme, et
-     * l'invariant verifie par {@link SatellitePass} tient par construction.
+     * <p>The three remarkable points are not interpolated: they are built from the
+     * {@code SpacecraftState} objects the root search has already produced. That is both
+     * more accurate and safer — the dates of the first point, the culmination and the
+     * last point are then, to the bit, those of the pass itself, and the invariant
+     * checked by {@link SatellitePass} holds by construction.
      *
-     * <p>Entre les deux, un seul {@code propagate(AOS, LOS)} : le gestionnaire de pas
-     * preleve les etats <em>dans</em> chaque pas d'integration par interpolation. Un
-     * {@code propagate()} par point serait une relance complete de SGP4 a chaque
-     * echantillon.
+     * <p>In between, a single {@code propagate(AOS, LOS)}: the step handler takes states
+     * from <em>within</em> each integration step by interpolation. One {@code propagate()}
+     * per point would be a full restart of SGP4 for every sample.
      */
     private List<TrackPoint> sampleTrack(TLE tle, PassBoundaries pass, TopocentricFrame site) {
         AbsoluteDate aos = pass.aos().getDate();
@@ -276,11 +273,12 @@ public class PassPredictionService {
     }
 
     /**
-     * Les dates de la grille reguliere, bornes et sommet exclus.
+     * The dates of the regular grid, boundaries and culmination excluded.
      *
-     * <p>Un point de grille tombant a moins de {@value #THRESHOLD_SECONDS} s d'une de ces
-     * trois dates est ecarte : il ferait doublon avec un point deja plus precis, et deux
-     * points quasi confondus dans une polyligne SVG produisent des artefacts de jointure.
+     * <p>A grid point falling within {@value #THRESHOLD_SECONDS} s of one of the three
+     * remarkable dates is dropped: it would duplicate a point we already know more
+     * precisely, and two near-coincident points in an SVG polyline produce joint
+     * artefacts.
      */
     private List<AbsoluteDate> interiorSampleDates(AbsoluteDate aos, AbsoluteDate los, AbsoluteDate apex) {
         double duration = los.durationFrom(aos);
@@ -298,11 +296,10 @@ public class PassPredictionService {
     }
 
     /**
-     * Preleve des etats a des dates imposees, au fil d'une unique propagation.
+     * Takes states at imposed dates, over the course of a single propagation.
      *
-     * <p>Les dates doivent etre croissantes et contenues dans l'intervalle propage ;
-     * c'est le cas par construction ici. Chaque pas d'integration consomme toutes les
-     * dates qu'il recouvre.
+     * <p>The dates must be increasing and contained in the propagated interval; they are
+     * by construction here. Each integration step consumes every date it covers.
      */
     private final class TrackSampler implements OrekitStepHandler {
 
@@ -328,14 +325,14 @@ public class PassPredictionService {
 
         @Override
         public void finish(SpacecraftState finalState) {
-            // Le dernier pas se termine au LOS et a donc normalement tout consomme.
-            // Un reliquat signalerait une date hors de l'intervalle propage, c'est-a-dire
-            // un defaut de construction de la grille : on echoue plutot que de rendre une
-            // courbe silencieusement tronquee.
+            // The last step ends at LOS and has therefore normally consumed everything.
+            // A remainder would signal a date outside the propagated interval, that is, a
+            // flaw in how the grid was built: we fail rather than return a silently
+            // truncated curve.
             if (next < dates.size()) {
                 throw new IllegalStateException(
-                        (dates.size() - next) + " date(s) d'echantillonnage hors de l'intervalle propage, "
-                                + "a partir de " + dates.get(next));
+                        (dates.size() - next) + " sampling date(s) outside the propagated interval, "
+                                + "starting at " + dates.get(next));
             }
         }
 
@@ -345,13 +342,13 @@ public class PassPredictionService {
     }
 
     /**
-     * Trouve le sommet du passage : l'extremum d'elevation situe entre AOS et LOS dont
-     * la derivee passe du positif au negatif (un maximum, donc un evenement decroissant).
+     * Finds the culmination of the pass: the elevation extremum between AOS and LOS whose
+     * derivative goes from positive to negative (a maximum, hence a decreasing event).
      *
-     * <p>L'elevation est continue, egale au seuil aux deux bornes et strictement
-     * au-dessus entre les deux : le theoreme de Rolle garantit l'existence de ce maximum.
-     * Ne pas le trouver signale un pas de detection trop grossier, pas une orbite exotique
-     * — d'ou l'echec franc plutot qu'une valeur de repli plausible mais fausse.
+     * <p>Elevation is continuous, equal to the threshold at both boundaries and strictly
+     * above it in between: Rolle's theorem guarantees such a maximum exists. Failing to
+     * find one signals a detection step that is too coarse, not an exotic orbit — hence
+     * the outright failure rather than a plausible but wrong fallback value.
      */
     private SpacecraftState findApex(AbsoluteDate aos,
                                      AbsoluteDate los,
@@ -362,16 +359,17 @@ public class PassPredictionService {
                 .map(EventsLogger.LoggedEvent::getState)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(
-                        "aucun maximum d'elevation trouve entre " + aos + " et " + los
-                                + " — le pas de detection (" + MAX_CHECK_SECONDS + " s) est trop grossier"));
+                        "no elevation maximum found between " + aos + " and " + los
+                                + " — the detection step (" + MAX_CHECK_SECONDS + " s) is too coarse"));
     }
 
     /**
-     * Decrit un etat propage sous ses deux formes : vue du sol et vue de l'espace.
+     * Describes a propagated state in its two forms: seen from the ground and seen from
+     * space.
      *
-     * <p>{@code subPoint} est obtenu par projection de la position sur l'ellipsoide en
-     * ITRF, cote Orekit. Le navigateur ne le recalcule jamais : c'est la condition pour
-     * que le globe reste un affichage et ne devienne pas un second propagateur.
+     * <p>{@code subPoint} comes from projecting the position onto the ellipsoid in ITRF,
+     * on the Orekit side. The browser never recomputes it: that is the condition for the
+     * globe to stay a display and not become a second propagator.
      */
     private TrackPoint pointAt(SpacecraftState state, TopocentricFrame site) {
         TrackingCoordinates seen = trackingCoordinates(state, site);
@@ -398,11 +396,11 @@ public class PassPredictionService {
     }
 
     /**
-     * Convertit un azimut en degres dans [0, 360).
+     * Converts an azimuth to degrees in [0, 360).
      *
-     * <p>Orekit normalise deja l'azimut dans [0, 2pi) : le modulo ne redresse donc pas
-     * une convention differente, il ecarte le seul cas restant, un azimut juste sous
-     * 2pi qui, converti en degres, arrondirait exactement a 360.
+     * <p>Orekit already normalises the azimuth into [0, 2pi): the modulo therefore does
+     * not fix a different convention, it rules out the one remaining case, an azimuth
+     * just under 2pi which, converted to degrees, would round to exactly 360.
      */
     private static double degreesInCircle(double radians) {
         double degrees = FastMath.toDegrees(radians) % 360.0;

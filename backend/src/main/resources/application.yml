@@ -3,19 +3,28 @@ spring:
     name: sat-pass-predictor
 
 orekit:
-  # Surchargeable par variable d'environnement (Docker, CI).
+  # Overridable through an environment variable (Docker, CI).
   data-path: ${OREKIT_DATA_PATH:../orekit-data}
 
 tle:
   base-url: https://celestrak.org
   connect-timeout: 3s
   read-timeout: 5s
-  # Au-dela de cet age depuis la derniere recuperation, on retente CelesTrak.
-  # Ce n'est pas une duree de validite : voir TleStore.
+  # Past this age since the last fetch, CelesTrak is called again.
+  # This is not a validity period: see TleStore.
   refresh-after: 2h
-  # Au-dela de cet age depuis l'epoque des elements, on refuse de predire.
+  # Past this age since the epoch of the elements, we refuse to predict.
   max-age: 7d
   maximum-size: 500
+
+springdoc:
+  # Swagger UI under a short address: it is the first page anyone opens on this
+  # repository, it has no business being called /swagger-ui/index.html.
+  swagger-ui:
+    path: /docs
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
 
 management:
   endpoints:

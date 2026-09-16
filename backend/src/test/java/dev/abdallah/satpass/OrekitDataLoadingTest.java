@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.orekit.data.DataContext;
 import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScale;
+import org.orekit.utils.IERSConventions;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @OrekitTest
@@ -23,10 +24,10 @@ class OrekitDataLoadingTest {
     }
 
     /**
-     * Verifie que l'historique des sauts de seconde (UTC-TAI) est bien charge.
-     * Au 1er janvier 2017, TAI - UTC = 37 s : la meme date civile lue en UTC et
-     * en TAI designe donc deux instants espaces de 37 secondes.
-     * Si orekit-data n'est pas charge, Orekit ne connait aucun saut et l'ecart vaut 0.
+     * Checks that the leap second history (UTC-TAI) is loaded. On 1 January 2017,
+     * TAI - UTC = 37 s: the same civil date read in UTC and in TAI therefore denotes two
+     * instants 37 seconds apart. Without orekit-data, Orekit knows of no leap second and
+     * the gap is zero.
      */
     @Test
     void leapSecondHistoryIsLoaded() {
@@ -41,14 +42,13 @@ class OrekitDataLoadingTest {
     }
 
     /**
-     * Verifie que les parametres d'orientation terrestre (EOP) sont charges :
-     * sans eux, la transformation GCRF -> ITRF est degradee et Orekit emet un
-     * avertissement au lieu d'utiliser les donnees IERS.
+     * Checks that the Earth orientation parameters are loaded: without them the
+     * GCRF to ITRF transform is degraded and Orekit issues a warning instead of using the
+     * IERS data.
      */
     @Test
     void earthOrientationParametersAreLoaded() {
-        assertThat(dataContext.getFrames().getEOPHistory(
-                org.orekit.utils.IERSConventions.IERS_2010, true).getEntries())
+        assertThat(dataContext.getFrames().getEOPHistory(IERSConventions.IERS_2010, true).getEntries())
                 .isNotEmpty();
     }
 }

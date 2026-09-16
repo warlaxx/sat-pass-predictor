@@ -1,5 +1,5 @@
 {
-  "_comment": "Reference de non-regression du jalon 2. Produite par PassPredictionService, verifiee independamment par scripts/validate-against-skyfield.py. Ne pas editer a la main : regenerer et revalider.",
+  "_comment": "Milestone 2 regression reference. Produced by PassPredictionService, verified independently by scripts/validate-against-skyfield.py. Do not edit by hand: regenerate and revalidate.",
   "satellite": {
     "name": "ISS (ZARYA)",
     "noradId": 25544,

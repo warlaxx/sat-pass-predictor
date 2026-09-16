@@ -3,26 +3,25 @@ package dev.abdallah.satpass.domain;
 import java.time.Instant;
 
 /**
- * Un point de la trajectoire d'un passage : ou se trouve le satellite a un instant
- * donne, vu du sol et vu de l'espace.
+ * One point along the track of a pass: where the satellite is at a given instant, seen
+ * from the ground and seen from space.
  *
- * <p>Les trois instants d'un {@link SatellitePass} suffisent a remplir un tableau, pas
- * a tracer une courbe. Ce type porte la polyligne dont ont besoin les deux vues de
- * l'interface : la carte du ciel consomme {@code azimuthDeg} et {@code elevationDeg}
- * (repere topocentrique, centre sur l'observateur), le globe consomme
- * {@code subPoint} (repere terrestre, centre sur la Terre). Les deux descriptions
- * viennent du meme etat propage, donc du meme calcul — c'est ce qui garantit que les
- * deux vues racontent la meme chose.
+ * <p>The three instants of a {@link SatellitePass} are enough to fill a table, not to
+ * draw a curve. This type carries the polyline both views of the interface need: the sky
+ * chart consumes {@code azimuthDeg} and {@code elevationDeg} (topocentric frame, centred
+ * on the observer), the globe consumes {@code subPoint} (terrestrial frame, centred on
+ * the Earth). Both descriptions come from the same propagated state, hence from the same
+ * computation — which is what guarantees the two views tell the same story.
  *
- * @param instant      date UTC de l'echantillon
- * @param azimuthDeg   azimut dans [0, 360), compte depuis le Nord vers l'Est
- * @param elevationDeg elevation geometrique au-dessus de l'horizon, en degres
- * @param rangeKm      distance observateur-satellite, en kilometres
- * @param subPoint     point au sol a la verticale du satellite
- * @param illuminated  vrai si le satellite est eclaire par le Soleil. <b>Vaut
- *                     systematiquement {@code false} jusqu'au jalon 10</b> : le champ
- *                     existe des maintenant pour que l'arrivee du calcul d'eclipse ne
- *                     change ni le contrat de l'API ni une ligne de frontend.
+ * @param instant      UTC date of the sample
+ * @param azimuthDeg   azimuth in [0, 360), measured from North towards East
+ * @param elevationDeg geometric elevation above the horizon, in degrees
+ * @param rangeKm      observer-to-satellite distance, in kilometres
+ * @param subPoint     the point on the ground directly below the satellite
+ * @param illuminated  true if the satellite is lit by the Sun. <b>Always {@code false}
+ *                     until milestone 10</b>: the field exists now so that the arrival of
+ *                     the eclipse computation changes neither the API contract nor a line
+ *                     of frontend code.
  */
 public record TrackPoint(
         Instant instant,
@@ -34,19 +33,19 @@ public record TrackPoint(
 
     public TrackPoint {
         if (instant == null) {
-            throw new IllegalArgumentException("date de l'echantillon manquante");
+            throw new IllegalArgumentException("sample date is missing");
         }
         if (subPoint == null) {
-            throw new IllegalArgumentException("point sous-satellite manquant");
+            throw new IllegalArgumentException("sub-satellite point is missing");
         }
         if (azimuthDeg < 0.0 || azimuthDeg >= 360.0) {
-            throw new IllegalArgumentException("azimut hors de [0, 360) : " + azimuthDeg);
+            throw new IllegalArgumentException("azimuth outside [0, 360): " + azimuthDeg);
         }
         if (elevationDeg < -90.0 || elevationDeg > 90.0) {
-            throw new IllegalArgumentException("elevation hors de [-90, 90] : " + elevationDeg);
+            throw new IllegalArgumentException("elevation outside [-90, 90]: " + elevationDeg);
         }
         if (!(rangeKm > 0.0)) {
-            throw new IllegalArgumentException("distance non strictement positive : " + rangeKm);
+            throw new IllegalArgumentException("range is not strictly positive: " + rangeKm);
         }
     }
 }

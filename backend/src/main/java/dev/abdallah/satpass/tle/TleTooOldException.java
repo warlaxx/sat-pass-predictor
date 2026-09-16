@@ -3,17 +3,17 @@ package dev.abdallah.satpass.tle;
 import java.time.Duration;
 
 /**
- * Le seul TLE disponible a une epoque trop ancienne pour qu'une prediction ait un sens.
+ * The only available TLE has an epoch too old for a prediction to mean anything.
  *
- * <p>La degradation propre a une limite. SGP4 diverge d'environ un kilometre par jour
- * en orbite basse ; passe une semaine, l'erreur le long de la trajectoire se compte en
- * minutes sur l'heure de passage, et afficher une courbe au degre pres serait une
- * fausse precision. Mieux vaut dire qu'on ne sait pas.
+ * <p>Graceful degradation has a limit. SGP4 drifts by roughly a kilometre a day in low
+ * Earth orbit; past a week, the along-track error amounts to minutes on the time of a
+ * pass, and drawing a curve to the degree would be false precision. Better to say we do
+ * not know.
  */
 public class TleTooOldException extends RuntimeException {
 
     public TleTooOldException(int noradId, Duration age, Duration maxAge) {
-        super("TLE du satellite " + noradId + " age de " + age.toHours() + " h,"
-                + " au-dela de la limite de " + maxAge.toHours() + " h");
+        super("TLE for satellite " + noradId + " is " + age.toHours() + " h old,"
+                + " beyond the " + maxAge.toHours() + " h limit");
     }
 }
