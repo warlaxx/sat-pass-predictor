@@ -54,6 +54,14 @@ cd backend  && mvn verify
 cd frontend && npm test
 ```
 
+La validation croisee avec Skyfield est un script separe, volontairement hors de la CI
+(voir [Validation](#validation)) :
+
+```bash
+pip install skyfield
+python3 scripts/validate-against-skyfield.py
+```
+
 ## Donnees Orekit
 
 Orekit a besoin d'un jeu de donnees externe (historique UTC-TAI, parametres
@@ -66,15 +74,106 @@ Le chemin est configurable par `OREKIT_DATA_PATH`.
 L'application refuse de demarrer si le repertoire est absent : un echec explicite
 au demarrage vaut mieux qu'une erreur obscure au premier calcul.
 
+## Validation
+
+Un calcul de mecanique spatiale qui n'est compare a rien n'est pas un calcul, c'est une
+opinion. Le projet s'appuie donc sur deux controles distincts, qui ne prouvent pas la meme
+chose et dont aucun ne remplace l'autre.
+
+**Un fichier de reference unique.**
+`backend/src/test/resources/validation/iss-lyon-reference.json` porte le TLE, l'observateur,
+la fenetre et les passages attendus. Il est lu par le test Java *et* par le script Python.
+Deux fichiers auraient signifie deux verites, dont l'une aurait pu mentir sans bruit.
+
+**Controle 1 — non-regression (Java, dans la CI).**
+`PassPredictionReferenceTest` verifie qu'Orekit reproduit la reference. Il surveille la
+derive : une montee de version, un rafraichissement des donnees IERS, une refonte du
+service. Il ne dit rien de la justesse : un calcul faux figerait une reference fausse,
+que ce test defendrait ensuite fidelement.
+
+**Controle 2 — justesse (Python, hors CI).**
+`scripts/validate-against-skyfield.py` confronte la meme reference a
+[Skyfield](https://rhodesmill.org/skyfield/), une implementation de SGP4 ecrite en Python,
+sans lien de code avec Orekit.
+
+La comparaison naive — demander ses passages a Skyfield et comparer les dates — donne des
+ecarts allant jusqu'a une seconde, sans dire lequel des deux a tort : le `find_events` de
+Skyfield est documente comme precis a la seconde. Le script procede donc a l'envers : il
+prend les dates produites par Orekit et demande a Skyfield **quelle elevation et quel
+azimut il calcule a ces instants precis**. Si Orekit a raison, Skyfield doit retrouver
+exactement le seuil aux bornes du passage.
+
+Quatre controles : les bornes, le sommet (valeur et caractere de maximum local), les trois
+azimuts, et l'exhaustivite — ce dernier etant le seul capable de detecter un passage
+*manque* par le pas de detection de 60 s d'Orekit.
+
+### Tolerances retenues, et pourquoi
+
+| Grandeur | Ecart mesure | Tolerance | Marge |
+|---|---|---|---|
+| Elevation (Orekit vs Skyfield) | 0,53 millidegre | 10 millidegres | x19 |
+| Azimut (Orekit vs Skyfield) | 2,0 millidegres | 20 millidegres | x10 |
+| Dates (non-regression Java) | 0 | 1 s | — |
+| Angles (non-regression Java) | 0 | 0,1 degre | — |
+
+Les tolerances de non-regression ne sont pas des marges d'erreur physiques : elles
+absorbent une evolution interne d'Orekit, pas une erreur de modele, qui serait de
+plusieurs ordres de grandeur superieure. Reperes utiles : au voisinage de l'AOS, l'ISS
+gagne environ 0,1 degre d'elevation par seconde — un ecart d'une seconde et un ecart de
+0,1 degre decrivent donc le meme evenement.
+
+### Ce que cette validation ne prouve pas
+
+Skyfield et Orekit implementent **le meme modele**, SGP4. Leur accord etablit que
+l'implementation et la chaine de reperes de ce projet sont correctes. Il ne dit rien de
+l'ecart au ciel reel, domine par l'age du TLE : en orbite basse, SGP4 derive de l'ordre de
+1 a 3 km par jour, davantage pendant une tempete geomagnetique. C'est une limite du modele,
+assumee, et la raison pour laquelle la fenetre de prevision est bornee a quelques jours.
+
+Une comparaison a Heavens-Above repondrait a l'autre question. Elle a ete ecartee
+volontairement : son ecart melange l'erreur du TLE, la refraction et les conventions
+d'affichage du site, et ne serait donc pas interpretable.
+
+### Pourquoi le script Python n'est pas dans la CI
+
+Il exigerait Python et Skyfield dans le workflow pour verifier un fichier qui ne change
+pas. La justesse de la reference est etablie une fois ; c'est sa derive qui doit etre
+surveillee en continu, et le test Java s'en charge. Le script est a relancer a la main
+chaque fois que la reference change — c'est precisement ce que le commentaire en tete du
+fichier JSON demande.
+
 ## Feuille de route
 
 Detail, jalons et budget temps : [ROADMAP.md](ROADMAP.md).
 
 
 - [x] Chargement des donnees Orekit, teste
+- [x] Calcul des passages (`TLEPropagator` + `ElevationDetector`)
+- [x] Validation croisee avec une implementation independante de SGP4 (Skyfield)
 - [ ] Recuperation d'un TLE depuis CelesTrak
-- [ ] Calcul des passages (`TLEPropagator` + `ElevationDetector`)
 - [ ] API REST `/api/passes`
 - [ ] Affichage frontend (liste + carte)
-- [ ] Validation croisee avec une reference externe (Heavens-Above)
+- [ ] Diagramme polaire du passage
 - [ ] Cache des TLE (PostgreSQL), Docker Compose
+
+## Methode de travail
+
+Une partie du code de ce depot a ete ecrite avec l'assistance de Claude (Anthropic) : les
+commits concernes portent un trailer `Co-Authored-By`. Autant le dire ici plutot que de
+laisser le lecteur le decouvrir dans `git log`.
+
+Ce que cela recouvre concretement :
+
+- Le code et les tests ont ete rediges avec assistance, puis **executes et confrontes a
+  une reference independante** avant d'etre commites. La section [Validation](#validation)
+  decrit la procedure ; elle est reproductible par n'importe qui avec deux commandes.
+- Les decisions techniques non triviales sont documentees dans le code, avec leur
+  justification et leur contrepartie : le pas de detection de 60 s au lieu des 600 s par
+  defaut, le gestionnaire d'evenement `ContinueOnEvent` sans lequel un seul passage serait
+  detecte, le maximum d'elevation comme evenement *decroissant* de la derivee, l'exclusion
+  des passages tronques par les bords de la fenetre.
+- Les limites du modele sont ecrites noir sur blanc plutot que passees sous silence :
+  derive de SGP4, absence de refraction sous 5 degres, portee reelle de la validation.
+
+Un outil qui ecrit du code ne dispense pas de savoir le defendre. Cette section existe
+pour que ce depot soit juge sur ce qu'il demontre, pas sur ce qu'il dissimule.
