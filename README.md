@@ -158,7 +158,7 @@ Detail, jalons et budget temps : [ROADMAP.md](ROADMAP.md).
 - [x] Calcul des passages (`TLEPropagator` + `ElevationDetector`)
 - [x] Validation croisee avec une implementation independante de SGP4 (Skyfield)
 - [x] Echantillonnage de la trajectoire (`track`, `OrekitStepHandler`, pas fixe de 10 s)
-- [ ] Recuperation d'un TLE depuis CelesTrak
+- [x] Recuperation d'un TLE depuis CelesTrak (dernier TLE connu, age expose)
 - [ ] API REST `/api/passes`
 - [ ] Frontend : socle, liste des passages, bandeau d'age du TLE
 - [ ] Carte du ciel polaire (SVG, sans dependance)

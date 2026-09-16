@@ -100,17 +100,76 @@ basse inclinée à 51,6°.
 
 ---
 
-## Jalon 4 — Récupération des TLE (≈ 4 h · 1 semaine)
+## ✅ Jalon 4 — Récupération des TLE (fait)
 
-- Client `RestClient` vers l'API GP de CelesTrak (`CATNR`, format TLE).
-- Cache mémoire (Caffeine, TTL 2 h) — CelesTrak demande explicitement de ne pas
-  interroger l'API en boucle. **Toujours pas de base de données.**
-- Gestion des pannes : timeout, satellite inconnu, service indisponible. Contrairement
-  aux données Orekit, un CelesTrak injoignable **ne doit pas** empêcher l'application de
-  démarrer : timeout, cache, dégradation propre.
-- Exposer l'**époque du TLE et son âge** dans le modèle : le bandeau d'incertitude de
-  l'interface en dépend, et c'est l'élément différenciant du projet.
-- Tests avec `MockRestServiceServer`, jamais d'appel réseau réel en CI.
+Un TLE figé suffisait pour valider le calcul ; il ne suffit pas pour une application.
+CelesTrak republie les éléments de l'ISS plusieurs fois par jour, et c'est leur âge —
+pas le modèle — qui domine l'écart au ciel réel.
+
+- `TleSnapshot(noradId, name, line1, line2, epoch, fetchedAt, source)` dans le domaine.
+- `CelestrakTleClient` : `RestClient` vers l'API GP (`CATNR`, `FORMAT=TLE`), timeouts
+  explicites, validation par Orekit **à la récupération**.
+- `TleStore` : magasin borné du dernier TLE connu par satellite.
+- 15 tests, aucun appel réseau (`MockRestServiceServer`, horloge injectée).
+
+**Décision : ce n'est pas un cache à TTL.** La consigne initiale disait « Caffeine,
+TTL 2 h » et exigeait deux lignes plus bas qu'un CelesTrak injoignable n'empêche pas
+l'application de fonctionner. Les deux ne tiennent pas ensemble : avec une expiration à
+2 h, la première requête arrivée à 2 h 01 pendant une panne ne trouve plus rien. D'où
+l'inversion — **rien n'expire** ; les 2 h déclenchent une *tentative* de
+rafraîchissement, et son échec laisse le snapshot précédent en place avec son âge réel.
+Caffeine sert de magasin borné (`maximumSize`), pas de cache. Contrepartie assumée :
+c'est un écart explicite à la consigne, et il faut donc savoir l'expliquer.
+
+**Deux âges, jamais confondus.** L'âge *depuis l'époque* est physique : l'erreur de SGP4
+croît avec lui, de l'ordre du kilomètre par jour en orbite basse, et c'est lui qu'affiche
+le bandeau d'incertitude. L'âge *depuis la récupération* est opérationnel : il décide
+seulement s'il faut rappeler CelesTrak. Un cache qui expire au bout de deux heures croit
+garantir une précision qu'il ne contrôle pas.
+
+**Deux limites à la dégradation.** Au-delà de `tle.max-age` (7 jours d'époque), la
+prédiction est refusée plutôt qu'affichée au degré près — de la fausse précision. Et un
+satellite absent du catalogue (`TleNotFoundException`) n'est **jamais** dégradé : il est
+oublié du magasin. Un objet qui disparaît de CelesTrak est le plus souvent rentré dans
+l'atmosphère, et propager son dernier TLE afficherait les passages d'un satellite qui
+n'existe plus.
+
+**Deux pièges de l'API GP**, tous deux encodés dans les tests : un numéro NORAD inconnu
+répond **200 avec le corps `No GP data found`**, pas 404 ; et sous charge CelesTrak sert
+une page HTML, toujours en 200. Tout corps qui ne ressemble pas à un TLE est donc traité
+comme une panne. Le numéro renvoyé est en outre vérifié contre celui demandé : sans ce
+contrôle, une réponse mise en cache par un intermédiaire pour un autre satellite
+produirait des passages parfaitement plausibles — et faux.
+
+**Un seul appel réseau par satellite.** Le rafraîchissement passe par
+`asMap().compute(...)`, atomique par clé chez Caffeine : dix requêtes simultanées sur
+l'ISS donnent un appel, pas dix, ce que la documentation de CelesTrak demande
+explicitement. Contrepartie assumée : l'appel réseau a lieu sous le verrou de la clé —
+borné par les timeouts, et seuls les appelants du *même* satellite attendent.
+
+**Découpage des contextes de test, fait dans la foulée.** Le premier `verify` de ce
+jalon a fait échouer 26 tests sur cinq classes dont aucune ne touche au réseau : toutes
+étaient en `@SpringBootTest` nu, donc toutes démarraient l'application entière, donc
+toutes tombaient avec le bean HTTP mal câblé. Un test doit échouer pour ce qu'il teste.
+Elles passent désormais par `@OrekitTest`, une tranche nommant `OrekitConfig` et
+`PassPredictionService` — un seul contexte, mis en cache, sans couche web.
+
+La contrepartie est réelle : plus rien ne vérifiait alors que l'application *réelle*
+démarre, or c'est exactement le défaut qui venait de passer à travers. D'où
+`ApplicationStartupTest`, seul test à tout démarrer, qui vérifie en plus que les beans
+porteurs de comportement sont présents — un contexte peut démarrer en ayant silencieusement
+omis un `@Component`. Un test démarre tout et échoue seul ; les autres restent lisibles.
+
+Corollaire découvert au passage : `DataContext.getDefault()` est un singleton de JVM, pas
+un bean. Avec deux contextes Spring dans la même JVM, `addProvider` empilait deux
+fournisseurs sur les mêmes fichiers EOP. `OrekitConfig` fait maintenant
+`clearProviders()` d'abord — l'enregistrement est idempotent.
+
+**Critère de sortie atteint** : `CelestrakTleClientTest` couvre la réponse nominale,
+`No GP data found`, une page HTML, un mauvais numéro NORAD, une somme de contrôle
+altérée, un timeout et un 500. `TleStoreTest` couvre la fenêtre de rafraîchissement, le
+repli sur le dernier TLE connu, l'absence de repli au premier appel, l'oubli d'un
+satellite retiré du catalogue, la limite d'âge dure et la fusion des appels concurrents.
 
 ---
 
