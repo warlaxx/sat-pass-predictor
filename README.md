@@ -157,11 +157,17 @@ Detail, jalons et budget temps : [ROADMAP.md](ROADMAP.md).
 - [x] Chargement des donnees Orekit, teste
 - [x] Calcul des passages (`TLEPropagator` + `ElevationDetector`)
 - [x] Validation croisee avec une implementation independante de SGP4 (Skyfield)
+- [x] Echantillonnage de la trajectoire (`track`, `OrekitStepHandler`, pas fixe de 10 s)
 - [ ] Recuperation d'un TLE depuis CelesTrak
 - [ ] API REST `/api/passes`
-- [ ] Affichage frontend (liste + carte)
-- [ ] Diagramme polaire du passage
-- [ ] Cache des TLE (PostgreSQL), Docker Compose
+- [ ] Frontend : socle, liste des passages, bandeau d'age du TLE
+- [ ] Carte du ciel polaire (SVG, sans dependance)
+- [ ] Globe 3D : trace au sol, cercle de visibilite, terminateur
+- [ ] Docker Compose, mise en vitrine
+- [ ] Passages visibles a l'oeil nu, cache des TLE (PostgreSQL)
+
+Maquette d'interface validee : [docs/maquette-interface.html](docs/maquette-interface.html)
+(a ouvrir dans un navigateur).
 
 ## Methode de travail
 
