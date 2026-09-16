@@ -72,6 +72,34 @@
 
   <build>
     <plugins>
+      <!--
+        Fails fast, in the validate phase, when Maven runs on the wrong JDK. Without it
+        the symptom is either "release version 25 not supported" or, when target/ still
+        holds classes from a previous build, the far less obvious "class file version
+        69.0 ... only recognizes class file versions up to 65.0" at test time.
+        Homebrew JDKs are keg-only: see the Prerequisites section of the README.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>require-jdk-25</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireJavaVersion>
+                  <version>[25,)</version>
+                  <message>This project needs JDK 25. Run: export JAVA_HOME=$(/usr/libexec/java_home -v 25)</message>
+                </requireJavaVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
