@@ -17,9 +17,20 @@ Backend Java / Spring Boot avec [Orekit](https://www.orekit.org/), frontend Angu
 
 ## Prerequis
 
-- JDK 25 (`sdk install java 25-tem`)
-- Maven 3.9+ (`brew install maven`)
-- Node 22 LTS
+- **JDK 25** — Le projet compile en `release 25`, un JDK plus ancien echoue avec
+  `release version 25 not supported`.
+
+  ```bash
+  brew install openjdk@25
+  # Les JDK Homebrew sont keg-only : sans ce lien, /usr/libexec/java_home ne les voit pas.
+  sudo ln -sfn /opt/homebrew/opt/openjdk@25/libexec/openjdk.jdk \
+               /Library/Java/JavaVirtualMachines/openjdk-25.jdk
+  export JAVA_HOME=$(/usr/libexec/java_home -v 25)
+  ```
+
+- **Maven 3.9+** (`brew install maven`) pour la premiere generation du wrapper.
+  Ensuite, `./mvnw` suffit.
+- **Node 22 LTS**
 
 ## Demarrage
 
