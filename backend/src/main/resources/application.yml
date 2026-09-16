@@ -6,6 +6,17 @@ orekit:
   # Surchargeable par variable d'environnement (Docker, CI).
   data-path: ${OREKIT_DATA_PATH:../orekit-data}
 
+tle:
+  base-url: https://celestrak.org
+  connect-timeout: 3s
+  read-timeout: 5s
+  # Au-dela de cet age depuis la derniere recuperation, on retente CelesTrak.
+  # Ce n'est pas une duree de validite : voir TleStore.
+  refresh-after: 2h
+  # Au-dela de cet age depuis l'epoque des elements, on refuse de predire.
+  max-age: 7d
+  maximum-size: 500
+
 management:
   endpoints:
     web:
