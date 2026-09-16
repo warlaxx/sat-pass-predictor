@@ -1,6 +1,9 @@
 package dev.abdallah.satpass;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import dev.abdallah.satpass.passes.PassPredictionService;
 import dev.abdallah.satpass.tle.CelestrakTleClient;
@@ -8,8 +11,10 @@ import dev.abdallah.satpass.tle.TleStore;
 import org.junit.jupiter.api.Test;
 import org.orekit.data.DataContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.web.servlet.MockMvc;
 
 /**
  * The only test that starts the whole application.
@@ -31,10 +36,14 @@ import org.springframework.context.ApplicationContext;
  * — and that is as real a failure as an exception.
  */
 @SpringBootTest
+@AutoConfigureMockMvc
 class ApplicationStartupTest {
 
     @Autowired
     ApplicationContext context;
+
+    @Autowired
+    MockMvc mockMvc;
 
     @Test
     void theRealApplicationContextStarts() {
