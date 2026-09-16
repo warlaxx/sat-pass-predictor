@@ -36,6 +36,7 @@ class TleStoreTest {
     private static final Instant START = Instant.parse("2021-02-04T08:00:00Z");
 
     private static final Duration REFRESH_AFTER = Duration.ofHours(2);
+    private static final Duration RETRY_AFTER = Duration.ofMinutes(5);
     private static final Duration MAX_AGE = Duration.ofDays(7);
 
     private CelestrakTleClient client;
@@ -51,7 +52,7 @@ class TleStoreTest {
 
     private static TleProperties properties() {
         return new TleProperties("https://celestrak.test",
-                Duration.ofSeconds(3), Duration.ofSeconds(5), REFRESH_AFTER, MAX_AGE, 500);
+                Duration.ofSeconds(3), Duration.ofSeconds(5), REFRESH_AFTER, RETRY_AFTER, MAX_AGE, 500);
     }
 
     /** A snapshot whose epoch and fetch date are chosen by the test. */
@@ -104,6 +105,49 @@ class TleStoreTest {
 
         assertThat(served.fetchedAt()).isEqualTo(START);
         assertThat(served.ageSinceEpoch(clock.instant())).isGreaterThan(Duration.ofHours(6));
+    }
+
+    /**
+     * A failed refresh leaves the snapshot, and therefore its fetch date, unchanged. The
+     * staleness test stays true, so without a backoff every single request during an
+     * outage would call CelesTrak again — which CelesTrak explicitly asks callers not to
+     * do. The entry therefore remembers its last attempt, not just its last success.
+     */
+    @Test
+    void doesNotCallCelestrakAgainWhileTheBackoffWindowIsOpen() {
+        when(client.fetch(ISS))
+                .thenReturn(snapshot(EPOCH, START))
+                .thenThrow(new TleUnavailableException("CelesTrak unreachable"));
+
+        store.get(ISS);
+        clock.advance(REFRESH_AFTER);
+        store.get(ISS); // second call: the failing attempt
+
+        clock.advance(RETRY_AFTER.minusMinutes(1));
+        TleSnapshot served = store.get(ISS);
+        store.get(ISS);
+
+        verify(client, times(2)).fetch(ISS);
+        assertThat(served.fetchedAt()).isEqualTo(START);
+    }
+
+    @Test
+    void triesAgainOnceTheBackoffWindowHasElapsed() {
+        Instant recovered = START.plus(REFRESH_AFTER).plus(RETRY_AFTER);
+        when(client.fetch(ISS))
+                .thenReturn(snapshot(EPOCH, START))
+                .thenThrow(new TleUnavailableException("CelesTrak unreachable"))
+                .thenReturn(snapshot(EPOCH.plus(Duration.ofHours(2)), recovered));
+
+        store.get(ISS);
+        clock.advance(REFRESH_AFTER);
+        store.get(ISS); // the failing attempt
+
+        clock.advance(RETRY_AFTER);
+        TleSnapshot refreshed = store.get(ISS);
+
+        verify(client, times(3)).fetch(ISS);
+        assertThat(refreshed.fetchedAt()).isEqualTo(recovered);
     }
 
     /** Degrading assumes there is something to degrade to. */

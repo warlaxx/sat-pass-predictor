@@ -12,6 +12,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param refreshAfter   past this age <em>since the last fetch</em>, CelesTrak is called
  *                       again. This is not a validity period: if the call fails, the
  *                       previous snapshot keeps being served.
+ * @param retryAfter     minimum delay between two <em>attempts</em>. Without it, an
+ *                       outage turns every incoming request into a CelesTrak call, since
+ *                       a failed refresh leaves the snapshot — and therefore its age —
+ *                       unchanged. Must not exceed {@code refreshAfter}, otherwise it
+ *                       would also delay ordinary refreshes.
  * @param maxAge         past this age <em>since the epoch of the elements</em>, we refuse
  *                       to predict. This is the only hard limit, and it is about physics,
  *                       not about the network.
@@ -23,6 +28,7 @@ public record TleProperties(String baseUrl,
                             Duration connectTimeout,
                             Duration readTimeout,
                             Duration refreshAfter,
+                            Duration retryAfter,
                             Duration maxAge,
                             int maximumSize) {
 
@@ -32,6 +38,14 @@ public record TleProperties(String baseUrl,
         }
         if (refreshAfter == null || refreshAfter.isNegative() || refreshAfter.isZero()) {
             throw new IllegalArgumentException("tle.refresh-after must be strictly positive");
+        }
+        if (retryAfter == null || retryAfter.isNegative() || retryAfter.isZero()) {
+            throw new IllegalArgumentException("tle.retry-after must be strictly positive");
+        }
+        if (retryAfter.compareTo(refreshAfter) > 0) {
+            throw new IllegalArgumentException(
+                    "tle.retry-after must not exceed tle.refresh-after, otherwise the backoff"
+                            + " would also hold back ordinary refreshes");
         }
         if (maxAge == null || maxAge.compareTo(refreshAfter) <= 0) {
             throw new IllegalArgumentException(

@@ -13,6 +13,9 @@ tle:
   # Past this age since the last fetch, CelesTrak is called again.
   # This is not a validity period: see TleStore.
   refresh-after: 2h
+  # Minimum delay between two attempts. Keeps an outage from turning every
+  # incoming request into a call to CelesTrak.
+  retry-after: 5m
   # Past this age since the epoch of the elements, we refuse to predict.
   max-age: 7d
   maximum-size: 500
