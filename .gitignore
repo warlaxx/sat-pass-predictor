@@ -1,0 +1,21 @@
+# Donnees Orekit : telechargees via scripts/fetch-orekit-data.sh
+orekit-data/
+
+# Java / Maven
+target/
+*.class
+*.jar
+!**/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.jar
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
