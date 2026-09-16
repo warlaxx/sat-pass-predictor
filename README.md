@@ -1,5 +1,7 @@
 # Sat Pass Predictor
 
+[![CI](https://github.com/warlaxx/sat-pass-predictor/actions/workflows/ci.yml/badge.svg)](https://github.com/warlaxx/sat-pass-predictor/actions/workflows/ci.yml)
+
 Calcul et visualisation des passages de satellites au-dessus d'un point donne.
 Backend Java / Spring Boot avec [Orekit](https://www.orekit.org/), frontend Angular.
 
