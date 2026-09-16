@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.within;
 
+import dev.abdallah.satpass.OrekitTest;
 import dev.abdallah.satpass.TleFixtures;
 import dev.abdallah.satpass.domain.ObserverLocation;
 import dev.abdallah.satpass.domain.SatellitePass;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.orekit.data.DataContext;
 import org.orekit.propagation.analytical.tle.TLE;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 /**
  * Jalon 3 — la trajectoire echantillonnee.
@@ -26,7 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  * refactoring casserait sans bruit — que la courbe commence a l'AOS, finisse au LOS,
  * passe par le sommet, et que le pas annonce soit celui applique.
  */
-@SpringBootTest
+@OrekitTest
 class TrackSamplingTest {
 
     private static final ObserverLocation LYON = new ObserverLocation(45.7578, 4.8320, 170.0);

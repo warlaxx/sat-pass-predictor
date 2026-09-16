@@ -25,6 +25,35 @@ public final class TleFixtures {
         return ValidationReference.load().tle();
     }
 
+    /** Le nom tel que CelesTrak le publie pour ce satellite. */
+    public static String issName() {
+        return ValidationReference.load().satellite().name();
+    }
+
+    /** Numero NORAD de l'ISS. */
+    public static int issNoradId() {
+        return ValidationReference.load().satellite().noradId();
+    }
+
+    /** Ligne 1 brute, telle qu'elle circule sur le reseau. */
+    public static String issLine1() {
+        return ValidationReference.load().satellite().tleLine1();
+    }
+
+    /** Ligne 2 brute. */
+    public static String issLine2() {
+        return ValidationReference.load().satellite().tleLine2();
+    }
+
+    /**
+     * Une reponse de CelesTrak reconstituee a l'identique : nom complete par des espaces
+     * jusqu'a 24 caracteres, fins de ligne CRLF, ligne vide finale. Les tests qui ne
+     * reproduisent pas ces details valident un format qui n'existe pas.
+     */
+    public static String celestrakThreeLineResponse() {
+        return String.format("%-24s", issName()) + "\r\n" + issLine1() + "\r\n" + issLine2() + "\r\n";
+    }
+
     private TleFixtures() {
     }
 }

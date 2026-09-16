@@ -8,9 +8,8 @@ import org.orekit.data.DataContext;
 import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScale;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@OrekitTest
 class OrekitDataLoadingTest {
 
     @Autowired

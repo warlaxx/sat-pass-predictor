@@ -3,6 +3,7 @@ package dev.abdallah.satpass.validation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
+import dev.abdallah.satpass.OrekitTest;
 import dev.abdallah.satpass.domain.SatellitePass;
 import dev.abdallah.satpass.passes.PassPredictionService;
 import java.time.Instant;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.orekit.data.DataContext;
 import org.orekit.propagation.analytical.tle.TLE;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 /**
  * Jalon 2 — non-regression contre la reference validee.
@@ -42,7 +42,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  * 0,1 degre d'elevation par seconde. Un ecart d'une seconde et un ecart de 0,1 degre
  * decrivent donc le meme evenement.
  */
-@SpringBootTest
+@OrekitTest
 class PassPredictionReferenceTest {
 
     /** Derive temporelle toleree sur AOS, sommet et LOS. */
