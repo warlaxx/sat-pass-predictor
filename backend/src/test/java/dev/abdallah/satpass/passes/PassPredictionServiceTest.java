@@ -2,14 +2,12 @@ package dev.abdallah.satpass.passes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.within;
 
 import dev.abdallah.satpass.TleFixtures;
 import dev.abdallah.satpass.domain.ObserverLocation;
 import dev.abdallah.satpass.domain.SatellitePass;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.orekit.data.DataContext;
@@ -84,33 +82,6 @@ class PassPredictionServiceTest {
             assertThat(pass.maxElevationAzimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
             assertThat(pass.losAzimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
         });
-    }
-
-    /**
-     * Ancrage de non-regression sur le premier passage.
-     *
-     * <p>Ces valeurs ont ete confrontees a Skyfield, une implementation independante de
-     * SGP4 : aux dates produites ici, Skyfield calcule une elevation de 10 degres a
-     * 0,13 millidegre pres. La tolerance de la seconde retenue ci-dessous n'est donc pas
-     * une marge d'erreur physique, mais une marge de securite face aux evolutions
-     * futures d'Orekit ou du jeu de donnees EOP. La justification formelle de la
-     * tolerance relevera du jalon 2.
-     */
-    @Test
-    void firstPassMatchesTheValidatedReference() {
-        TLE iss = TleFixtures.iss();
-
-        SatellitePass first = service
-                .predictPasses(iss, LYON, tleEpoch(iss), Duration.ofHours(24), MIN_ELEVATION_DEG)
-                .getFirst();
-
-        assertThat(first.aos())
-                .isCloseTo(Instant.parse("2021-02-04T12:16:42.325Z"), within(1, ChronoUnit.SECONDS));
-        assertThat(first.los())
-                .isCloseTo(Instant.parse("2021-02-04T12:23:16.131Z"), within(1, ChronoUnit.SECONDS));
-        assertThat(first.maxElevationDeg()).isCloseTo(50.62, within(0.05));
-        assertThat(first.aosAzimuthDeg()).isCloseTo(221.7, within(0.5));
-        assertThat(first.losAzimuthDeg()).isCloseTo(68.9, within(0.5));
     }
 
     /**

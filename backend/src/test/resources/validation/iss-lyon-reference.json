@@ -1,0 +1,67 @@
+{
+  "_comment": "Reference de non-regression du jalon 2. Produite par PassPredictionService, verifiee independamment par scripts/validate-against-skyfield.py. Ne pas editer a la main : regenerer et revalider.",
+  "satellite": {
+    "name": "ISS (ZARYA)",
+    "noradId": 25544,
+    "tleLine1": "1 25544U 98067A   21035.14486477  .00001026  00000-0  26816-4 0  9998",
+    "tleLine2": "2 25544  51.6455 280.7636 0002243 335.6496 186.1723 15.48938788267977"
+  },
+  "observer": {
+    "name": "Lyon",
+    "latitudeDeg": 45.7578,
+    "longitudeDeg": 4.832,
+    "altitudeMeters": 170.0
+  },
+  "window": {
+    "startsAtTleEpoch": true,
+    "hours": 24
+  },
+  "minElevationDeg": 10.0,
+  "passes": [
+    {
+      "aos": "2021-02-04T12:16:42.325291143Z",
+      "aosAzimuthDeg": 221.711017,
+      "maxElevationTime": "2021-02-04T12:19:58.590716703Z",
+      "maxElevationDeg": 50.623526,
+      "maxElevationAzimuthDeg": 145.246808,
+      "los": "2021-02-04T12:23:16.131319659Z",
+      "losAzimuthDeg": 68.862188
+    },
+    {
+      "aos": "2021-02-04T13:53:40.636473027Z",
+      "aosAzimuthDeg": 272.658657,
+      "maxElevationTime": "2021-02-04T13:56:52.838300868Z",
+      "maxElevationDeg": 39.168058,
+      "maxElevationAzimuthDeg": 344.033067,
+      "los": "2021-02-04T14:00:05.761236403Z",
+      "losAzimuthDeg": 55.411151
+    },
+    {
+      "aos": "2021-02-04T15:31:13.486821686Z",
+      "aosAzimuthDeg": 301.204042,
+      "maxElevationTime": "2021-02-04T15:34:14.724406306Z",
+      "maxElevationDeg": 29.108498,
+      "maxElevationAzimuthDeg": 4.251265,
+      "los": "2021-02-04T15:37:16.006778200Z",
+      "losAzimuthDeg": 67.290695
+    },
+    {
+      "aos": "2021-02-04T17:08:06.914715574Z",
+      "aosAzimuthDeg": 301.760782,
+      "maxElevationTime": "2021-02-04T17:11:28.822421590Z",
+      "maxElevationDeg": 62.350170,
+      "maxElevationAzimuthDeg": 24.033948,
+      "los": "2021-02-04T17:14:50.079057211Z",
+      "losAzimuthDeg": 106.277290
+    },
+    {
+      "aos": "2021-02-04T18:45:17.570466334Z",
+      "aosAzimuthDeg": 277.348854,
+      "maxElevationTime": "2021-02-04T18:48:04.778971655Z",
+      "maxElevationDeg": 23.829042,
+      "maxElevationAzimuthDeg": 221.860715,
+      "los": "2021-02-04T18:50:51.307597345Z",
+      "losAzimuthDeg": 166.290431
+    }
+  ]
+}

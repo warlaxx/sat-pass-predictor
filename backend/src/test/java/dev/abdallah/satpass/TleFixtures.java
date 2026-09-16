@@ -1,5 +1,6 @@
 package dev.abdallah.satpass;
 
+import dev.abdallah.satpass.validation.ValidationReference;
 import org.orekit.propagation.analytical.tle.TLE;
 
 /**
@@ -15,14 +16,13 @@ public final class TleFixtures {
     /**
      * ISS (NORAD 25544), epoque 2021-02-04T03:28:36.316 UTC.
      *
-     * <p>Provient du jeu de tests d'Orekit lui-meme, donc d'un TLE reellement publie :
-     * sommes de controle valides, valeurs coherentes. Son age est sans importance ici,
-     * puisque toutes les fenetres de test partent de son epoque.
+     * <p>Lu depuis {@code validation/iss-lyon-reference.json} plutot que recopie ici :
+     * le meme TLE sert au test de non-regression Java et au script de validation
+     * Python, et deux copies finiraient par diverger. Le TLE provient du jeu de tests
+     * d'Orekit, donc d'un TLE reellement publie, sommes de controle valides.
      */
     public static TLE iss() {
-        return new TLE(
-                "1 25544U 98067A   21035.14486477  .00001026  00000-0  26816-4 0  9998",
-                "2 25544  51.6455 280.7636 0002243 335.6496 186.1723 15.48938788267977");
+        return ValidationReference.load().tle();
     }
 
     private TleFixtures() {
