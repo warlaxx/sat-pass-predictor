@@ -1,9 +1,6 @@
 package dev.abdallah.satpass;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import dev.abdallah.satpass.passes.PassPredictionService;
 import dev.abdallah.satpass.tle.CelestrakTleClient;
@@ -11,13 +8,11 @@ import dev.abdallah.satpass.tle.TleStore;
 import org.junit.jupiter.api.Test;
 import org.orekit.data.DataContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * The only test that starts the whole application.
+ * The only test that starts the whole application, on a real servlet container.
  *
  * <h2>Why it exists</h2>
  * The other tests run on a context slice ({@link OrekitTest}) and therefore no longer
@@ -26,24 +21,30 @@ import org.springframework.test.web.servlet.MockMvc;
  * Boot 4, and the context refused to start. The code compiled, every brick was correct,
  * and the application would not have started in production.
  *
- * <p>This test is therefore the necessary complement to the slicing, not a redundancy.
- * The rule: <strong>one</strong> test starts everything, and it alone fails when the
- * wiring is broken; the others stay readable.
+ * <h2>Why a real web environment, and not the mock one</h2>
+ * Because a mock servlet context is not a servlet container, and the difference is not
+ * academic. With {@code WebEnvironment.MOCK} this class stayed green for three milestones
+ * while {@code mvn spring-boot:run} could not start at all: {@code orekit.data-path} was
+ * bound to a {@link java.nio.file.Path}, Spring's {@code PathEditor} resolved it through
+ * the servlet {@code ResourceLoader}, and {@code ../orekit-data} became
+ * {@code /../orekit-data} - a path above the context root, rejected outright. Every
+ * orbital test runs on {@code WebEnvironment.NONE} and never saw it; this one ran on a
+ * mock and did not see it either.
+ *
+ * <p>A test that claims to start "the whole application" has to start the thing that is
+ * actually shipped. {@code RANDOM_PORT} costs about a second and buys back the only
+ * failure mode the slices cannot see.
  *
  * <h2>What it checks beyond startup</h2>
  * That the beans carrying behaviour are actually there. A context can start having
- * silently omitted a {@code @Component} — a package outside the scan, an unmet condition
- * — and that is as real a failure as an exception.
+ * silently omitted a {@code @Component} - a package outside the scan, an unmet condition
+ * - and that is as real a failure as an exception.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ApplicationStartupTest {
 
     @Autowired
     ApplicationContext context;
-
-    @Autowired
-    MockMvc mockMvc;
 
     @Test
     void theRealApplicationContextStarts() {

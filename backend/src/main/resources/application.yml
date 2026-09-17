@@ -10,8 +10,11 @@ spring:
       enabled: true
 
 orekit:
-  # Overridable through an environment variable (Docker, CI).
-  data-path: ${OREKIT_DATA_PATH:../orekit-data}
+  # Candidate directories, searched in order: the first one that actually holds the data
+  # wins. Two entries because there are two places this application gets launched from -
+  # backend/ (Maven, the IDE) and the repository root. OREKIT_DATA_PATH replaces the list
+  # with the single location it names, so an explicit setting is never second-guessed.
+  data-paths: ${OREKIT_DATA_PATH:../orekit-data,orekit-data}
 
 tle:
   base-url: https://celestrak.org

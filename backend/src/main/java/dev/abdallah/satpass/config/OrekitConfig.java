@@ -1,6 +1,6 @@
 package dev.abdallah.satpass.config;
 
-import java.io.File;
+import java.nio.file.Path;
 import org.orekit.data.DataContext;
 import org.orekit.data.DirectoryCrawler;
 import org.orekit.data.LazyLoadedDataContext;
@@ -13,7 +13,9 @@ import org.springframework.context.annotation.Configuration;
  *
  * <p>Without those files, the first call to TimeScalesFactory.getUTC() raises an
  * OrekitException ("no IERS UTC-TAI history data loaded"). We therefore fail at startup,
- * with an explicit message, rather than at the first computation.
+ * with an explicit message, rather than at the first computation. Finding the directory
+ * and deciding whether it is usable is {@link OrekitDataDirectory}'s job; this class only
+ * registers the result.
  *
  * <h2>Idempotent registration</h2>
  * {@link DataContext#getDefault()} is a JVM singleton, not a bean: its provider manager
@@ -41,15 +43,11 @@ public class OrekitConfig {
 
     @Bean
     public DataContext orekitDataContext(OrekitProperties properties) {
-        File dir = properties.dataPath().toFile();
-        if (!dir.isDirectory()) {
-            throw new IllegalStateException(
-                    "orekit-data not found: " + dir.getAbsolutePath()
-                            + " — run scripts/fetch-orekit-data.sh first");
-        }
+        Path directory = OrekitDataDirectory.resolve(properties.dataPaths());
+
         LazyLoadedDataContext context = DataContext.getDefault();
         context.getDataProvidersManager().clearProviders();
-        context.getDataProvidersManager().addProvider(new DirectoryCrawler(dir));
+        context.getDataProvidersManager().addProvider(new DirectoryCrawler(directory.toFile()));
         return context;
     }
 }

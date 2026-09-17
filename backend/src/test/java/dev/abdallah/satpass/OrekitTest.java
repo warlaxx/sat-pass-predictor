@@ -28,8 +28,13 @@ import org.springframework.boot.test.context.SpringBootTest;
  * <h2>What {@code @SpringBootTest(classes = ...)} keeps</h2>
  * The loading of {@code application.yml} and the relaxed binding of
  * {@code @ConfigurationProperties}. A bare {@code @ContextConfiguration} would lose them,
- * and {@code orekit.data-path} would no longer resolve. {@code WebEnvironment.NONE} also
+ * and {@code orekit.data-paths} would no longer resolve. {@code WebEnvironment.NONE} also
  * avoids standing up a web context none of these tests has any use for.
+ *
+ * <p>That last convenience has a sharp edge, and it drew blood: because these tests never
+ * stand up a servlet context, they never saw that the application could not start in one.
+ * {@link ApplicationStartupTest} is what covers it, and it now runs on a real port for
+ * exactly that reason.
  *
  * <h2>The trade-off, and how it is covered</h2>
  * None of these tests checks any more that the real application starts. That is exactly
