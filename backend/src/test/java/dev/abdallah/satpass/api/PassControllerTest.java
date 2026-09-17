@@ -190,4 +190,24 @@ class PassControllerTest {
         mockMvc.perform(get("/api/passes?noradId=ISS&lat=45.7578&lon=4.8320"))
                 .andExpect(status().isBadRequest());
     }
+
+    /**
+     * A rejection by the framework comes out in the same format as a rejection by the
+     * application.
+     *
+     * <p>The three tests above assert a status code and nothing else, which is exactly
+     * how the endpoint went on serving two different error formats without anyone
+     * noticing: {@code spring.mvc.problemdetails.enabled} defaults to {@code false} in
+     * Spring Boot, so a parameter the framework rejects used to come back as a plain
+     * error body with no {@code type} to branch on, while an unknown satellite came back
+     * as a Problem Detail. A client cannot be asked to parse both. Asserting the media
+     * type is what makes the property load-bearing instead of merely believed in.
+     */
+    @Test
+    void aRejectionByTheFrameworkIsAlsoAProblemDetail() throws Exception {
+        mockMvc.perform(get("/api/passes?noradId=25544&lat=300&lon=4.8320"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400));
+    }
 }

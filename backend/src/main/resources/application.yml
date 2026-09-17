@@ -1,6 +1,13 @@
 spring:
   application:
     name: sat-pass-predictor
+  mvc:
+    problemdetails:
+      # Off by default in Spring Boot. Without it, a parameter the framework rejects
+      # (missing, wrong type, out of bounds) comes back in a different format from the
+      # errors ApiExceptionHandler produces, and carries no type a client could branch
+      # on. Two error formats on one endpoint is not an API.
+      enabled: true
 
 orekit:
   # Overridable through an environment variable (Docker, CI).
