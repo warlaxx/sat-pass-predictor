@@ -164,7 +164,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [ ] Docker Compose, showcase pass
 - [ ] Naked-eye visible passes, TLE cache (PostgreSQL)
 
-Validated interface mockup: [docs/maquette-interface.html](docs/maquette-interface.html)
+Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
 (open it in a browser).
 
 ## How this repository was written

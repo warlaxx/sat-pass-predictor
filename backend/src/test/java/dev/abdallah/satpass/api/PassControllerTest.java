@@ -47,7 +47,7 @@ class PassControllerTest {
 
     /**
      * The exit criterion of the milestone: the shape documented in
-     * {@code docs/maquette-interface.html} is served as-is. The frontend was designed
+     * {@code docs/interface-mockup.html} is served as-is. The frontend was designed
      * against this JSON; any deviation here is a broken contract.
      */
     @Test

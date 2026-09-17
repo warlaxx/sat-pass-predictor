@@ -49,8 +49,8 @@
     </dependency>
 
     <!--
-      Documentation OpenAPI generee depuis le code. La serie 3.1.x est celle qui cible
-      Spring Boot 4 ; la 2.x s'arrete a Boot 3.5 et ne demarrerait pas ici.
+      OpenAPI documentation generated from the code. The 3.1.x line is the one that
+      targets Spring Boot 4; 2.x stops at Boot 3.5 and would not even start here.
     -->
     <dependency>
       <groupId>org.springdoc</groupId>

@@ -15,7 +15,7 @@ import java.util.List;
  * it. Merging the two means publishing every internal refactoring as a breaking API
  * change — and never being able to rename a domain field because a browser reads it.
  *
- * <p>The shape is the one documented in {@code docs/maquette-interface.html}, section
+ * <p>The shape is the one documented in {@code docs/interface-mockup.html}, section
  * "What the API must return". It was frozen before the frontend was written, so that the
  * frontend has nothing to negotiate.
  *

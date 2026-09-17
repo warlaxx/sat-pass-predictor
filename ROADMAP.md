@@ -12,7 +12,7 @@ Target: a presentable version by **end of November 2026**, mid-December with sla
 > discovered in December.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
-milestones 6 to 8: `docs/maquette-interface.html`, which opens directly in a browser.
+milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
 
 ---
 
@@ -52,7 +52,7 @@ comes before the rest, not at the end.
 that the implementation and the chain of frames are correct; it says nothing about the gap
 to the real sky, which is dominated by the age of the TLE. A comparison against
 Heavens-Above would answer the other question. Reference passes for Lyon (16–25 September
-2026) are already recorded in `docs/maquette-interface.html` if you want to run it.
+2026) are already recorded in `docs/interface-mockup.html` if you want to run it.
 
 ---
 
@@ -195,14 +195,14 @@ collapsing of concurrent calls.
 - Jakarta validation + `@RestControllerAdvice` (errors as Problem Details, RFC 9457).
 - `@WebMvcTest` tests, springdoc-openapi documentation.
 
-**Exit criterion**: the JSON documented in `docs/maquette-interface.html` (section "What
+**Exit criterion**: the JSON documented in `docs/interface-mockup.html` (section "What
 the API must return") is served as-is.
 
 ---
 
 ## Milestone 6 — Frontend: shell and list (≈ 6 h · 1.5 weeks)
 
-Visual reference: `docs/maquette-interface.html`. **The mockup is the visual and
+Visual reference: `docs/interface-mockup.html`. **The mockup is the visual and
 behavioural target, not a template to copy**: its DOM is built in imperative JavaScript,
 which has no place in an Angular component.
 
