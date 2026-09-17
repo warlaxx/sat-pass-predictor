@@ -30,8 +30,8 @@ Java / Spring Boot backend with [Orekit](https://www.orekit.org/), Angular front
   export JAVA_HOME=$(/usr/libexec/java_home -v 25)
   ```
 
-- **Maven 3.9+** (`brew install maven`) to generate the wrapper the first time.
-  After that, `./mvnw` is enough.
+- **No Maven to install**: `backend/mvnw` downloads the pinned version (3.9.16) on
+  first use. It is the command the CI runs, so what passes here passes there.
 - **Node 22 LTS**
 
 ## Getting started
@@ -41,7 +41,7 @@ Java / Spring Boot backend with [Orekit](https://www.orekit.org/), Angular front
 ./scripts/fetch-orekit-data.sh
 
 # 2. Backend (http://localhost:8080)
-cd backend && mvn spring-boot:run
+cd backend && ./mvnw spring-boot:run
 
 # 3. Frontend (http://localhost:4200, /api proxied to 8080)
 cd frontend && npm install && npm start
@@ -50,7 +50,7 @@ cd frontend && npm install && npm start
 ## Tests
 
 ```bash
-cd backend  && mvn verify
+cd backend  && ./mvnw verify
 cd frontend && npm test
 ```
 
@@ -157,7 +157,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] Cross-validation against an independent SGP4 implementation (Skyfield)
 - [x] Track sampling (`track`, `OrekitStepHandler`, fixed 10 s step)
 - [x] TLE retrieval from CelesTrak (last known TLE, age exposed)
-- [ ] REST API `/api/passes`
+- [x] REST API `/api/passes` (Problem Details, springdoc)
 - [ ] Frontend: shell, pass list, TLE age banner
 - [ ] Polar sky chart (SVG, no dependency)
 - [ ] 3D globe: ground track, visibility circle, terminator

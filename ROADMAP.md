@@ -6,10 +6,13 @@ to make sense: if the project stops at milestone 4, what is online stays coheren
 
 Target: a presentable version by **end of November 2026**, mid-December with slack.
 
-> Milestones 0 to 4 are done. About 29 h remain, that is 7 full weeks at 4 h/week.
-> Adding the 3D globe and splitting the frontend more finely cost about ten hours more
-> than the initial roadmap. That is an accepted cost, not a slip: better written down than
-> discovered in December.
+> Milestones 0 to 5 are done. About 21 h remain, that is a little over 5 weeks at
+> 4 h/week — the whole frontend, and nothing else. Adding the 3D globe and splitting the
+> frontend more finely cost about ten hours more than the initial roadmap. That is an
+> accepted cost, not a slip: better written down than discovered in December.
+>
+> The backend is finished, apart from milestone 10. Everything that remains is what the
+> project shows rather than what it computes.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
 milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
@@ -90,6 +93,15 @@ its curve is visibly angular.
 polyline. Visible consequence: the culmination marker falls *on* the curve. Without that
 it would float beside it — near the zenith the ISS gains several degrees of elevation in a
 few seconds, and the culmination never falls on a multiple of 10 s.
+
+**Amended at milestone 5.** The record carried the polyline *and* seven scalars beside it
+— three instants and four angles — which stated the same thing twice. It now carries
+`SatellitePass(TrackPoint aos, TrackPoint culmination, TrackPoint los, List<TrackPoint>
+track)`, where the three remarkable points are the very instances the track holds. The
+invariant becomes an equality of objects instead of a comparison of dates, the API gains
+the range and the sub-satellite point at those three instants, and the culmination can no
+longer be missing from the track — there is nothing left to look up. The JSON did not
+change: `PassDto` already published those three phases.
 
 **Exit criterion met**: `TrackSamplingTest` checks that the first and last points coincide
 with AOS and LOS and that the elevation there equals the threshold to within 1e-3 degree,
@@ -186,17 +198,54 @@ collapsing of concurrent calls.
 
 ---
 
-## Milestone 5 — REST API (≈ 4 h · 1 week)
+## Milestone 5 — REST API (done)
 
-- `GET /api/passes?noradId=25544&lat=45.75&lon=4.85&altitude=200&hours=48&minElevation=10`
+- `GET /api/passes?noradId=25544&lat=45.75&lon=4.85&alt=170&hours=48&minElevation=10`
 - DTOs in ISO-8601 UTC `Instant`. Time zones are a display problem, not a computation one.
-- The response carries `tle` (epoch, age, source, fetch date), `observer`,
-  `minElevationDeg` and the list of passes with their `track`.
+- The response carries `satellite`, `tle` (epoch, age, source, fetch date), `observer`,
+  `minElevationDeg`, `computedAt` and the list of passes with their `track`.
 - Jakarta validation + `@RestControllerAdvice` (errors as Problem Details, RFC 9457).
-- `@WebMvcTest` tests, springdoc-openapi documentation.
+- `@WebMvcTest` tests, springdoc-openapi documentation, Swagger UI under `/docs`.
 
-**Exit criterion**: the JSON documented in `docs/interface-mockup.html` (section "What
-the API must return") is served as-is.
+**Decision: the DTOs are not the domain.** A domain record changes when the physics or
+the computation demands it; a DTO changes when a client demands it. Publishing the domain
+would make every internal refactoring a breaking API change, and would forbid renaming a
+domain field because a browser reads it. Accepted trade-off: one mapping to write and to
+keep in step, paid for by `PassControllerTest`, which pins the shape field by field.
+
+**Decision: the age of the TLE is computed on the server, once.** The uncertainty banner
+depends on it, and a client recomputing it from `epoch` and its own clock would show a
+false age the moment that clock drifts. Same reasoning for `computedAt`: the clock is read
+once per request and carried along, so the start of the window and the displayed age
+cannot disagree.
+
+**Decision: the three phases are read off the track, not recomputed.** `aos`,
+`culmination` and `los` are the very `TrackPoint` instances the polyline holds — the
+domain guarantees the identity — so the labelled instants carry exactly the azimuth,
+elevation and range of the curve drawn beside them. Nothing is searched for and nothing
+can disagree.
+
+**Decision: the bounds live in the service, and are repeated in the annotations.** The
+`@Max` on the window turns an absurd request into a 400 before any propagation starts;
+that is a convenience. The rule itself belongs to `PassPredictionService`, which refuses a
+window beyond ten days whoever calls it — a scheduled job, a test, tomorrow's second entry
+point.
+
+**One error format, not two.** `spring.mvc.problemdetails.enabled` is off by default in
+Spring Boot. Without it, a parameter the framework rejects comes back in a format
+different from the one `ApiExceptionHandler` produces, with no `type` to branch on — and
+a suite that only asserts status codes never notices. The property is set, and the test
+asserts the media type.
+
+**The TLE failures go through a single exhaustive `switch`** over the sealed
+`TleException`. Three separate `@ExceptionHandler` methods worked; they would also have
+turned a fourth subtype into a silent 500. Now the compiler refuses the fourth subtype
+until the switch names it.
+
+**Exit criterion met**: the JSON documented in `docs/interface-mockup.html` (section "What
+the API must return") is served as-is, and `PassControllerTest` covers the documented
+shape, the server-side age, the three phases, the defaults, the four error cases and the
+parameter bounds.
 
 ---
 
