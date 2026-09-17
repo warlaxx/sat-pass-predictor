@@ -5,9 +5,18 @@ on:
     branches: [main]
   pull_request:
 
+# A second push while a run is still going makes the first one pointless: its verdict
+# would describe a commit nobody will look at again. Cancel it instead of paying for it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     runs-on: ubuntu-latest
+    # The suite runs in about a minute. Anything past this is a hang, and a hung job
+    # burns six hours of runner time by default.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -18,15 +27,33 @@ jobs:
           java-version: '25'
           cache: maven
 
+      # orekit-data weighs about 100 MB and its content barely moves. The key carries the
+      # ISO week, so the download happens once a week rather than on every run and a
+      # stale cache can never be more than seven days old — far inside the tolerances of
+      # the reference test, which propagates a frozen 2021 TLE.
+      - name: Stamp the week
+        id: stamp
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Orekit data
+        uses: actions/cache@v4
+        with:
+          path: orekit-data
+          key: orekit-data-${{ steps.stamp.outputs.week }}-${{ hashFiles('scripts/fetch-orekit-data.sh') }}
+
+      # A no-op when the cache has restored the directory.
       - name: Fetch Orekit data
         run: ./scripts/fetch-orekit-data.sh
 
+      # The wrapper, not the runner's Maven: the badge then attests exactly the command
+      # the README gives.
       - name: Run backend tests
         working-directory: backend
-        run: mvn -B verify
+        run: ./mvnw -B verify
 
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -48,3 +75,10 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npm run build
+
+      # A build says the code compiles, not that it works. One test today, many from
+      # milestone 6 on: running them costs nothing, discovering later that they were
+      # never run costs a milestone.
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test -- --watch=false
