@@ -56,7 +56,7 @@ class PassQueryServiceTest {
         // Five passes over 24 h, exactly like the milestone 2 reference: the two raw
         // lines did rebuild the same TLE.
         assertThat(prediction.passes()).hasSize(5);
-        assertThat(prediction.passes().getFirst().aos())
+        assertThat(prediction.passes().getFirst().aos().instant())
                 .isEqualTo(Instant.parse("2021-02-04T12:16:42.325291143Z"));
     }
 
@@ -88,6 +88,6 @@ class PassQueryServiceTest {
 
         assertThat(prediction.computedAt()).isEqualTo(now);
         assertThat(prediction.passes()).allSatisfy(pass ->
-                assertThat(pass.aos()).isAfterOrEqualTo(now));
+                assertThat(pass.aos().instant()).isAfterOrEqualTo(now));
     }
 }

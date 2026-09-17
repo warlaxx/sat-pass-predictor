@@ -82,26 +82,26 @@ class PassPredictionReferenceTest {
             SatellitePass actual = computed.get(i);
             ValidationReference.ExpectedPass expected = reference.passes().get(i);
 
-            assertThat(actual.aos())
+            assertThat(actual.aos().instant())
                     .as("pass %d: AOS", i + 1)
                     .isCloseTo(expected.aos(), within(TIME_TOLERANCE, TIME_UNIT));
-            assertThat(actual.maxElevationTime())
+            assertThat(actual.culmination().instant())
                     .as("pass %d: culmination time", i + 1)
                     .isCloseTo(expected.maxElevationTime(), within(TIME_TOLERANCE, TIME_UNIT));
-            assertThat(actual.los())
+            assertThat(actual.los().instant())
                     .as("pass %d: LOS", i + 1)
                     .isCloseTo(expected.los(), within(TIME_TOLERANCE, TIME_UNIT));
 
-            assertThat(actual.maxElevationDeg())
+            assertThat(actual.culmination().elevationDeg())
                     .as("pass %d: maximum elevation", i + 1)
                     .isCloseTo(expected.maxElevationDeg(), within(ANGLE_TOLERANCE_DEG));
-            assertThat(actual.aosAzimuthDeg())
+            assertThat(actual.aos().azimuthDeg())
                     .as("pass %d: azimuth at AOS", i + 1)
                     .isCloseTo(expected.aosAzimuthDeg(), within(ANGLE_TOLERANCE_DEG));
-            assertThat(actual.maxElevationAzimuthDeg())
+            assertThat(actual.culmination().azimuthDeg())
                     .as("pass %d: azimuth at culmination", i + 1)
                     .isCloseTo(expected.maxElevationAzimuthDeg(), within(ANGLE_TOLERANCE_DEG));
-            assertThat(actual.losAzimuthDeg())
+            assertThat(actual.los().azimuthDeg())
                     .as("pass %d: azimuth at LOS", i + 1)
                     .isCloseTo(expected.losAzimuthDeg(), within(ANGLE_TOLERANCE_DEG));
         }

@@ -238,36 +238,42 @@ public class PassPredictionService {
         return passes;
     }
 
+    /**
+     * Builds the three remarkable points once, and hands those very instances both to the
+     * track and to the pass.
+     *
+     * <p>Not a detail: {@link SatellitePass} requires its culmination to be a point of the
+     * track. Sharing the instance makes that invariant hold by identity — no search, no
+     * date comparison, nothing to get wrong the day the sampling changes.
+     */
     private SatellitePass buildPass(TLE tle, PassBoundaries pass, TopocentricFrame site) {
-        TrackingCoordinates aos = trackingCoordinates(pass.aos(), site);
-        TrackingCoordinates los = trackingCoordinates(pass.los(), site);
-        TrackingCoordinates max = trackingCoordinates(pass.apex(), site);
+        TrackPoint aos = pointAt(pass.aos(), site);
+        TrackPoint culmination = pointAt(pass.apex(), site);
+        TrackPoint los = pointAt(pass.los(), site);
 
-        return new SatellitePass(
-                toInstant(pass.aos().getDate()),
-                degreesInCircle(aos.getAzimuth()),
-                toInstant(pass.apex().getDate()),
-                FastMath.toDegrees(max.getElevation()),
-                degreesInCircle(max.getAzimuth()),
-                toInstant(pass.los().getDate()),
-                degreesInCircle(los.getAzimuth()),
-                sampleTrack(tle, pass, site));
+        return new SatellitePass(aos, culmination, los,
+                sampleTrack(tle, pass, site, aos, culmination, los));
     }
 
     /**
      * Samples the track between AOS and LOS.
      *
-     * <p>The three remarkable points are not interpolated: they are built from the
-     * {@code SpacecraftState} objects the root search has already produced. That is both
-     * more accurate and safer — the dates of the first point, the culmination and the
-     * last point are then, to the bit, those of the pass itself, and the invariant
-     * checked by {@link SatellitePass} holds by construction.
+     * <p>The three remarkable points are not interpolated: {@link #buildPass} builds them
+     * from the {@code SpacecraftState} objects the root search has already produced, and
+     * passes them in. That is both more accurate and safer — the dates of the first
+     * point, the culmination and the last point are then, to the bit, those of the pass
+     * itself, and the invariant checked by {@link SatellitePass} holds by construction.
      *
      * <p>In between, a single {@code propagate(AOS, LOS)}: the step handler takes states
      * from <em>within</em> each integration step by interpolation. One {@code propagate()}
      * per point would be a full restart of SGP4 for every sample.
      */
-    private List<TrackPoint> sampleTrack(TLE tle, PassBoundaries pass, TopocentricFrame site) {
+    private List<TrackPoint> sampleTrack(TLE tle,
+                                         PassBoundaries pass,
+                                         TopocentricFrame site,
+                                         TrackPoint aosPoint,
+                                         TrackPoint culmination,
+                                         TrackPoint losPoint) {
         AbsoluteDate aos = pass.aos().getDate();
         AbsoluteDate los = pass.los().getDate();
         AbsoluteDate apex = pass.apex().getDate();
@@ -275,9 +281,9 @@ public class PassPredictionService {
         List<AbsoluteDate> interior = interiorSampleDates(aos, los, apex);
 
         List<TrackPoint> track = new ArrayList<>(interior.size() + 3);
-        track.add(pointAt(pass.aos(), site));
-        track.add(pointAt(pass.apex(), site));
-        track.add(pointAt(pass.los(), site));
+        track.add(aosPoint);
+        track.add(culmination);
+        track.add(losPoint);
 
         if (!interior.isEmpty()) {
             TrackSampler sampler = new TrackSampler(interior, site);

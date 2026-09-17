@@ -60,19 +60,22 @@ class PassPredictionServiceTest {
 
     @Test
     void passesAreOrderedAndDisjoint() {
-        assertThat(passes).isSortedAccordingTo((a, b) -> a.aos().compareTo(b.aos()));
+        assertThat(passes).isSortedAccordingTo(
+                (a, b) -> a.aos().instant().compareTo(b.aos().instant()));
         for (int i = 1; i < passes.size(); i++) {
-            assertThat(passes.get(i).aos())
+            assertThat(passes.get(i).aos().instant())
                     .as("pass %d starts after the previous one ends", i)
-                    .isAfter(passes.get(i - 1).los());
+                    .isAfter(passes.get(i - 1).los().instant());
         }
     }
 
     @Test
     void everyPassIsPhysicallyCoherent() {
         assertThat(passes).allSatisfy(pass -> {
-            assertThat(pass.maxElevationDeg()).isGreaterThanOrEqualTo(MIN_ELEVATION_DEG);
-            assertThat(pass.maxElevationTime()).isAfter(pass.aos()).isBefore(pass.los());
+            assertThat(pass.culmination().elevationDeg()).isGreaterThanOrEqualTo(MIN_ELEVATION_DEG);
+            assertThat(pass.culmination().instant())
+                    .isAfter(pass.aos().instant())
+                    .isBefore(pass.los().instant());
 
             // A low Earth orbit crosses the sky in a few minutes. A duration of several
             // hours would signal a confusion of frame or of time scale.
@@ -80,9 +83,9 @@ class PassPredictionServiceTest {
                     .isGreaterThan(Duration.ofSeconds(30))
                     .isLessThan(Duration.ofMinutes(15));
 
-            assertThat(pass.aosAzimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
-            assertThat(pass.maxElevationAzimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
-            assertThat(pass.losAzimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
+            assertThat(pass.aos().azimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
+            assertThat(pass.culmination().azimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
+            assertThat(pass.los().azimuthDeg()).isGreaterThanOrEqualTo(0.0).isLessThan(360.0);
         });
     }
 
@@ -92,12 +95,13 @@ class PassPredictionServiceTest {
      */
     @Test
     void discardsAPassAlreadyUnderwayWhenTheWindowOpens() {
-        Instant oneMinuteIntoTheFirstPass = passes.getFirst().aos().plusSeconds(60);
+        Instant oneMinuteIntoTheFirstPass = passes.getFirst().aos().instant().plusSeconds(60);
 
         List<SatellitePass> truncated = service.predictPasses(
                 iss, LYON, oneMinuteIntoTheFirstPass, Duration.ofHours(24), MIN_ELEVATION_DEG);
 
-        assertThat(truncated.getFirst().aos()).isEqualTo(passes.get(1).aos());
+        assertThat(truncated.getFirst().aos().instant())
+                .isEqualTo(passes.get(1).aos().instant());
     }
 
     @Test

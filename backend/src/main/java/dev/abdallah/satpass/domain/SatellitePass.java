@@ -16,46 +16,50 @@ import java.util.List;
  * signal</i>, LOS for <i>loss of signal</i>: ground-station vocabulary, used here because
  * it is the vocabulary of the people this project is aimed at.
  *
- * <p>{@code track} is the same pass, sampled. The three instants above are what you read
- * in a table; {@code track} is what you draw. The first point is AOS, the last is LOS,
- * and the culmination is one of them: the three dates the interface labels therefore
- * fall <em>on</em> the curve, never beside it.
+ * <p><b>The three remarkable points are points of the track, not a copy of them.</b> An
+ * earlier shape carried seven scalars alongside the polyline — three instants and four
+ * angles — which stated the same thing twice and left every reader to hope the two
+ * agreed. Here {@code aos} is {@code track.getFirst()}, {@code los} is
+ * {@code track.getLast()} and {@code culmination} is one of the points in between: the
+ * invariant is an equality of objects checked at construction, so the three dates the
+ * interface labels fall <em>on</em> the drawn curve by construction rather than to within
+ * a tolerance. The side benefit is that the range and the sub-satellite point are
+ * available at those three instants too, which the scalars did not carry.
  */
-public record SatellitePass(
-        Instant aos,
-        double aosAzimuthDeg,
-        Instant maxElevationTime,
-        double maxElevationDeg,
-        double maxElevationAzimuthDeg,
-        Instant los,
-        double losAzimuthDeg,
-        List<TrackPoint> track) {
+public record SatellitePass(TrackPoint aos,
+                            TrackPoint culmination,
+                            TrackPoint los,
+                            List<TrackPoint> track) {
 
     public SatellitePass {
-        if (aos == null || maxElevationTime == null || los == null) {
-            throw new IllegalArgumentException("pass dates are missing");
-        }
-        if (!los.isAfter(aos)) {
-            throw new IllegalArgumentException("LOS (" + los + ") must follow AOS (" + aos + ")");
-        }
-        if (maxElevationTime.isBefore(aos) || maxElevationTime.isAfter(los)) {
-            throw new IllegalArgumentException(
-                    "culmination (" + maxElevationTime + ") must fall between AOS and LOS");
+        if (aos == null || culmination == null || los == null) {
+            throw new IllegalArgumentException("a pass needs its AOS, its culmination and its LOS");
         }
         if (track == null || track.size() < 2) {
             throw new IllegalArgumentException("a pass without a sampled track cannot be drawn");
         }
-        // The defensive copy protects the invariant checked right after: without it, the
-        // caller could empty the list once the record is built.
+        // The defensive copy comes before the checks below: without it the caller could
+        // empty the list once the record is built and the invariant would no longer hold.
         track = List.copyOf(track);
-        if (!track.getFirst().instant().equals(aos) || !track.getLast().instant().equals(los)) {
+        if (!track.getFirst().equals(aos) || !track.getLast().equals(los)) {
             throw new IllegalArgumentException(
-                    "the track must start at AOS (" + aos + ") and end at LOS (" + los + "), "
-                            + "it runs from " + track.getFirst().instant() + " to " + track.getLast().instant());
+                    "the track must start at AOS (" + aos.instant() + ") and end at LOS ("
+                            + los.instant() + "), it runs from " + track.getFirst().instant()
+                            + " to " + track.getLast().instant());
+        }
+        if (!los.instant().isAfter(aos.instant())) {
+            throw new IllegalArgumentException(
+                    "LOS (" + los.instant() + ") must follow AOS (" + aos.instant() + ")");
+        }
+        // Containment, not an interval test: the culmination has to be a point that is
+        // actually drawn, which is what lets the interface put its marker on the curve.
+        if (!track.contains(culmination)) {
+            throw new IllegalArgumentException(
+                    "the culmination (" + culmination.instant() + ") is not a point of the track");
         }
     }
 
     public Duration duration() {
-        return Duration.between(aos, los);
+        return Duration.between(aos.instant(), los.instant());
     }
 }

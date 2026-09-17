@@ -74,8 +74,8 @@ class TrackSamplingTest {
             TrackPoint first = pass.track().getFirst();
             TrackPoint last = pass.track().getLast();
 
-            assertThat(first.instant()).as("first point = AOS").isEqualTo(pass.aos());
-            assertThat(last.instant()).as("last point = LOS").isEqualTo(pass.los());
+            assertThat(first).as("first point = AOS").isEqualTo(pass.aos());
+            assertThat(last).as("last point = LOS").isEqualTo(pass.los());
 
             assertThat(first.elevationDeg())
                     .as("elevation at AOS")
@@ -87,31 +87,33 @@ class TrackSamplingTest {
     }
 
     /**
-     * The culmination falls on the curve.
+     * The culmination falls on the curve, and it is its highest point.
      *
      * <p>Without that guarantee the interface would draw the culmination marker beside
      * the track: near the zenith the ISS gains several degrees of elevation in a few
      * seconds, and the culmination, found by zeroing the derivative, does not fall on a
      * multiple of {@value #TRACK_STEP_SECONDS} s. It is a flaw visible to the eye, hence
      * a test.
+     *
+     * <p>Membership is now an invariant of the record, so the first assertion can no
+     * longer fail on its own; it is kept because it is the property the interface
+     * depends on, and a test that states it survives a change of representation. The
+     * second assertion is the one with teeth: it checks that the extremum Orekit
+     * returned really is the maximum of the sampled curve, which the detector alone does
+     * not guarantee.
      */
     @Test
-    void theCulminationIsOneOfTheTrackPoints() {
+    void theCulminationIsTheHighestPointOfTheTrack() {
         assertThat(passes).allSatisfy(pass -> {
-            TrackPoint apex = pass.track().stream()
-                    .filter(point -> point.instant().equals(pass.maxElevationTime()))
-                    .findFirst()
-                    .orElseThrow(() -> new AssertionError(
-                            "culmination " + pass.maxElevationTime() + " is not in the track"));
-
-            assertThat(apex.elevationDeg())
-                    .as("the top of the curve is the announced maximum")
-                    .isCloseTo(pass.maxElevationDeg(), within(ELEVATION_TOLERANCE_DEG));
+            assertThat(pass.track())
+                    .as("the culmination is one of the drawn points")
+                    .contains(pass.culmination());
 
             assertThat(pass.track())
-                    .as("no point of the track goes above that maximum")
+                    .as("no point of the track goes above the culmination")
                     .allSatisfy(point -> assertThat(point.elevationDeg())
-                            .isLessThanOrEqualTo(pass.maxElevationDeg() + ELEVATION_TOLERANCE_DEG));
+                            .isLessThanOrEqualTo(
+                                    pass.culmination().elevationDeg() + ELEVATION_TOLERANCE_DEG));
         });
     }
 
@@ -185,10 +187,23 @@ class TrackSamplingTest {
 
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> new SatellitePass(
-                        pass.aos(), pass.aosAzimuthDeg(),
-                        pass.maxElevationTime(), pass.maxElevationDeg(), pass.maxElevationAzimuthDeg(),
-                        pass.los(), pass.losAzimuthDeg(),
-                        amputated))
+                        pass.aos(), pass.culmination(), pass.los(), amputated))
                 .withMessageContaining("AOS");
+    }
+
+    /**
+     * The culmination has to be a point of the track, not merely a date that falls
+     * between AOS and LOS. That is the invariant that lets the API publish the three
+     * phases without looking anything up.
+     */
+    @Test
+    void aPassCannotBeBuiltWithACulminationThatIsNotInItsTrack() {
+        SatellitePass pass = passes.getFirst();
+        TrackPoint takenFromAnotherPass = passes.get(1).culmination();
+
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new SatellitePass(
+                        pass.aos(), takenFromAnotherPass, pass.los(), pass.track()))
+                .withMessageContaining("culmination");
     }
 }

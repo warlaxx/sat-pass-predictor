@@ -17,9 +17,9 @@ import java.util.List;
  * validation. Running a real propagation there would make them slow and would fail them
  * for reasons that are none of their business.
  *
- * <p>The pass still honours the {@link SatellitePass} invariants — first point at AOS,
- * last at LOS, culmination present — because building the DTO relies on them to read out
- * the three phases.
+ * <p>The pass still honours the {@link SatellitePass} invariants — the three remarkable
+ * points are the very instances the track holds — because that identity is what the DTO
+ * relies on to publish the three phases.
  */
 final class PassFixtures {
 
@@ -39,14 +39,11 @@ final class PassFixtures {
     }
 
     static SatellitePass pass() {
-        return new SatellitePass(
-                AOS, 292.5,
-                CULMINATION, 63.1, 22.5,
-                LOS, 112.4,
-                List.of(
-                        point(AOS, 292.5, 10.0, 1553.2),
-                        point(CULMINATION, 22.5, 63.1, 462.7),
-                        point(LOS, 112.4, 10.0, 1551.8)));
+        TrackPoint aos = point(AOS, 292.5, 10.0, 1553.2);
+        TrackPoint culmination = point(CULMINATION, 22.5, 63.1, 462.7);
+        TrackPoint los = point(LOS, 112.4, 10.0, 1551.8);
+
+        return new SatellitePass(aos, culmination, los, List.of(aos, culmination, los));
     }
 
     static TleSnapshot snapshot() {

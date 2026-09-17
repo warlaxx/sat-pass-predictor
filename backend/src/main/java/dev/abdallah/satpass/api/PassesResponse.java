@@ -77,29 +77,22 @@ public record PassesResponse(SatelliteDto satellite,
                           List<TrackPointDto> track) {
 
         /**
-         * The three phases are <em>read out of the track</em>, not recomputed.
+         * The three phases are the three remarkable points of the pass, which are also
+         * points of its track.
          *
-         * <p>Milestone 3 guarantees that the first point is AOS, the last is LOS, and the
-         * culmination is among them. Using them gives exact ranges at the three instants
-         * without a single extra propagation; recomputing would produce values slightly
-         * different from the curve drawn right next to them.
+         * <p>Nothing is recomputed and nothing is searched for: the domain guarantees the
+         * identity, so the labelled instants carry exactly the azimuth, elevation and
+         * range of the curve drawn next to them. This method used to look the culmination
+         * up in the track by date and throw when it did not find it; that failure mode no
+         * longer exists.
          */
         static PassDto from(SatellitePass pass) {
-            List<TrackPoint> track = pass.track();
-            TrackPoint aos = track.getFirst();
-            TrackPoint los = track.getLast();
-            TrackPoint culmination = track.stream()
-                    .filter(point -> point.instant().equals(pass.maxElevationTime()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException(
-                            "culmination missing from the track of the pass starting at " + pass.aos()));
-
             return new PassDto(
-                    PhaseDto.from(aos),
-                    PhaseDto.from(culmination),
-                    PhaseDto.from(los),
-                    java.time.Duration.between(pass.aos(), pass.los()).toSeconds(),
-                    track.stream().map(TrackPointDto::from).toList());
+                    PhaseDto.from(pass.aos()),
+                    PhaseDto.from(pass.culmination()),
+                    PhaseDto.from(pass.los()),
+                    pass.duration().toSeconds(),
+                    pass.track().stream().map(TrackPointDto::from).toList());
         }
     }
 
