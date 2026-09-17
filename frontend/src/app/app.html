@@ -1,8 +1,101 @@
-<header>
-  <h1>Sat Pass Predictor</h1>
-  <p>Satellite pass prediction — Orekit + Spring Boot + Angular</p>
+<header class="appbar">
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <h1>Sat Pass Predictor</h1>
+  </div>
+  @if (response(); as loaded) {
+    <p class="context">
+      <span class="num">{{ loaded.satellite.name }}</span>
+      <span class="sep" aria-hidden="true">&middot;</span>
+      <span class="num">{{ loaded.observer.latitudeDeg }}&deg;, {{ loaded.observer.longitudeDeg }}&deg;</span>
+      <span class="sep" aria-hidden="true">&middot;</span>
+      <span class="num">above {{ loaded.minElevationDeg }}&deg;</span>
+    </p>
+  }
 </header>
 
 <main>
-  <router-outlet />
+  <form class="card query" (submit)="$event.preventDefault(); search()">
+    <fieldset>
+      <legend class="label">Query</legend>
+
+      <label>
+        <span>NORAD</span>
+        <input class="num" type="number" min="1" max="99999" required
+               [value]="form().noradId" (input)="patch('noradId', $any($event.target).value)">
+      </label>
+      <label>
+        <span>Latitude</span>
+        <input class="num" type="number" step="0.0001" min="-90" max="90" required
+               [value]="form().lat" (input)="patch('lat', $any($event.target).value)">
+      </label>
+      <label>
+        <span>Longitude</span>
+        <input class="num" type="number" step="0.0001" min="-180" max="180" required
+               [value]="form().lon" (input)="patch('lon', $any($event.target).value)">
+      </label>
+      <label>
+        <span>Altitude (m)</span>
+        <input class="num" type="number" step="1" min="-500" max="9000" required
+               [value]="form().alt" (input)="patch('alt', $any($event.target).value)">
+      </label>
+      <label>
+        <span>Window (h)</span>
+        <input class="num" type="number" min="1" [max]="maxHours" required
+               [value]="form().hours" (input)="patch('hours', $any($event.target).value)">
+      </label>
+      <label>
+        <span>Min elev. (&deg;)</span>
+        <input class="num" type="number" step="0.5" min="0" max="89" required
+               [value]="form().minElevation" (input)="patch('minElevation', $any($event.target).value)">
+      </label>
+
+      <button type="submit" [disabled]="resource.isLoading()">
+        {{ resource.isLoading() ? 'Computing...' : 'Compute passes' }}
+      </button>
+    </fieldset>
+  </form>
+
+  <!--
+    Four states, four answers. The @else chain is ordered by what the reader needs to
+    know first: a failure beats a stale value, and an empty window is a result, not an
+    error.
+  -->
+  @if (!searched()) {
+    <p class="state hint">
+      Pick a satellite and a place, then compute. Defaults: the ISS over Lyon, the next
+      two days, passes above 10&deg;.
+    </p>
+  } @else if (resource.isLoading()) {
+    <p class="state" role="status">Propagating the orbit over the window&hellip;</p>
+  } @else if (problem(); as failure) {
+    <section class="state error" role="alert">
+      <h2>{{ failure.title }}</h2>
+      @if (failure.detail) {
+        <p>{{ failure.detail }}</p>
+      }
+      <button type="button" (click)="reload()">Try again</button>
+    </section>
+  } @else if (isEmptyResult()) {
+    <p class="state" role="status">
+      No pass above {{ response()!.minElevationDeg }}&deg; in this window. Lower the
+      threshold, or widen the window.
+    </p>
+  } @else if (response(); as loaded) {
+    <app-tle-banner [tle]="loaded.tle" />
+
+    <section class="card results">
+      <h2>{{ loaded.passes.length }} passes</h2>
+      <app-pass-table
+        [passes]="loaded.passes"
+        [selected]="selected()"
+        (select)="selected.set($event)"
+      />
+    </section>
+  }
 </main>
+
+<footer>
+  Elements from CelesTrak, propagated with Orekit (SGP4). No atmospheric refraction below
+  5&deg;. Every instant is computed in UTC; local times are your browser's.
+</footer>
