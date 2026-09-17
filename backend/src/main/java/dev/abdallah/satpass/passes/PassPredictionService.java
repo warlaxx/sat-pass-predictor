@@ -99,6 +99,20 @@ public class PassPredictionService {
      */
     private static final double TRACK_STEP_SECONDS = 10.0;
 
+    /**
+     * Longest search window the service accepts, in hours.
+     *
+     * <p>Beyond ten days the SGP4 error dwarfs the accuracy on display, and the response
+     * grows by one pass every ninety minutes or so, each carrying some forty points. The
+     * bound lives here rather than only in the controller: the service carries the
+     * invariant, and it is callable from elsewhere — a scheduled job, a test, tomorrow's
+     * second entry point. The HTTP annotation turns the same rule into a 400 before a
+     * propagation ever starts, which is a convenience, not the rule itself.
+     */
+    public static final int MAX_WINDOW_HOURS = 240;
+
+    private static final Duration MAX_WINDOW = Duration.ofHours(MAX_WINDOW_HOURS);
+
     private final DataContext dataContext;
     private final OneAxisEllipsoid earth;
 
@@ -129,6 +143,10 @@ public class PassPredictionService {
 
         if (window.isNegative() || window.isZero()) {
             throw new IllegalArgumentException("the search window must be positive: " + window);
+        }
+        if (window.compareTo(MAX_WINDOW) > 0) {
+            throw new IllegalArgumentException(
+                    "the search window exceeds " + MAX_WINDOW_HOURS + " h: " + window);
         }
         if (minElevationDeg < 0.0 || minElevationDeg >= 90.0) {
             throw new IllegalArgumentException("minimum elevation outside [0, 90): " + minElevationDeg);

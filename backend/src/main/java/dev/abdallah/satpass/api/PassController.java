@@ -1,6 +1,7 @@
 package dev.abdallah.satpass.api;
 
 import dev.abdallah.satpass.domain.ObserverLocation;
+import dev.abdallah.satpass.passes.PassPredictionService;
 import dev.abdallah.satpass.passes.PassQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,18 +31,16 @@ import org.springframework.web.bind.annotation.RestController;
  * in the Problem Details format. Adding {@code @Validated} would validate twice and
  * surface a {@code ConstraintViolationException} instead.
  *
- * <p>The {@value #MAX_HOURS} h cap on the window is not arbitrary. Beyond it, the SGP4
- * error far exceeds the accuracy on display, and the response grows by one pass every 90
- * minutes or so, each carrying some forty points. Ten days is already the limit of what
- * makes physical sense.
+ * <p>The {@value PassPredictionService#MAX_WINDOW_HOURS} h cap on the window is not
+ * arbitrary, and it is not defined here: it belongs to
+ * {@link PassPredictionService}, which refuses a longer window whoever calls it. This
+ * annotation only moves the refusal forward, so that an absurd request costs a 400 rather
+ * than a few seconds of SGP4.
  */
 @RestController
 @RequestMapping("/api/passes")
 @Tag(name = "Passes", description = "Prediction of the passes visible from an observer")
 public class PassController {
-
-    /** Maximum window, in hours. See the class javadoc. */
-    public static final int MAX_HOURS = 240;
 
     private final PassQueryService passQueryService;
 
@@ -76,7 +75,8 @@ public class PassController {
                     example = "170")
             @RequestParam(defaultValue = "0") @DecimalMin("-500.0") @DecimalMax("9000.0") double alt,
             @Parameter(description = "Length of the search window, in hours", example = "48")
-            @RequestParam(defaultValue = "48") @Min(1) @Max(MAX_HOURS) int hours,
+            @RequestParam(defaultValue = "48") @Min(1) @Max(PassPredictionService.MAX_WINDOW_HOURS)
+            int hours,
             @Parameter(description = "Minimum elevation for a pass to count, in degrees",
                     example = "10")
             @RequestParam(defaultValue = "10.0") @DecimalMin("0.0") @DecimalMax("89.0")
