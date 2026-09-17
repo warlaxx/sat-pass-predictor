@@ -249,7 +249,7 @@ parameter bounds.
 
 ---
 
-## Milestone 6 — Frontend: shell and list (≈ 6 h · 1.5 weeks)
+## Milestone 6 — Frontend: shell and list (half done)
 
 Visual reference: `docs/interface-mockup.html`. **The mockup is the visual and
 behavioural target, not a template to copy**: its DOM is built in imperative JavaScript,
@@ -267,6 +267,35 @@ which has no place in an Angular component.
 - `PassTableComponent`: local time **and** UTC, duration, maximum elevation, azimuths as
   compass points. Rows focusable and activatable from the keyboard.
 - `PassRibbonComponent`: one bar per pass, height = maximum elevation.
+
+**Done (17/09)**: design tokens, the API contract types and their fixture test, the
+`httpResource` service, the shell with its query form, `TleBannerComponent`,
+`PassTableComponent`. 18 frontend tests, `ng build` and `ng test` green.
+
+**Left**: `PassRibbonComponent`, browser geolocation, and the responsive pass at 880 px
+and 640 px.
+
+**Decision: the API types are written by hand, and pinned by a fixture.** Generating them
+from `/v3/api-docs` would remove the risk of drift and add a generator, a build step and a
+pile of generated code to review. Six records do not justify that — provided the drift is
+caught rather than hoped away. `passes.contract.spec.ts` holds the exact response
+`PassControllerTest` makes the backend produce, and compares key sets rather than reading
+fields, so a renamed field fails a test instead of going unread. The two suites pin the two
+ends of one contract.
+
+**Decision: the fonts are bundled, not fetched from Google.** The Angular build inlines a
+Google Fonts stylesheet at build time, so the build fails when that host is unreachable —
+which is how the decision came to be made rather than assumed. Fetching them at runtime
+hands every visitor's IP to a third party, and typography validated in IBM Plex that falls
+back to Helvetica because a CDN hiccuped is not the same page. `@fontsource`, latin subset,
+seven faces: 66 kB of bundle and 940 bytes of critical CSS. Same reasoning as the sky chart
+having no external dependency, applied to the type.
+
+**Decision: four states, four answers.** Idle, loading, error and empty are drawn as four
+different things. A page that answers "still loading", "the server said no" and "no pass in
+this window" with the same spinner answers the wrong question twice out of three. The error
+state reads the `type` of the Problem Details body, which is what tells an unknown
+satellite from a CelesTrak outage — two answers that share status 503.
 
 ---
 
