@@ -104,6 +104,30 @@ The line to read in the startup log is `TLE sources, in order: [...]`. It says e
 what this instance will try, which is the first thing worth knowing when the deployed
 application and the local one disagree.
 
+## Network resilience on Render
+
+Connection establishment has a 5 s timeout and each source has its own 15 s request
+budget. Render logs showed connection timeouts on both endpoints; response timings alone
+cannot establish whether a connection or a response timed out. `render.yaml` prefers the
+Vercel relay on Render. For a manually configured service, set `TLE_BASE_URLS` to
+`https://sat-pass-predictor-nine.vercel.app/tle-upstream,https://celestrak.org` in its dashboard.
+A Blueprint setting does not automatically update a manually created service.
+
+Failed sources remain available but move to the end for ten minutes. When nothing has
+been fetched, a failed attempt is remembered for 15 seconds to avoid serial network calls
+from queued requests. Existing snapshots retain the five-minute retry interval and the
+seven-day age limit. This store is still in memory: a restart loses it, and no timeout
+setting guarantees availability during an upstream outage.
+
+## Sky chart
+
+Select a bar or table row to inspect a pass. The SVG uses the API track, with the selected
+minimum elevation drawn as a dashed circle. Minute dots and phase details accompany a
+shared clock: play/pause at 20×, scrub, stop at LOS, and reset when selecting another pass.
+Playback starts paused (including for reduced-motion users). All displayed times include
+local/UTC labels. Intermediate readouts interpolate API samples; no orbit is computed in
+the browser. Illumination remains unknown until milestone 10, so the curve is neutral.
+
 ## Validation
 
 An astrodynamics computation that is compared to nothing is not a computation, it is an
@@ -183,7 +207,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] TLE retrieval from CelesTrak (last known TLE, age exposed)
 - [x] REST API `/api/passes` (Problem Details, springdoc)
 - [x] Frontend: shell, pass list, ribbon of nights, TLE age banner
-- [ ] Polar sky chart (SVG, no dependency)
+- [x] Polar sky chart (SVG), shared selection and playback controls
 - [ ] 3D globe: ground track, visibility circle, terminator
 - [ ] Docker Compose, showcase pass
 - [ ] Naked-eye visible passes, TLE cache (PostgreSQL)

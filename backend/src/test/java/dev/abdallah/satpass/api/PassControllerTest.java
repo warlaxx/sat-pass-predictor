@@ -147,7 +147,7 @@ class PassControllerTest {
 
         mockMvc.perform(get(QUERY))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(header().string("Retry-After", "300"))
+                .andExpect(header().string("Retry-After", "15"))
                 .andExpect(jsonPath("$.type")
                         .value("https://github.com/warlaxx/sat-pass-predictor/errors/tle-unavailable"));
     }

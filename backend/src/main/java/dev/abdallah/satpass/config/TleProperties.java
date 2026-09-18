@@ -18,10 +18,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *                       than one entry above, this is also the price of each unreachable
  *                       source before the next one is tried — it is a latency budget now,
  *                       not only a safety net.
- * @param readTimeout    how long to wait for the response body. Measured against the
- *                       slowest source, not the fastest: the relay is a second hop and
- *                       answers in about a second warm and about five cold, so a budget
- *                       set for a direct call refuses the relay exactly when it is needed.
+ * @param readTimeout    timeout for each HTTP request, independently of earlier sources.
  * @param sourceCooldown how long a source that has just failed is tried <em>last</em>
  *                       instead of in its configured position. Demotion, not exclusion:
  *                       when every source is cooling the order is the configured one
@@ -58,6 +55,12 @@ public record TleProperties(List<String> baseUrls,
             throw new IllegalArgumentException("tle.base-urls contains a blank entry");
         }
         baseUrls = List.copyOf(baseUrls);
+        if (connectTimeout == null || connectTimeout.isNegative() || connectTimeout.isZero()) {
+            throw new IllegalArgumentException("tle.connect-timeout must be strictly positive");
+        }
+        if (readTimeout == null || readTimeout.isNegative() || readTimeout.isZero()) {
+            throw new IllegalArgumentException("tle.read-timeout must be strictly positive");
+        }
         if (sourceCooldown == null || sourceCooldown.isNegative()) {
             throw new IllegalArgumentException(
                     "tle.source-cooldown must not be negative");

@@ -76,7 +76,7 @@
       two days, passes above 10&deg;.
     </p>
   } @else if (resource.isLoading()) {
-    <p class="state" role="status">Propagating the orbit over the window&hellip;</p>
+    <p class="state" role="status">Retrieving orbital elements and computing passes. A server starting up can take longer&hellip;</p>
   } @else if (problem(); as failure) {
     <section class="state error" role="alert">
       <h2>{{ failure.title }}</h2>
@@ -98,13 +98,17 @@
 
       <app-pass-ribbon
         [passes]="loaded.passes"
-        [selected]="selected()"
+        [selected]="selectedPass()?.aos?.instant"
         (select)="selected.set($event)"
       />
 
+      @if (selectedPass(); as pass) {
+        <app-pass-viewer [pass]="pass" [threshold]="loaded.minElevationDeg" />
+      }
+
       <app-pass-table
         [passes]="loaded.passes"
-        [selected]="selected()"
+        [selected]="selectedPass()?.aos?.instant"
         (select)="selected.set($event)"
       />
     </section>

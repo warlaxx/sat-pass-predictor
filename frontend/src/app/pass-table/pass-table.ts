@@ -47,7 +47,7 @@ import { compassPoint, elevationColour, formatDuration } from '../format';
             [class.selected]="pass.aos.instant === selected()"
             (click)="select.emit(pass.aos.instant)"
             (keydown.enter)="select.emit(pass.aos.instant)"
-            (keydown.space)="select.emit(pass.aos.instant)"
+            (keydown.space)="$event.preventDefault(); select.emit(pass.aos.instant)"
           >
             <td class="num">{{ pass.aos.instant | date: 'EEE d MMM HH:mm:ss' }}</td>
             <td class="num dim">{{ pass.aos.instant | date: 'HH:mm:ss' : 'UTC' }}</td>
@@ -130,12 +130,6 @@ import { compassPoint, elevationColour, formatDuration } from '../format';
       font-weight: 500;
     }
 
-    @media (width < 720px) {
-      .dim,
-      th:nth-child(2) {
-        display: none;
-      }
-    }
   `,
 })
 export class PassTable {

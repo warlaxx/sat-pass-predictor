@@ -76,6 +76,8 @@ public class TleClientConfig {
         // deployed application and the local one disagree.
         log.info("TLE sources, in order: {}{}", properties.baseUrls(),
                 spaceTrack.configured() ? " then " + spaceTrack.baseUrl() + " (space-track)" : "");
+        log.info("TLE HTTP budgets: connect={}, request={}, source cooldown={}",
+                properties.connectTimeout(), properties.readTimeout(), properties.sourceCooldown());
         return new FallbackTleClient(sources, properties.sourceCooldown(), clock);
     }
 

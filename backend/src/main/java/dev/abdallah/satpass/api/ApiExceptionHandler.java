@@ -41,7 +41,7 @@ public class ApiExceptionHandler {
     private static final String TYPE_PREFIX = "https://github.com/warlaxx/sat-pass-predictor/errors/";
 
     /** Suggested delay before retrying, in seconds, when the TLE sources falter. */
-    private static final String RETRY_AFTER_SECONDS = "300";
+    private static final String RETRY_AFTER_SECONDS = "15";
 
     @ExceptionHandler(TleException.class)
     public ResponseEntity<ProblemDetail> handleTleFailure(TleException e) {
@@ -68,7 +68,7 @@ public class ApiExceptionHandler {
                         unavailable.getMessage(), unavailable);
                 ProblemDetail problem = problem(HttpStatus.SERVICE_UNAVAILABLE,
                         "No TLE available for this satellite: no source of orbital elements"
-                                + " could be reached, and nothing has been fetched yet.",
+                                + " could be reached, and nothing has been fetched yet. Please retry in 15 seconds.",
                         "tle-unavailable", "Orbital elements unavailable");
                 yield ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS)

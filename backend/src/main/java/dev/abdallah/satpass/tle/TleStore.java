@@ -80,7 +80,7 @@ public class TleStore {
      * the age of the elements drives what we serve, the age of the attempt drives whether
      * we call out again.
      */
-    private record Entry(TleSnapshot snapshot, Instant lastAttempt) {
+    private record Entry(TleSnapshot snapshot, Instant lastAttempt, TleUnavailableException failure) {
     }
 
     /**
@@ -97,23 +97,28 @@ public class TleStore {
                 return existing;
             }
             try {
-                return new Entry(client.fetch(id), now);
+                return new Entry(client.fetch(id), now, null);
             } catch (TleNotFoundException e) {
                 return null; // Caffeine removes the entry: the satellite left the catalogue.
             } catch (TleUnavailableException e) {
-                if (existing == null) {
-                    throw e;
+                if (existing == null || existing.snapshot() == null) {
+                    log.warn("Initial TLE fetch failed for {}: {}", id, e.getMessage(), e);
+                    // Store the failed attempt too, so queued callers do not each retry.
+                    return new Entry(null, clock.instant(), e);
                 }
                 log.warn("no TLE source answered for {} ({}) — keeping the TLE fetched at {}",
                         id, e.getMessage(), existing.snapshot().fetchedAt());
                 // The attempt is recorded even though it failed; that is what stops the
                 // next request from immediately calling CelesTrak again.
-                return new Entry(existing.snapshot(), now);
+                return new Entry(existing.snapshot(), now, e);
             }
         });
 
         if (entry == null) {
             throw new TleNotFoundException(noradId);
+        }
+        if (entry.snapshot() == null) {
+            throw new TleUnavailableException("No orbital elements fetched yet; retry in 15 seconds", entry.failure());
         }
         return checkAge(entry.snapshot());
     }
@@ -123,6 +128,9 @@ public class TleStore {
      * renewing, and enough time has passed since the last attempt to be worth trying.
      */
     private boolean shouldAttemptRefresh(Entry entry, Instant now) {
+        if (entry.snapshot() == null) {
+            return !now.isBefore(entry.lastAttempt().plusSeconds(15));
+        }
         boolean stale = entry.snapshot().ageSinceFetch(now).compareTo(properties.refreshAfter()) >= 0;
         if (!stale) {
             return false;

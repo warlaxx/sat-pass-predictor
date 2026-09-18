@@ -33,6 +33,9 @@ services:
       # that is exactly how an instance ended up calling the blacklisted host while the
       # repository said otherwise. The source list lives in application.yml, ships in the
       # image, and is overridable by TLE_BASE_URLS when an environment really differs.
+      # Prefer the relay on Render; the direct origin remains a fallback.
+      - key: TLE_BASE_URLS
+        value: https://sat-pass-predictor-nine.vercel.app/tle-upstream,https://celestrak.org
       - key: JAVA_OPTS
         value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC
       # Space-Track, last source of the chain. sync: false means Render asks for the

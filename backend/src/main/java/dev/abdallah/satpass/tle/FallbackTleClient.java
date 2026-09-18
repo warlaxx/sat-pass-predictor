@@ -26,11 +26,8 @@ import org.slf4j.LoggerFactory;
  * that vote away.
  *
  * <h2>Why a failing source moves to the back, and is never dropped</h2>
- * Measured in production: the first endpoint burned its full connect timeout on
- * <strong>every single</strong> retrieval, having never once answered from that host, and
- * that delay came straight out of the budget the next source had to answer within. Two
- * seconds spent asking a question whose answer is already known, at the moment it is most
- * expensive.
+ * A failed endpoint adds latency before the next source is tried. Each source has its
+ * own timeout: the first attempt does not consume the next source's request budget.
  *
  * <p>So a source that fails goes to the back of the queue for a while, and a source that
  * answers returns to its place. Demoted, never removed — the order changes, the list does

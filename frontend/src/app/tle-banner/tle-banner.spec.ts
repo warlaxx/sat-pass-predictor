@@ -45,6 +45,12 @@ describe('TleBanner', () => {
     expect(fixture.nativeElement.textContent).toContain('4 to 12 km');
   });
 
+  it('does not suggest perfect accuracy for recent elements', async () => {
+    const fixture = await render(0.75);
+    expect(fixture.nativeElement.textContent).toContain('less than 1 s');
+    expect(fixture.nativeElement.textContent).not.toContain('±0');
+  });
+
   it('turns to the alert colour past three days, well before the server refuses', async () => {
     expect((await render(2)).nativeElement.querySelector('.stale')).toBeNull();
     expect((await render(4)).nativeElement.querySelector('.stale')).not.toBeNull();

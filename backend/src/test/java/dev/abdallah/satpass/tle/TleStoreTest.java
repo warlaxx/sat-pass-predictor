@@ -159,6 +159,40 @@ class TleStoreTest {
         assertThatExceptionOfType(TleUnavailableException.class).isThrownBy(() -> store.get(ISS));
     }
 
+    @Test
+    void collapsesConcurrentFailuresWhenNothingIsCached() throws Exception {
+        when(client.fetch(ISS)).thenThrow(new TleUnavailableException("connect timed out"));
+        try (var executor = java.util.concurrent.Executors.newFixedThreadPool(8)) {
+            var tasks = IntStream.range(0, 8)
+                    .<java.util.concurrent.Callable<Boolean>>mapToObj(i -> () -> {
+                        try {
+                            store.get(ISS);
+                            return false;
+                        } catch (TleUnavailableException expected) {
+                            return true;
+                        }
+                    }).toList();
+            for (var result : executor.invokeAll(tasks)) {
+                assertThat(result.get()).isTrue();
+            }
+        }
+        verify(client, times(1)).fetch(ISS);
+    }
+
+    @Test
+    void backsOffAnEmptyStoreThenRecovers() {
+        when(client.fetch(ISS))
+                .thenThrow(new TleUnavailableException("connect timed out"))
+                .thenReturn(snapshot(EPOCH, START.plusSeconds(15)));
+        assertThatExceptionOfType(TleUnavailableException.class).isThrownBy(() -> store.get(ISS));
+        clock.advance(Duration.ofSeconds(14));
+        assertThatExceptionOfType(TleUnavailableException.class).isThrownBy(() -> store.get(ISS));
+        verify(client, times(1)).fetch(ISS);
+        clock.advance(Duration.ofSeconds(1));
+        assertThat(store.get(ISS).fetchedAt()).isEqualTo(START.plusSeconds(15));
+        verify(client, times(2)).fetch(ISS);
+    }
+
     /**
      * A satellite removed from the catalogue has most likely re-entered the atmosphere.
      * Serving its last TLE would display the passes of an object that no longer exists:

@@ -5,6 +5,7 @@ import { PassQuery, DEFAULT_QUERY, MAX_WINDOW_HOURS } from './api/passes.query';
 import { ProblemDetail } from './api/passes.model';
 import { TleBanner } from './tle-banner/tle-banner';
 import { PassRibbon } from './pass-ribbon/pass-ribbon';
+import { PassViewer } from './pass-viewer/pass-viewer';
 import { PassTable } from './pass-table/pass-table';
 
 const GEOLOCATION_ERRORS: Record<number, string> = {
@@ -28,7 +29,7 @@ function round(value: number, decimals: number): number {
  */
 @Component({
   selector: 'app-root',
-  imports: [TleBanner, PassRibbon, PassTable],
+  imports: [TleBanner, PassRibbon, PassTable, PassViewer],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './app.scss',
   templateUrl: './app.html',
@@ -41,7 +42,11 @@ export class App {
   protected readonly selected = signal<string | undefined>(undefined);
 
   protected readonly resource = this.api.resource;
-  protected readonly response = computed(() => this.resource.value());
+  protected readonly response = computed(() => this.resource.hasValue() ? this.resource.value() : undefined);
+  protected readonly selectedPass = computed(() => {
+    const passes = this.response()?.passes ?? [];
+    return passes.find(pass => pass.aos.instant === this.selected()) ?? passes[0];
+  });
   protected readonly searched = computed(() => this.api.lastQuery() !== undefined);
 
   /**
@@ -63,7 +68,7 @@ export class App {
       type: 'about:blank',
       title: 'The backend could not be reached',
       status: 0,
-      detail: 'Check that the API is running on port 8080.',
+      detail: 'The server may be starting. Please try again shortly.',
     };
   });
 

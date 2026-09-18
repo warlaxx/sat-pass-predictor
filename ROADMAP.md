@@ -6,8 +6,8 @@ to make sense: if the project stops at milestone 4, what is online stays coheren
 
 Target: a presentable version by **end of November 2026**, mid-December with slack.
 
-> Milestones 0 to 5 are done. About 21 h remain, that is a little over 5 weeks at
-> 4 h/week — the whole frontend, and nothing else. Adding the 3D globe and splitting the
+> Milestones 0 to 7 are done. About 10 h remain, before the optional milestone, at roughly
+> 4 h/week — the globe and the showcase. Adding the 3D globe and splitting the
 > frontend more finely cost about ten hours more than the initial roadmap. That is an
 > accepted cost, not a slip: better written down than discovered in December.
 >
@@ -322,20 +322,24 @@ satellite from a CelesTrak outage — two answers that share status 503.
 
 ---
 
-## Milestone 7 — Sky chart (≈ 5 h · 1.5 weeks)
+## Milestone 7 — Sky chart (done)
 
 The view that answers "where do I look up from Lyon". **No external dependency**: SVG
 rendered by the Angular template from `computed()`.
 
 - Polar disc: edge = horizon, centre = zenith, north at the top. Circles at 30° and 60°, a
-  dashed circle at the 10° threshold, compass points outside.
-- Track drawn from `track`: solid while the satellite is lit, dashed after that. Tick
-  marks and time labels every minute.
-- `TransportBarComponent`: a **single clock** for the whole page, `t ∈ [0, 2]` carried by
-  a signal, play / pause / scrubber, and a continuous readout of time, azimuth, elevation,
-  range and illumination state.
+  dashed circle at the requested threshold, compass points outside.
+- Track drawn from `track` in a neutral colour until illumination is computed in milestone
+  10. Minute dots, with alternate minute labels to reduce collisions.
+- `PassViewer`: a **single clock** for the whole page, actual time carried by
+  a signal, play / pause / scrubber, and a continuous readout of time, azimuth, elevation
+  and range. Implemented by `PassClock` with actual UTC milliseconds, not a phase index.
 - `requestAnimationFrame`, never `setInterval`. Honour `prefers-reduced-motion`.
 - Accessible text equivalent: the pass table, with a `<caption>` that says so.
+
+Validated with the real local API in the browser at desktop and mobile widths. Selection,
+play/pause and phase readouts were exercised; 43 frontend tests and the production build
+pass. The neutral illumination treatment is intentional until milestone 10.
 
 This is the image that serves as the demo GIF in the README. It is worth more than three
 paragraphs of description.

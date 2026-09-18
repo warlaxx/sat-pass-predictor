@@ -28,10 +28,11 @@ import { aosUncertaintySeconds, expectedDriftKm, formatAge } from '../format';
       <p class="detail">
         Epoch <span class="num">{{ t.epoch | date: 'yyyy-MM-dd HH:mm' : 'UTC' }} UTC</span>,
         fetched <span class="num">{{ t.fetchedAt | date: 'yyyy-MM-dd HH:mm' : 'UTC' }} UTC</span>.
-        SGP4 has drifted by roughly
-        <span class="num">{{ drift().low }} to {{ drift().high }} km</span> since then,
-        which puts about <span class="num">&plusmn;{{ uncertainty() }} s</span> on the
-        times below.
+        Indicative SGP4 position drift:
+        <span class="num">{{ drift().low }} to {{ drift().high }} km</span> since the epoch.
+        Approximate timing scale:
+        <span class="num">{{ uncertainty() === 0 ? 'less than 1 s' : 'about ±' + uncertainty() + ' s' }}</span>.
+        These are rough estimates, not accuracy guarantees.
       </p>
     </section>
   `,

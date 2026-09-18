@@ -20,6 +20,20 @@ class TlePropertiesTest {
     }
 
     @Test
+    void refusesUnboundedNetworkTimeouts() {
+        for (Duration timeout : List.of(Duration.ZERO, Duration.ofSeconds(-1))) {
+            assertThatIllegalArgumentException().isThrownBy(() -> new TleProperties(
+                    List.of("https://celestrak.test"), timeout, Duration.ofSeconds(15),
+                    Duration.ofMinutes(10), Duration.ofHours(2), Duration.ofMinutes(5),
+                    Duration.ofDays(7), 500)).withMessageContaining("connect-timeout");
+            assertThatIllegalArgumentException().isThrownBy(() -> new TleProperties(
+                    List.of("https://celestrak.test"), Duration.ofSeconds(5), timeout,
+                    Duration.ofMinutes(10), Duration.ofHours(2), Duration.ofMinutes(5),
+                    Duration.ofDays(7), 500)).withMessageContaining("read-timeout");
+        }
+    }
+
+    @Test
     void acceptsAConsistentConfiguration() {
         assertThatNoException().isThrownBy(() ->
                 properties(Duration.ofHours(2), Duration.ofMinutes(5), Duration.ofDays(7)));
