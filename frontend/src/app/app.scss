@@ -109,6 +109,36 @@ button:disabled {
   cursor: progress;
 }
 
+/*
+ * The buttons take a row of their own rather than a cell in the field grid. Sharing the
+ * row looked tighter at one width and pushed "Compute passes" out of the card at every
+ * other: a label of two words cannot live in a column sized for a six-digit number.
+ */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+button.ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+button.ghost:hover:not(:disabled) {
+  border-color: var(--accent-dim);
+  color: var(--ink);
+}
+
+.location-error {
+  color: var(--warn);
+  font-size: 0.82rem;
+  margin: 0.75rem 0 0;
+}
+
 .state {
   color: var(--ink-2);
   margin: 0;
@@ -148,10 +178,44 @@ button:disabled {
   margin-bottom: 0.9rem;
 }
 
+/* Without it the table caption reads as a caption for the ribbon above it. */
+.results app-pass-table {
+  display: block;
+  margin-top: 1.5rem;
+}
+
 footer {
   border-top: 1px solid var(--line-soft);
   color: var(--ink-3);
   font-size: 0.78rem;
   margin-top: 2.5rem;
   padding-top: 1rem;
+}
+
+/*
+ * Two breakpoints, both taken from the validated mockup.
+ *
+ * 880 px is where the two visualisations of milestones 7 and 8 stop fitting side by side;
+ * the page becomes a single column there, and the ribbon rewraps on five nights per row
+ * (its own rule, in its own component). 640 px is where a form of six fields in a row
+ * becomes six fields two characters wide.
+ */
+@media (width < 880px) {
+  :host {
+    padding: 1rem 1rem 2.5rem;
+  }
+
+  .context {
+    margin-left: 0;
+  }
+}
+
+@media (width < 640px) {
+  .query fieldset {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actions button {
+    flex: 1 1 0;
+  }
 }

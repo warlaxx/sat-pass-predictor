@@ -50,10 +50,19 @@
                [value]="form().minElevation" (input)="patch('minElevation', $any($event.target).value)">
       </label>
 
-      <button type="submit" [disabled]="resource.isLoading()">
-        {{ resource.isLoading() ? 'Computing...' : 'Compute passes' }}
-      </button>
+      <div class="actions">
+        <button type="button" class="ghost" [disabled]="locating()" (click)="useMyPosition()">
+          {{ locating() ? 'Locating...' : 'Use my position' }}
+        </button>
+        <button type="submit" [disabled]="resource.isLoading()">
+          {{ resource.isLoading() ? 'Computing...' : 'Compute passes' }}
+        </button>
+      </div>
     </fieldset>
+
+    @if (locationError(); as failure) {
+      <p class="location-error" role="status">{{ failure }}</p>
+    }
   </form>
 
   <!--
@@ -86,6 +95,13 @@
 
     <section class="card results">
       <h2>{{ loaded.passes.length }} passes</h2>
+
+      <app-pass-ribbon
+        [passes]="loaded.passes"
+        [selected]="selected()"
+        (select)="selected.set($event)"
+      />
+
       <app-pass-table
         [passes]="loaded.passes"
         [selected]="selected()"

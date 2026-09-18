@@ -249,7 +249,7 @@ parameter bounds.
 
 ---
 
-## Milestone 6 — Frontend: shell and list (half done)
+## Milestone 6 — Frontend: shell and list (done)
 
 Visual reference: `docs/interface-mockup.html`. **The mockup is the visual and
 behavioural target, not a template to copy**: its DOM is built in imperative JavaScript,
@@ -268,12 +268,35 @@ which has no place in an Angular component.
   compass points. Rows focusable and activatable from the keyboard.
 - `PassRibbonComponent`: one bar per pass, height = maximum elevation.
 
-**Done (17/09)**: design tokens, the API contract types and their fixture test, the
-`httpResource` service, the shell with its query form, `TleBannerComponent`,
-`PassTableComponent`. 18 frontend tests, `ng build` and `ng test` green.
+Design tokens, the API contract types and their fixture test, the `httpResource` service,
+the shell with its query form and browser geolocation, `TleBannerComponent`,
+`PassTableComponent`, `PassRibbonComponent`, and the responsive pass at 880 px and 640 px.
+36 frontend tests, `ng build` and `ng test` green.
 
-**Left**: `PassRibbonComponent`, browser geolocation, and the responsive pass at 880 px
-and 640 px.
+**Decision: a night is named after its evening.** The ribbon groups by observing night,
+not by calendar date: a pass at 02:00 on the 23rd belongs to the night of the 22nd, not to
+a column of its own wedged between two that belong to the same night out. Shifting the
+local time back twelve hours before taking the date does exactly that, with no special
+case at a month or year boundary. Empty nights are kept — a night with nothing is a
+result, not a gap to close up, and dropping it would make two nights a week apart look
+adjacent.
+
+**Decision: the bars are scaled against 90 degrees, not against the best pass.** A
+relative scale would make a mediocre evening look excellent whenever the window holds
+nothing better, which is the opposite of what the ribbon is for. Accepted trade-off: a
+window of nothing but grazing passes is a row of stubs — which is the honest picture.
+
+**Decision: geolocation never becomes the only way to give a position.** It is a
+permission the user can refuse, a sensor that can fail and a call that can hang; each has
+its own message, and the fields stay editable throughout. `enableHighAccuracy` is off:
+metres are pointless four hundred kilometres below the satellite, and a GPS fix would cost
+battery and seconds for nothing. The altitude is taken as the API returns it — the
+Geolocation spec measures it above the WGS84 ellipsoid, which is exactly the datum
+`ObserverLocation` expects.
+
+**Decision: narrow screens scroll the table rather than lose columns.** It is the
+accessible equivalent of two drawings; dropping the azimuths to make it fit would take the
+information away from precisely the readers who have nothing else.
 
 **Decision: the API types are written by hand, and pinned by a fixture.** Generating them
 from `/v3/api-docs` would remove the risk of drift and add a generator, a build step and a

@@ -21,6 +21,7 @@ import { compassPoint, elevationColour, formatDuration } from '../format';
   imports: [DatePipe, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <div class="scroller">
     <table>
       <caption>
         Every pass of the window, in words. This is the text equivalent of the sky chart
@@ -61,8 +62,18 @@ import { compassPoint, elevationColour, formatDuration } from '../format';
         }
       </tbody>
     </table>
+    </div>
   `,
   styles: `
+    /*
+     * The narrow screens scroll rather than lose columns. This table is the accessible
+     * equivalent of two drawings: dropping the azimuths to make it fit would take the
+     * information away from exactly the readers who have nothing else.
+     */
+    .scroller {
+      overflow-x: auto;
+    }
+
     table {
       border-collapse: collapse;
       width: 100%;

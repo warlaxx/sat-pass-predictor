@@ -4,7 +4,19 @@ import { PassesApi } from './api/passes.service';
 import { PassQuery, DEFAULT_QUERY, MAX_WINDOW_HOURS } from './api/passes.query';
 import { ProblemDetail } from './api/passes.model';
 import { TleBanner } from './tle-banner/tle-banner';
+import { PassRibbon } from './pass-ribbon/pass-ribbon';
 import { PassTable } from './pass-table/pass-table';
+
+const GEOLOCATION_ERRORS: Record<number, string> = {
+  1: 'Permission refused. Type the position in instead.',
+  2: 'Your device could not determine a position.',
+  3: 'The position request timed out.',
+};
+
+function round(value: number, decimals: number): number {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
 
 /**
  * The page.
@@ -16,7 +28,7 @@ import { PassTable } from './pass-table/pass-table';
  */
 @Component({
   selector: 'app-root',
-  imports: [TleBanner, PassTable],
+  imports: [TleBanner, PassRibbon, PassTable],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './app.scss',
   templateUrl: './app.html',
@@ -59,6 +71,60 @@ export class App {
     const response = this.response();
     return response !== undefined && response.passes.length === 0;
   });
+
+  // --- Browser geolocation -------------------------------------------------
+
+  protected readonly locating = signal(false);
+  protected readonly locationError = signal<string | undefined>(undefined);
+
+  /**
+   * Fills the position from the browser, and never becomes the only way to give one.
+   *
+   * <p>Geolocation is a permission the user can refuse, a sensor that can fail and a call
+   * that can hang. Each of those has a message here rather than a silent no-op, and the
+   * two fields stay editable throughout: a refused prompt must not cost the user the
+   * page.
+   */
+  protected useMyPosition(): void {
+    this.locationError.set(undefined);
+
+    if (!('geolocation' in navigator)) {
+      this.locationError.set('This browser does not offer geolocation. Type the position in.');
+      return;
+    }
+
+    this.locating.set(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.form.update((query) => ({
+          ...query,
+          // Four decimals is about eleven metres. An observer a hundred metres off
+          // changes nothing in a pass four hundred kilometres up, and the extra digits
+          // would only put a more precise home address on screen.
+          lat: round(position.coords.latitude, 4),
+          lon: round(position.coords.longitude, 4),
+          // The Geolocation API returns altitude above the WGS84 ellipsoid, which is
+          // exactly the datum ObserverLocation expects - no conversion, and no guess
+          // when the device does not provide one.
+          alt: position.coords.altitude === null
+            ? query.alt
+            : Math.round(position.coords.altitude),
+        }));
+        this.locating.set(false);
+      },
+      (error) => {
+        this.locationError.set(GEOLOCATION_ERRORS[error.code] ?? 'Position unavailable.');
+        this.locating.set(false);
+      },
+      {
+        // Metres are pointless here and a GPS fix costs battery and seconds: the coarse
+        // network position is already far below the accuracy this computation needs.
+        enableHighAccuracy: false,
+        timeout: 10_000,
+        maximumAge: 300_000,
+      },
+    );
+  }
 
   protected patch(field: keyof PassQuery, value: string): void {
     const parsed = Number(value);

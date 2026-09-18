@@ -158,7 +158,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] Track sampling (`track`, `OrekitStepHandler`, fixed 10 s step)
 - [x] TLE retrieval from CelesTrak (last known TLE, age exposed)
 - [x] REST API `/api/passes` (Problem Details, springdoc)
-- [ ] Frontend: shell, pass list, TLE age banner
+- [x] Frontend: shell, pass list, ribbon of nights, TLE age banner
 - [ ] Polar sky chart (SVG, no dependency)
 - [ ] 3D globe: ground track, visibility circle, terminator
 - [ ] Docker Compose, showcase pass
