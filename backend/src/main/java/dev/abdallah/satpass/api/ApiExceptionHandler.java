@@ -56,7 +56,13 @@ public class ApiExceptionHandler {
             // sense. It is also the only case where the store had nothing to degrade
             // to — a CelesTrak failure with a TLE in memory never reaches this far.
             case TleUnavailableException unavailable -> {
-                log.warn("CelesTrak unavailable and no TLE in memory: {}", unavailable.getMessage());
+                // The exception goes in as the last argument, not just its message. The
+                // cause IS the diagnosis: "unreachable" covers a connect timeout, a read
+                // timeout, a DNS failure and a refused connection, and those four are
+                // fixed in four different places. Logging getMessage() alone turned a
+                // named defect into a guess - it cost a deploy cycle to find out.
+                log.warn("CelesTrak unavailable and no TLE in memory: {}",
+                        unavailable.getMessage(), unavailable);
                 ProblemDetail problem = problem(HttpStatus.SERVICE_UNAVAILABLE,
                         "No TLE available for this satellite: CelesTrak is unreachable and nothing"
                                 + " has been fetched yet.",
