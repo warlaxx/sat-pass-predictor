@@ -2,9 +2,14 @@ package dev.abdallah.satpass.config;
 
 import dev.abdallah.satpass.tle.CelestrakTleClient;
 import dev.abdallah.satpass.tle.FallbackTleClient;
+import dev.abdallah.satpass.tle.RequestBudget;
+import dev.abdallah.satpass.tle.SpaceTrackTleClient;
 import dev.abdallah.satpass.tle.TleClient;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
 import java.net.http.HttpClient;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.List;
 import org.orekit.data.DataContext;
 import org.slf4j.Logger;
@@ -37,38 +42,87 @@ import org.springframework.web.client.RestClient;
  * tie up server threads, and the store's graceful degradation would never kick in — it
  * would rest entirely on the remote service's goodwill.
  *
- * <p>One {@link HttpClient} is shared by every endpoint, on purpose: it is thread-safe,
- * it carries the connection pool, and the timeouts are the same everywhere by definition
- * — they describe how long <em>this application</em> is willing to wait, not how slow a
- * particular host is.
+ * <h2>Two HTTP clients, not one</h2>
+ * The CelesTrak endpoints share one {@link HttpClient}: it is thread-safe, it carries the
+ * connection pool, and the timeouts describe how long <em>this application</em> is
+ * willing to wait, not how slow a particular host is. Space-Track gets its own, because
+ * it is the only one that needs a cookie jar, and a session cookie has no business being
+ * offered to hosts that never asked for one.
  */
 @Configuration
-@EnableConfigurationProperties(TleProperties.class)
+@EnableConfigurationProperties({TleProperties.class, SpaceTrackProperties.class})
 public class TleClientConfig {
 
     private static final Logger log = LoggerFactory.getLogger(TleClientConfig.class);
 
     @Bean
-    public TleClient tleClient(TleProperties properties, DataContext dataContext, Clock clock) {
-        HttpClient httpClient = HttpClient.newBuilder()
-                .connectTimeout(properties.connectTimeout())
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build();
-        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
-        factory.setReadTimeout(properties.readTimeout());
+    public TleClient tleClient(TleProperties properties,
+                               SpaceTrackProperties spaceTrack,
+                               DataContext dataContext,
+                               Clock clock) {
+        List<TleClient> sources = new ArrayList<>(celestrakSources(properties, dataContext, clock));
 
-        List<TleClient> sources = properties.baseUrls().stream()
+        if (spaceTrack.configured()) {
+            sources.add(spaceTrackSource(spaceTrack, properties, dataContext, clock));
+        } else {
+            // Said once, out loud. A second source that is silently absent is worth less
+            // than no second source, because you believe you have one.
+            log.info("Space-Track is not configured (SPACETRACK_IDENTITY / SPACETRACK_PASSWORD):"
+                    + " the chain ends at the CelesTrak endpoints");
+        }
+
+        // Printed at startup rather than discovered from a failure. Which sources an
+        // instance will actually try is the first thing anyone wants to know when the
+        // deployed application and the local one disagree.
+        log.info("TLE sources, in order: {}{}", properties.baseUrls(),
+                spaceTrack.configured() ? " then " + spaceTrack.baseUrl() + " (space-track)" : "");
+        return new FallbackTleClient(sources);
+    }
+
+    private List<TleClient> celestrakSources(TleProperties properties,
+                                             DataContext dataContext,
+                                             Clock clock) {
+        JdkClientHttpRequestFactory factory = requestFactory(properties, null);
+        return properties.baseUrls().stream()
                 .map(baseUrl -> (TleClient) new CelestrakTleClient(
                         baseUrl,
                         RestClient.builder().baseUrl(baseUrl).requestFactory(factory).build(),
                         dataContext,
                         clock))
                 .toList();
+    }
 
-        // Printed at startup rather than discovered from a failure. Which sources an
-        // instance will actually try is the first thing anyone wants to know when the
-        // deployed application and the local one disagree.
-        log.info("TLE sources, in order: {}", properties.baseUrls());
-        return new FallbackTleClient(sources);
+    private TleClient spaceTrackSource(SpaceTrackProperties spaceTrack,
+                                       TleProperties properties,
+                                       DataContext dataContext,
+                                       Clock clock) {
+        // ACCEPT_ALL rather than the default ACCEPT_ORIGINAL_SERVER: the login and the
+        // query are the same host, but a redirect through www. would otherwise drop the
+        // cookie and turn every query into a re-login.
+        CookieManager cookies = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
+        RestClient client = RestClient.builder()
+                .baseUrl(spaceTrack.baseUrl())
+                .requestFactory(requestFactory(properties, cookies))
+                .build();
+        RequestBudget budget = new RequestBudget(
+                spaceTrack.requestsPerMinute(), spaceTrack.requestsPerHour(), clock);
+
+        log.info("Space-Track joins the chain as its last source, capped at {}/min and {}/h",
+                spaceTrack.requestsPerMinute(), spaceTrack.requestsPerHour());
+        return new SpaceTrackTleClient(spaceTrack.baseUrl(), client, dataContext, clock,
+                budget, spaceTrack.identity(), spaceTrack.password());
+    }
+
+    private JdkClientHttpRequestFactory requestFactory(TleProperties properties,
+                                                       CookieManager cookies) {
+        HttpClient.Builder builder = HttpClient.newBuilder()
+                .connectTimeout(properties.connectTimeout())
+                .followRedirects(HttpClient.Redirect.NORMAL);
+        if (cookies != null) {
+            builder.cookieHandler(cookies);
+        }
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(builder.build());
+        factory.setReadTimeout(properties.readTimeout());
+        return factory;
     }
 }

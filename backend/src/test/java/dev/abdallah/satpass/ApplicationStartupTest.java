@@ -3,6 +3,7 @@ package dev.abdallah.satpass;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.abdallah.satpass.passes.PassPredictionService;
+import dev.abdallah.satpass.config.SpaceTrackProperties;
 import dev.abdallah.satpass.config.TleProperties;
 import dev.abdallah.satpass.tle.FallbackTleClient;
 import dev.abdallah.satpass.tle.TleClient;
@@ -54,6 +55,9 @@ class ApplicationStartupTest {
     @Autowired
     TleProperties tleProperties;
 
+    @Autowired
+    SpaceTrackProperties spaceTrackProperties;
+
     @Test
     void theRealApplicationContextStarts() {
         assertThat(context).isNotNull();
@@ -72,12 +76,28 @@ class ApplicationStartupTest {
      * the whole point of the chain, and a binding that silently kept one entry would look
      * exactly like a healthy application — right up to the day the first source goes
      * unreachable, which is the day it is needed.
+     *
+     * <p>The count has no room for Space-Track, and that is asserted rather than assumed:
+     * no credentials in a test run means the chain is exactly the CelesTrak endpoints.
      */
     @Test
     void everyConfiguredTleSourceIsWiredIntoTheChain() {
+        assertThat(spaceTrackProperties.configured()).isFalse();
         assertThat(tleProperties.baseUrls()).hasSizeGreaterThan(1);
         assertThat(tleClient).isInstanceOf(FallbackTleClient.class);
         assertThat(((FallbackTleClient) tleClient).size())
                 .isEqualTo(tleProperties.baseUrls().size());
+    }
+
+    /**
+     * A clone of this repository has no Space-Track account, and must start anyway. An
+     * optional dependency that is only optional once the credentials are right is not
+     * optional — this is the assertion that keeps it honest.
+     */
+    @Test
+    void theApplicationStartsWithoutSpaceTrackCredentials() {
+        assertThat(context.getBeanNamesForType(SpaceTrackProperties.class)).hasSize(1);
+        assertThat(spaceTrackProperties.configured()).isFalse();
+        assertThat(tleClient).isNotNull();
     }
 }

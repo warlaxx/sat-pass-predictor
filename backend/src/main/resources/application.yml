@@ -45,6 +45,24 @@ tle:
   max-age: 7d
   maximum-size: 500
 
+  # Last source of the chain, and optional: no credentials, no source, and the
+  # application says so once at startup. Space-Track is the catalogue CelesTrak
+  # republishes, so it is here for the day the others cannot be REACHED - not for objects
+  # they do not have. That is why a "not found" still ends the chain before it gets here.
+  #
+  # Credentials come from the environment, never from this file. On Render they are
+  # declared sync: false, which is how a Blueprint asks the human instead of git.
+  #
+  # The caps sit below Space-Track's published limits of 30/min and 300/h. Space-Track
+  # enforces them by throttling and then by suspending the account, and an account
+  # suspended is a source lost - the opposite of what a second source is for.
+  space-track:
+    base-url: https://www.space-track.org
+    identity: ${SPACETRACK_IDENTITY:}
+    password: ${SPACETRACK_PASSWORD:}
+    requests-per-minute: 20
+    requests-per-hour: 200
+
 springdoc:
   # Swagger UI under a short address: it is the first page anyone opens on this
   # repository, it has no business being called /swagger-ui/index.html.

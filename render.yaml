@@ -35,3 +35,11 @@ services:
       # image, and is overridable by TLE_BASE_URLS when an environment really differs.
       - key: JAVA_OPTS
         value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC
+      # Space-Track, last source of the chain. sync: false means Render asks for the
+      # value when the Blueprint is applied and keeps it out of this repository. Leave
+      # both empty and the application starts without that source, and says so in its
+      # startup log - it does not fail.
+      - key: SPACETRACK_IDENTITY
+        sync: false
+      - key: SPACETRACK_PASSWORD
+        sync: false

@@ -80,6 +80,30 @@ configurable through `OREKIT_DATA_PATH`.
 The application refuses to start if the directory is missing: an explicit failure at
 startup beats an obscure error at the first computation.
 
+## TLE sources
+
+Orbital elements come from a **chain of sources, tried in order**, configured by
+`tle.base-urls` and overridable in one go with `TLE_BASE_URLS` (comma-separated):
+
+1. `https://celestrak.org` — the origin.
+2. `https://sat-pass-predictor-nine.vercel.app/tle-upstream` — the same CelesTrak, reached
+   through a rewrite on the frontend's host. It exists because CelesTrak silently drops
+   packets coming from the shared outbound IPs of the platform the API is deployed on: a
+   connect timeout, no refusal, no DNS error, on a host that answers other datacenters in
+   10 ms. Reachability is not a property of a service alone.
+3. **Space-Track**, optional, only when `SPACETRACK_IDENTITY` and `SPACETRACK_PASSWORD`
+   are both set. Without them the application starts on the first two and says so in its
+   startup log.
+
+A source that says "I do not have this object" ends the chain; a source that cannot be
+reached does not. Space-Track is an *availability* fallback, not a *coverage* one — it is
+the catalogue CelesTrak republishes — and its calls are capped well under the published
+limits of 30 a minute and 300 an hour, because an account suspended is a source lost.
+
+The line to read in the startup log is `TLE sources, in order: [...]`. It says exactly
+what this instance will try, which is the first thing worth knowing when the deployed
+application and the local one disagree.
+
 ## Validation
 
 An astrodynamics computation that is compared to nothing is not a computation, it is an

@@ -22,13 +22,25 @@ import org.slf4j.LoggerFactory;
  *
  * <h2>Why "not found" stops the chain</h2>
  * {@link TleNotFoundException} is a statement about the catalogue, not about a connection:
- * the service answered, and said the object is not in it. Every endpoint configured today
- * serves the same CelesTrak catalogue, so trying the next one would be asking one service
- * the same question twice — and it would turn a clean 404 into a slow one.
+ * the service answered, and said the object is not in it. Trying the next endpoint would
+ * be asking the same question twice, and it would turn a clean 404 into a slow one.
  *
- * <p>That reasoning holds exactly as long as the list stays one catalogue. The day
- * Space-Track joins it, this is the rule to revisit; it has a test of its own so that
- * revisiting it is a decision and not an accident.
+ * <p>This rule was written with "revisit it the day Space-Track lands" attached, and
+ * Space-Track has landed. Revisited, and <strong>kept</strong>, for two reasons:
+ * <ul>
+ *   <li>CelesTrak republishes Space-Track's own public catalogue. Its "I do not have this
+ *       object" is not a lesser answer than the upstream's, it is the same answer one hop
+ *       away. Space-Track is in the chain because a platform can make CelesTrak
+ *       unreachable, not because it knows about objects CelesTrak does not.</li>
+ *   <li>The NORAD number is a query parameter of a public endpoint, and a negative answer
+ *       is not cached — the store removes the entry. Falling through would let a stream of
+ *       made-up numbers become one authenticated, rate-limited call each. Stopping here is
+ *       also what keeps the Space-Track account alive.</li>
+ * </ul>
+ *
+ * <p>It stays tested, so that changing it is a decision and not an accident. What would
+ * reopen it is a source with genuinely different coverage — an operator's own ephemerides,
+ * say, for an object that never enters the public catalogue.
  *
  * <h2>Why every failure is kept</h2>
  * With several endpoints, one message stops being the diagnosis: "unreachable" from the
