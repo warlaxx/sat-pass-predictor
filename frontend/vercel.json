@@ -8,6 +8,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://sat-pass-predictor-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/tle-upstream/NORAD/elements/gp.php",
+      "destination": "https://celestrak.org/NORAD/elements/gp.php"
     }
   ],
   "headers": [

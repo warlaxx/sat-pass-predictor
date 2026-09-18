@@ -24,5 +24,10 @@ services:
     envVars:
       # The frontend never calls this host directly - Vercel proxies /api server-side -
       # so no CORS configuration is needed on this side. Keep it that way.
+      # CelesTrak blacklists Render's shared outbound IPs - Frankfurt and Oregon both
+      # time out at the TCP level, while another datacenter connects in 10 ms. The
+      # frontend's own host is not blacklisted, so the call goes through a rewrite there
+      # that forwards exactly one path. A workaround, named as one: the durable answer is
+      # a second TLE source, and this comes out the day Space-Track lands.
       - key: JAVA_OPTS
-        value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC
+        value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC -Dtle.base-url=https://sat-pass-predictor-nine.vercel.app/tle-upstream
