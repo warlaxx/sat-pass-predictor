@@ -12,21 +12,17 @@ services:
     # repository root so that scripts/ stays reachable if the build ever needs it.
     dockerContext: .
     plan: free
-    # Lyon is the reference site of this project and CelesTrak is the only outbound
-    # dependency: the closer region wins on both legs.
-    region: frankfurt
+    # Oregon, not Frankfurt, and it is CelesTrak that decides. The Frankfurt instance
+    # could not open a TCP connection to celestrak.org (104.168.149.178:443) at all -
+    # HttpConnectTimeoutException, no refusal, no DNS failure: packets dropped. The host
+    # is in the United States and answers other datacenters in 10 ms, so the block is on
+    # that path. Lyon is only the default coordinate of a form; the round trip that
+    # actually has to work is the one to CelesTrak.
+    region: oregon
     healthCheckPath: /actuator/health
     autoDeploy: true
     envVars:
       # The frontend never calls this host directly - Vercel proxies /api server-side -
       # so no CORS configuration is needed on this side. Keep it that way.
-      # preferIPv4Stack: the container resolves celestrak.org to an AAAA record it has
-      # no route for, connect() hangs, and the 3 s timeout fires - the textbook shape of
-      # "unreachable" on a PaaS. Forcing IPv4 removes that whole branch.
-      # The two timeouts are raised for THIS machine only (0,1 vCPU: the application took
-      # 84 s to boot). application.yml keeps 3 s / 5 s, which are right on a laptop.
-      # Passed as -D rather than as environment variables: a system property carries the
-      # property name verbatim, where TLE_CONNECT_TIMEOUT would bind to tle.connect.timeout
-      # and be silently ignored.
       - key: JAVA_OPTS
-        value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC -Djava.net.preferIPv4Stack=true -Dtle.connect-timeout=10s -Dtle.read-timeout=20s
+        value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC
