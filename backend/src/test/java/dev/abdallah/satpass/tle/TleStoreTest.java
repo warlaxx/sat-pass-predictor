@@ -39,19 +39,19 @@ class TleStoreTest {
     private static final Duration RETRY_AFTER = Duration.ofMinutes(5);
     private static final Duration MAX_AGE = Duration.ofDays(7);
 
-    private CelestrakTleClient client;
+    private TleClient client;
     private MutableClock clock;
     private TleStore store;
 
     @BeforeEach
     void setUp() {
-        client = mock(CelestrakTleClient.class);
+        client = mock(TleClient.class);
         clock = new MutableClock(START);
         store = new TleStore(client, properties(), clock);
     }
 
     private static TleProperties properties() {
-        return new TleProperties("https://celestrak.test",
+        return new TleProperties(List.of("https://celestrak.test"),
                 Duration.ofSeconds(3), Duration.ofSeconds(5), REFRESH_AFTER, RETRY_AFTER, MAX_AGE, 500);
     }
 

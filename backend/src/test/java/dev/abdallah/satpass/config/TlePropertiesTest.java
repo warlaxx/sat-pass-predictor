@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 class TlePropertiesTest {
 
     private static TleProperties properties(Duration refreshAfter, Duration retryAfter, Duration maxAge) {
-        return new TleProperties("https://celestrak.test",
+        return new TleProperties(List.of("https://celestrak.test"),
                 Duration.ofSeconds(3), Duration.ofSeconds(5), refreshAfter, retryAfter, maxAge, 500);
     }
 
@@ -50,18 +51,32 @@ class TlePropertiesTest {
     @Test
     void refusesANonPositiveStoreSize() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new TleProperties("https://celestrak.test",
+                .isThrownBy(() -> new TleProperties(List.of("https://celestrak.test"),
                         Duration.ofSeconds(3), Duration.ofSeconds(5),
                         Duration.ofHours(2), Duration.ofMinutes(5), Duration.ofDays(7), 0))
                 .withMessageContaining("maximum-size");
     }
 
     @Test
-    void refusesAMissingBaseUrl() {
+    void refusesAnEmptySourceList() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new TleProperties("  ",
+                .isThrownBy(() -> new TleProperties(List.of(),
                         Duration.ofSeconds(3), Duration.ofSeconds(5),
                         Duration.ofHours(2), Duration.ofMinutes(5), Duration.ofDays(7), 500))
-                .withMessageContaining("base-url");
+                .withMessageContaining("base-urls");
+    }
+
+    /**
+     * A blank entry is what a trailing comma in {@code TLE_BASE_URLS} produces. It would
+     * otherwise become a {@code RestClient} with no base URL, failing at the first call
+     * with a message about a relative URI rather than about the configuration.
+     */
+    @Test
+    void refusesABlankSourceInTheList() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new TleProperties(List.of("https://celestrak.test", "  "),
+                        Duration.ofSeconds(3), Duration.ofSeconds(5),
+                        Duration.ofHours(2), Duration.ofMinutes(5), Duration.ofDays(7), 500))
+                .withMessageContaining("base-urls");
     }
 }

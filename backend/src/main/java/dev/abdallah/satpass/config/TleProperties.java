@@ -1,19 +1,29 @@
 package dev.abdallah.satpass.config;
 
 import java.time.Duration;
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * Settings for TLE retrieval.
  *
- * @param baseUrl        root of the CelesTrak GP API.
- * @param connectTimeout how long to wait for the connection to be established.
+ * @param baseUrls       roots of the CelesTrak GP API, <strong>tried in order</strong>,
+ *                       first usable answer wins. A list and not a single value because
+ *                       reachability is not a property of the service alone: CelesTrak
+ *                       answers some datacenters in 10 ms and silently drops the packets
+ *                       of others, so the host the application is deployed on gets a vote
+ *                       on whether the only configured source works. See
+ *                       {@code FallbackTleClient}.
+ * @param connectTimeout how long to wait for the connection to be established. With more
+ *                       than one entry above, this is also the price of each unreachable
+ *                       source before the next one is tried — it is a latency budget now,
+ *                       not only a safety net.
  * @param readTimeout    how long to wait for the response body.
- * @param refreshAfter   past this age <em>since the last fetch</em>, CelesTrak is called
- *                       again. This is not a validity period: if the call fails, the
- *                       previous snapshot keeps being served.
+ * @param refreshAfter   past this age <em>since the last fetch</em>, the sources are
+ *                       called again. This is not a validity period: if every call fails,
+ *                       the previous snapshot keeps being served.
  * @param retryAfter     minimum delay between two <em>attempts</em>. Without it, an
- *                       outage turns every incoming request into a CelesTrak call, since
+ *                       outage turns every incoming request into a round of calls, since
  *                       a failed refresh leaves the snapshot — and therefore its age —
  *                       unchanged. Must not exceed {@code refreshAfter}, otherwise it
  *                       would also delay ordinary refreshes.
@@ -24,7 +34,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *                       otherwise never expires anything.
  */
 @ConfigurationProperties("tle")
-public record TleProperties(String baseUrl,
+public record TleProperties(List<String> baseUrls,
                             Duration connectTimeout,
                             Duration readTimeout,
                             Duration refreshAfter,
@@ -33,9 +43,13 @@ public record TleProperties(String baseUrl,
                             int maximumSize) {
 
     public TleProperties {
-        if (baseUrl == null || baseUrl.isBlank()) {
-            throw new IllegalArgumentException("tle.base-url is missing");
+        if (baseUrls == null || baseUrls.isEmpty()) {
+            throw new IllegalArgumentException("tle.base-urls must list at least one source");
         }
+        if (baseUrls.stream().anyMatch(url -> url == null || url.isBlank())) {
+            throw new IllegalArgumentException("tle.base-urls contains a blank entry");
+        }
+        baseUrls = List.copyOf(baseUrls);
         if (refreshAfter == null || refreshAfter.isNegative() || refreshAfter.isZero()) {
             throw new IllegalArgumentException("tle.refresh-after must be strictly positive");
         }

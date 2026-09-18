@@ -10,9 +10,7 @@ import org.orekit.errors.OrekitException;
 import org.orekit.propagation.analytical.tle.TLE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
@@ -51,9 +49,23 @@ import org.springframework.web.client.RestClient;
  *   <li>Parsing by Orekit, which validates the fields themselves, then comparison of the
  *       returned NORAD number with the requested one.</li>
  * </ol>
+ *
+ * <h2>No HTTP status means "unknown satellite"</h2>
+ * The GP API never answers 404 for an object it does not hold — it answers 200 with
+ * {@code No GP data found}. So <strong>every</strong> error status, 404 included, is an
+ * outage here. The distinction earns its keep the moment this client is pointed at
+ * something other than the origin: a relay whose route has been removed answers 404, and
+ * reading that as "the catalogue does not have this satellite" would make
+ * {@link TleStore} throw away a perfectly good cached TLE and tell the user the object
+ * does not exist. A misrouted request is not a fact about the sky.
+ *
+ * <h2>One endpoint per instance</h2>
+ * This class talks to exactly one host. Trying more than one is
+ * {@link FallbackTleClient}'s job, which is why the endpoint is carried here as a field:
+ * with several instances in play, an error message that does not say <em>which</em> one
+ * failed is a message that has to be guessed at.
  */
-@Component
-public class CelestrakTleClient {
+public class CelestrakTleClient implements TleClient {
 
     private static final Logger log = LoggerFactory.getLogger(CelestrakTleClient.class);
 
@@ -65,11 +77,18 @@ public class CelestrakTleClient {
     /** Length of a TLE line, fixed by NORAD's column-based format. */
     private static final int TLE_LINE_LENGTH = 69;
 
+    /** Base URL of this endpoint. Carried for messages and logs, nothing else. */
+    private final String endpoint;
+
     private final RestClient restClient;
     private final DataContext dataContext;
     private final Clock clock;
 
-    public CelestrakTleClient(RestClient celestrakRestClient, DataContext dataContext, Clock clock) {
+    public CelestrakTleClient(String endpoint,
+                              RestClient celestrakRestClient,
+                              DataContext dataContext,
+                              Clock clock) {
+        this.endpoint = endpoint;
         this.restClient = celestrakRestClient;
         this.dataContext = dataContext;
         this.clock = clock;
@@ -80,6 +99,7 @@ public class CelestrakTleClient {
      * @throws TleUnavailableException if CelesTrak is unreachable or answers anything
      *                                 other than a usable TLE.
      */
+    @Override
     public TleSnapshot fetch(int noradId) {
         String body = get(noradId);
         Instant fetchedAt = clock.instant();
@@ -93,13 +113,13 @@ public class CelestrakTleClient {
         // valid TLE for, on the strength of one truncated response.
         if (trimmed.isEmpty()) {
             throw new TleUnavailableException(
-                    "CelesTrak returned an empty body for satellite " + noradId);
+                    endpoint + " returned an empty body for satellite " + noradId);
         }
 
         List<String> lines = significantLines(trimmed);
         if (lines.size() < 3) {
             throw new TleUnavailableException(
-                    "unusable CelesTrak response for satellite " + noradId
+                    "unusable response from " + endpoint + " for satellite " + noradId
                             + ": " + lines.size() + " significant line(s), 3 expected");
         }
 
@@ -112,7 +132,7 @@ public class CelestrakTleClient {
         TLE parsed = parse(noradId, line1, line2);
         if (parsed.getSatelliteNumber() != noradId) {
             throw new TleUnavailableException(
-                    "CelesTrak returned satellite " + parsed.getSatelliteNumber()
+                    endpoint + " returned satellite " + parsed.getSatelliteNumber()
                             + " when " + noradId + " was requested");
         }
 
@@ -124,7 +144,8 @@ public class CelestrakTleClient {
                 parsed.getDate().toInstant(dataContext.getTimeScales()),
                 fetchedAt,
                 SOURCE);
-        log.info("fetched TLE for {} ({}), epoch {}", noradId, name, snapshot.epoch());
+        log.info("fetched TLE for {} ({}) from {}, epoch {}",
+                noradId, name, endpoint, snapshot.epoch());
         return snapshot;
     }
 
@@ -136,12 +157,11 @@ public class CelestrakTleClient {
                             .queryParam("FORMAT", "TLE")
                             .build())
                     .retrieve()
+                    // Every error status, 404 included: see the class javadoc. The
+                    // only answer that means "unknown satellite" is the body marker.
                     .onStatus(HttpStatusCode::isError, (request, response) -> {
-                        if (response.getStatusCode().isSameCodeAs(HttpStatus.NOT_FOUND)) {
-                            throw new TleNotFoundException(noradId);
-                        }
                         throw new TleUnavailableException(
-                                "CelesTrak answered " + response.getStatusCode()
+                                endpoint + " answered " + response.getStatusCode()
                                         + " for satellite " + noradId);
                     })
                     .body(String.class);
@@ -149,7 +169,7 @@ public class CelestrakTleClient {
             // Timeout, DNS, connection refused: the only useful information is that we
             // could not ask. It is passed up as-is so the store can degrade.
             throw new TleUnavailableException(
-                    "CelesTrak unreachable for satellite " + noradId, e);
+                    endpoint + " unreachable for satellite " + noradId, e);
         }
     }
 

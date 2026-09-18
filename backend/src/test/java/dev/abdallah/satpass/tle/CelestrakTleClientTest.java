@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withResourceNotFound;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -55,7 +56,7 @@ class CelestrakTleClientTest {
         RestClient.Builder builder = RestClient.builder().baseUrl(BASE_URL);
         server = MockRestServiceServer.bindTo(builder).build();
         client = new CelestrakTleClient(
-                builder.build(), dataContext, Clock.fixed(FETCHED_AT, ZoneOffset.UTC));
+                BASE_URL, builder.build(), dataContext, Clock.fixed(FETCHED_AT, ZoneOffset.UTC));
     }
 
     private void respondWith(String body) {
@@ -194,5 +195,33 @@ class CelestrakTleClientTest {
         assertThatExceptionOfType(TleUnavailableException.class)
                 .isThrownBy(() -> client.fetch(25544))
                 .withMessageContaining("500");
+    }
+
+    /**
+     * A 404 is an outage, not an unknown satellite. The GP API never answers 404 for an
+     * object it does not hold — it answers 200 with {@code No GP data found}. So a 404
+     * comes from something else on the path: a relay whose route was removed, a proxy
+     * that renamed the endpoint. Reading it as "not found" would make the store drop the
+     * satellite and the cached TLE with it, on the strength of a misrouted request.
+     */
+    @Test
+    void treatsA404AsAnOutageAndNotAsAnUnknownSatellite() {
+        server.expect(requestTo(BASE_URL + "/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE"))
+                .andRespond(withResourceNotFound());
+
+        assertThatExceptionOfType(TleUnavailableException.class)
+                .isThrownBy(() -> client.fetch(25544))
+                .withMessageContaining("404");
+    }
+
+    /** Which endpoint failed is part of the diagnosis when several are configured. */
+    @Test
+    void namesTheEndpointItFailedOn() {
+        server.expect(requestTo(BASE_URL + "/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE"))
+                .andRespond(withException(new SocketTimeoutException("Read timed out")));
+
+        assertThatExceptionOfType(TleUnavailableException.class)
+                .isThrownBy(() -> client.fetch(25544))
+                .withMessageContaining(BASE_URL);
     }
 }

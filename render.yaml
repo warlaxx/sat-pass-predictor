@@ -12,22 +12,26 @@ services:
     # repository root so that scripts/ stays reachable if the build ever needs it.
     dockerContext: .
     plan: free
-    # Oregon, not Frankfurt, and it is CelesTrak that decides. The Frankfurt instance
-    # could not open a TCP connection to celestrak.org (104.168.149.178:443) at all -
-    # HttpConnectTimeoutException, no refusal, no DNS failure: packets dropped. The host
-    # is in the United States and answers other datacenters in 10 ms, so the block is on
-    # that path. Lyon is only the default coordinate of a form; the round trip that
-    # actually has to work is the one to CelesTrak.
-    region: oregon
+    # Frankfurt, and the region is no longer load-bearing. Frankfurt and Oregon both
+    # failed to open a TCP connection to celestrak.org (104.168.149.178:443) -
+    # HttpConnectTimeoutException, no refusal, no DNS failure: packets dropped, on a host
+    # that answers other datacenters in 10 ms. Moving regions never fixed that and never
+    # could; the TLE chain in application.yml did, by not depending on one egress path.
+    # What the region decides now is the only thing it ever should have: the latency of
+    # the Vercel <-> Render leg for European users.
+    region: frankfurt
     healthCheckPath: /actuator/health
     autoDeploy: true
     envVars:
       # The frontend never calls this host directly - Vercel proxies /api server-side -
       # so no CORS configuration is needed on this side. Keep it that way.
-      # CelesTrak blacklists Render's shared outbound IPs - Frankfurt and Oregon both
-      # time out at the TCP level, while another datacenter connects in 10 ms. The
-      # frontend's own host is not blacklisted, so the call goes through a rewrite there
-      # that forwards exactly one path. A workaround, named as one: the durable answer is
-      # a second TLE source, and this comes out the day Space-Track lands.
+      #
+      # No -Dtle.base-url override here any more. It used to carry the only working TLE
+      # endpoint, which made a deployment setting load-bearing for the application to
+      # work at all - and this file is only read when the service is created from a
+      # Blueprint. A service created by hand in the dashboard ignores it silently, and
+      # that is exactly how an instance ended up calling the blacklisted host while the
+      # repository said otherwise. The source list lives in application.yml, ships in the
+      # image, and is overridable by TLE_BASE_URLS when an environment really differs.
       - key: JAVA_OPTS
-        value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC -Dtle.base-url=https://sat-pass-predictor-nine.vercel.app/tle-upstream
+        value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC

@@ -17,14 +17,29 @@ orekit:
   data-paths: ${OREKIT_DATA_PATH:../orekit-data,orekit-data}
 
 tle:
-  base-url: https://celestrak.org
-  connect-timeout: 3s
+  # Sources tried in order, first usable answer wins. Both serve the same CelesTrak
+  # catalogue; the second one exists because reachability is not a property of the
+  # service alone. CelesTrak silently drops packets from the shared outbound IPs of
+  # Render's Frankfurt and Oregon regions - a connect timeout, no refusal, no DNS error,
+  # while the same host completes a handshake from another datacenter in 10 ms. The
+  # second entry is a rewrite on the frontend's own Vercel host, whose egress is not
+  # blacklisted, forwarding exactly one path (see frontend/vercel.json).
+  #
+  # The origin comes first on purpose: locally it answers immediately and nothing depends
+  # on the frontend being deployed. On Render the first entry costs connect-timeout
+  # before the second is tried - once per refresh at worst, never per request.
+  #
+  # TLE_BASE_URLS replaces the whole list, comma-separated, for an environment that wants
+  # a different order or a single source.
+  base-urls: ${TLE_BASE_URLS:https://celestrak.org,https://sat-pass-predictor-nine.vercel.app/tle-upstream}
+  # Also the latency paid for each unreachable source before falling through to the next.
+  connect-timeout: 2s
   read-timeout: 5s
-  # Past this age since the last fetch, CelesTrak is called again.
+  # Past this age since the last fetch, the sources are called again.
   # This is not a validity period: see TleStore.
   refresh-after: 2h
   # Minimum delay between two attempts. Keeps an outage from turning every
-  # incoming request into a call to CelesTrak.
+  # incoming request into a round of calls to every source.
   retry-after: 5m
   # Past this age since the epoch of the elements, we refuse to predict.
   max-age: 7d

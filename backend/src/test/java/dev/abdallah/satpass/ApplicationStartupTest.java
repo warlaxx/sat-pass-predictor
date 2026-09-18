@@ -3,7 +3,9 @@ package dev.abdallah.satpass;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.abdallah.satpass.passes.PassPredictionService;
-import dev.abdallah.satpass.tle.CelestrakTleClient;
+import dev.abdallah.satpass.config.TleProperties;
+import dev.abdallah.satpass.tle.FallbackTleClient;
+import dev.abdallah.satpass.tle.TleClient;
 import dev.abdallah.satpass.tle.TleStore;
 import org.junit.jupiter.api.Test;
 import org.orekit.data.DataContext;
@@ -46,6 +48,12 @@ class ApplicationStartupTest {
     @Autowired
     ApplicationContext context;
 
+    @Autowired
+    TleClient tleClient;
+
+    @Autowired
+    TleProperties tleProperties;
+
     @Test
     void theRealApplicationContextStarts() {
         assertThat(context).isNotNull();
@@ -55,7 +63,21 @@ class ApplicationStartupTest {
     void everyBeanThatCarriesBehaviourIsWired() {
         assertThat(context.getBeanNamesForType(DataContext.class)).hasSize(1);
         assertThat(context.getBeanNamesForType(PassPredictionService.class)).hasSize(1);
-        assertThat(context.getBeanNamesForType(CelestrakTleClient.class)).hasSize(1);
+        assertThat(context.getBeanNamesForType(TleClient.class)).hasSize(1);
         assertThat(context.getBeanNamesForType(TleStore.class)).hasSize(1);
+    }
+
+    /**
+     * Every configured source is actually wired. The list in {@code application.yml} is
+     * the whole point of the chain, and a binding that silently kept one entry would look
+     * exactly like a healthy application — right up to the day the first source goes
+     * unreachable, which is the day it is needed.
+     */
+    @Test
+    void everyConfiguredTleSourceIsWiredIntoTheChain() {
+        assertThat(tleProperties.baseUrls()).hasSizeGreaterThan(1);
+        assertThat(tleClient).isInstanceOf(FallbackTleClient.class);
+        assertThat(((FallbackTleClient) tleClient).size())
+                .isEqualTo(tleProperties.baseUrls().size());
     }
 }

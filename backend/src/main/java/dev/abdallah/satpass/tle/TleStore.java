@@ -58,12 +58,12 @@ public class TleStore {
 
     private static final Logger log = LoggerFactory.getLogger(TleStore.class);
 
-    private final CelestrakTleClient client;
+    private final TleClient client;
     private final TleProperties properties;
     private final Clock clock;
     private final Cache<Integer, Entry> store;
 
-    public TleStore(CelestrakTleClient client, TleProperties properties, Clock clock) {
+    public TleStore(TleClient client, TleProperties properties, Clock clock) {
         this.client = client;
         this.properties = properties;
         this.clock = clock;
@@ -104,7 +104,7 @@ public class TleStore {
                 if (existing == null) {
                     throw e;
                 }
-                log.warn("CelesTrak unavailable for {} ({}) — keeping the TLE fetched at {}",
+                log.warn("no TLE source answered for {} ({}) — keeping the TLE fetched at {}",
                         id, e.getMessage(), existing.snapshot().fetchedAt());
                 // The attempt is recorded even though it failed; that is what stops the
                 // next request from immediately calling CelesTrak again.

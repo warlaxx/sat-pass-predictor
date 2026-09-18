@@ -40,7 +40,7 @@ public class ApiExceptionHandler {
 
     private static final String TYPE_PREFIX = "https://github.com/warlaxx/sat-pass-predictor/errors/";
 
-    /** Suggested delay before retrying, in seconds, when CelesTrak falters. */
+    /** Suggested delay before retrying, in seconds, when the TLE sources falter. */
     private static final String RETRY_AFTER_SECONDS = "300";
 
     @ExceptionHandler(TleException.class)
@@ -54,18 +54,21 @@ public class ApiExceptionHandler {
             }
             // 503 and not 502: the service cannot answer *for now*, and retrying makes
             // sense. It is also the only case where the store had nothing to degrade
-            // to — a CelesTrak failure with a TLE in memory never reaches this far.
+            // to — a source failure with a TLE in memory never reaches this far.
             case TleUnavailableException unavailable -> {
                 // The exception goes in as the last argument, not just its message. The
                 // cause IS the diagnosis: "unreachable" covers a connect timeout, a read
                 // timeout, a DNS failure and a refused connection, and those four are
                 // fixed in four different places. Logging getMessage() alone turned a
                 // named defect into a guess - it cost a deploy cycle to find out.
-                log.warn("CelesTrak unavailable and no TLE in memory: {}",
+                // Suppressed exceptions come with it: with a chain of sources, one
+                // message is no longer the diagnosis - the origin timing out and the
+                // relay answering 502 are two repairs in two different places.
+                log.warn("no TLE source answered and nothing in memory: {}",
                         unavailable.getMessage(), unavailable);
                 ProblemDetail problem = problem(HttpStatus.SERVICE_UNAVAILABLE,
-                        "No TLE available for this satellite: CelesTrak is unreachable and nothing"
-                                + " has been fetched yet.",
+                        "No TLE available for this satellite: no source of orbital elements"
+                                + " could be reached, and nothing has been fetched yet.",
                         "tle-unavailable", "Orbital elements unavailable");
                 yield ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                         .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS)
