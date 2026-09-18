@@ -1,0 +1,24 @@
+# Render Blueprint. Render -> New -> Blueprint -> point it at this repository.
+# The service must keep the name below: frontend/vercel.json rewrites /api/* to
+# https://sat-pass-predictor-api.onrender.com, and Render derives that host from the name.
+services:
+  - type: web
+    name: sat-pass-predictor-api
+    runtime: docker
+    repo: https://github.com/warlaxx/sat-pass-predictor
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    # The Dockerfile copies backend/ AND nothing else, but it is written against the
+    # repository root so that scripts/ stays reachable if the build ever needs it.
+    dockerContext: .
+    plan: free
+    # Lyon is the reference site of this project and CelesTrak is the only outbound
+    # dependency: the closer region wins on both legs.
+    region: frankfurt
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      # The frontend never calls this host directly - Vercel proxies /api server-side -
+      # so no CORS configuration is needed on this side. Keep it that way.
+      - key: JAVA_OPTS
+        value: -XX:MaxRAMPercentage=70 -XX:+UseSerialGC
