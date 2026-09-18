@@ -76,7 +76,7 @@ public class TleClientConfig {
         // deployed application and the local one disagree.
         log.info("TLE sources, in order: {}{}", properties.baseUrls(),
                 spaceTrack.configured() ? " then " + spaceTrack.baseUrl() + " (space-track)" : "");
-        return new FallbackTleClient(sources);
+        return new FallbackTleClient(sources, properties.sourceCooldown(), clock);
     }
 
     private List<TleClient> celestrakSources(TleProperties properties,

@@ -34,7 +34,18 @@ tle:
   base-urls: ${TLE_BASE_URLS:https://celestrak.org,https://sat-pass-predictor-nine.vercel.app/tle-upstream}
   # Also the latency paid for each unreachable source before falling through to the next.
   connect-timeout: 2s
-  read-timeout: 5s
+  # 10s, and the number is a measurement. 5s was set for a direct call to CelesTrak; the
+  # relay is a second hop - Render to Vercel's edge, then Vercel to CelesTrak in the
+  # United States - and answers in about a second warm and about five cold. Timed from a
+  # browser against the deployed API: successful retrievals at 3.0 and 3.2 s, failures at
+  # 7.1 and 7.1 s, which is 2s of connect timeout on the first source plus exactly 5s of
+  # read timeout on the second. The 503 was our own budget, not the upstream refusing us.
+  read-timeout: 10s
+  # A source that just failed is tried LAST for this long, never removed. Measured on the
+  # same run: the first endpoint burned its full connect timeout on every retrieval, having
+  # never once answered from that host - two seconds taken out of the budget the relay then
+  # had to answer within. See FallbackTleClient.
+  source-cooldown: 10m
   # Past this age since the last fetch, the sources are called again.
   # This is not a validity period: see TleStore.
   refresh-after: 2h

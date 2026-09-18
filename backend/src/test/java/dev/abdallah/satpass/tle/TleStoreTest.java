@@ -52,7 +52,8 @@ class TleStoreTest {
 
     private static TleProperties properties() {
         return new TleProperties(List.of("https://celestrak.test"),
-                Duration.ofSeconds(3), Duration.ofSeconds(5), REFRESH_AFTER, RETRY_AFTER, MAX_AGE, 500);
+                Duration.ofSeconds(3), Duration.ofSeconds(5), Duration.ofMinutes(10),
+                REFRESH_AFTER, RETRY_AFTER, MAX_AGE, 500);
     }
 
     /** A snapshot whose epoch and fetch date are chosen by the test. */

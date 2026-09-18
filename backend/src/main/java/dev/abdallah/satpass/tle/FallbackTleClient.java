@@ -1,7 +1,12 @@
 package dev.abdallah.satpass.tle;
 
 import dev.abdallah.satpass.domain.TleSnapshot;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,46 +25,42 @@ import org.slf4j.LoggerFactory;
  * whether that source is reachable. The list is the smallest answer that does not hand
  * that vote away.
  *
- * <h2>Why "not found" stops the chain</h2>
- * {@link TleNotFoundException} is a statement about the catalogue, not about a connection:
- * the service answered, and said the object is not in it. Trying the next endpoint would
- * be asking the same question twice, and it would turn a clean 404 into a slow one.
+ * <h2>Why a failing source moves to the back, and is never dropped</h2>
+ * Measured in production: the first endpoint burned its full connect timeout on
+ * <strong>every single</strong> retrieval, having never once answered from that host, and
+ * that delay came straight out of the budget the next source had to answer within. Two
+ * seconds spent asking a question whose answer is already known, at the moment it is most
+ * expensive.
  *
- * <p>This rule was written with "revisit it the day Space-Track lands" attached, and
- * Space-Track has landed. Revisited, and <strong>kept</strong>, for two reasons:
- * <ul>
- *   <li>CelesTrak republishes Space-Track's own public catalogue. Its "I do not have this
- *       object" is not a lesser answer than the upstream's, it is the same answer one hop
- *       away. Space-Track is in the chain because a platform can make CelesTrak
- *       unreachable, not because it knows about objects CelesTrak does not.</li>
- *   <li>The NORAD number is a query parameter of a public endpoint, and a negative answer
- *       is not cached — the store removes the entry. Falling through would let a stream of
- *       made-up numbers become one authenticated, rate-limited call each. Stopping here is
- *       also what keeps the Space-Track account alive.</li>
- * </ul>
- *
- * <p>It stays tested, so that changing it is a decision and not an accident. What would
- * reopen it is a source with genuinely different coverage — an operator's own ephemerides,
- * say, for an object that never enters the public catalogue.
- *
- * <h2>Why every failure is kept</h2>
- * With several endpoints, one message stops being the diagnosis: "unreachable" from the
- * origin and "502" from the relay are two different repairs in two different places. The
- * first failure becomes the cause and the later ones are attached as suppressed
- * exceptions, so a single stack trace in the log names every endpoint that was tried and
- * what each one answered.
+ * <p>So a source that fails goes to the back of the queue for a while, and a source that
+ * answers returns to its place. Demoted, never removed — the order changes, the list does
+ * not. A breaker that <em>excludes</em> a source has to decide when to let it back in, and
+ * gets to be wrong in the one direction that matters: manufacturing an outage out of a
+ * service that had recovered. This one cannot. In the worst case — every source cooling —
+ * the order is exactly the configured one, which is where we started.
  */
 public class FallbackTleClient implements TleClient {
 
     private static final Logger log = LoggerFactory.getLogger(FallbackTleClient.class);
 
     private final List<TleClient> sources;
+    private final Duration cooldown;
+    private final Clock clock;
 
-    public FallbackTleClient(List<TleClient> sources) {
+    /** Per source: when it stops being demoted, or {@code null} while it is trusted. */
+    private final AtomicReferenceArray<Instant> coolingUntil;
+
+    public FallbackTleClient(List<TleClient> sources, Duration cooldown, Clock clock) {
         if (sources == null || sources.isEmpty()) {
             throw new IllegalArgumentException("a TLE chain needs at least one source");
         }
+        if (cooldown == null || cooldown.isNegative()) {
+            throw new IllegalArgumentException("the source cooldown must not be negative");
+        }
         this.sources = List.copyOf(sources);
+        this.cooldown = cooldown;
+        this.clock = clock;
+        this.coolingUntil = new AtomicReferenceArray<>(this.sources.size());
     }
 
     /** How many sources this chain will try. */
@@ -69,22 +70,28 @@ public class FallbackTleClient implements TleClient {
 
     @Override
     public TleSnapshot fetch(int noradId) {
+        List<Integer> order = order(clock.instant());
         TleUnavailableException firstFailure = null;
+        int attempt = 0;
 
-        for (int i = 0; i < sources.size(); i++) {
+        for (int index : order) {
+            attempt++;
             try {
-                TleSnapshot snapshot = sources.get(i).fetch(noradId);
-                if (i > 0) {
-                    log.info("TLE source {} of {} answered for satellite {} after {} failure(s)",
-                            i + 1, sources.size(), noradId, i);
+                TleSnapshot snapshot = sources.get(index).fetch(noradId);
+                // Back to being trusted: the next retrieval asks it first again.
+                coolingUntil.set(index, null);
+                if (attempt > 1) {
+                    log.info("TLE source {} answered for satellite {} after {} failure(s)",
+                            index + 1, noradId, attempt - 1);
                 }
                 return snapshot;
             } catch (TleUnavailableException e) {
+                coolingUntil.set(index, clock.instant().plus(cooldown));
                 // Logged at each step rather than only at the end: a chain that ends up
                 // succeeding still hides an endpoint that is down, and that is exactly the
                 // failure nobody notices until the last one goes too.
-                log.warn("TLE source {} of {} failed for satellite {}: {}",
-                        i + 1, sources.size(), noradId, e.getMessage(), e);
+                log.warn("TLE source {} of {} failed for satellite {}, demoted for {}: {}",
+                        index + 1, sources.size(), noradId, cooldown, e.getMessage(), e);
                 if (firstFailure == null) {
                     firstFailure = e;
                 } else {
@@ -96,5 +103,25 @@ public class FallbackTleClient implements TleClient {
         throw new TleUnavailableException(
                 "no TLE source could answer for satellite " + noradId
                         + " (" + sources.size() + " tried)", firstFailure);
+    }
+
+    /**
+     * Configured order, with the sources still cooling moved to the back. A stable
+     * partition: among the trusted ones, and among the demoted ones, the configured order
+     * is kept — the fallback stays a fallback.
+     */
+    private List<Integer> order(Instant now) {
+        List<Integer> trusted = new ArrayList<>(sources.size());
+        List<Integer> demoted = new ArrayList<>(sources.size());
+        for (int i = 0; i < sources.size(); i++) {
+            Instant until = coolingUntil.get(i);
+            if (until == null || !now.isBefore(until)) {
+                trusted.add(i);
+            } else {
+                demoted.add(i);
+            }
+        }
+        trusted.addAll(demoted);
+        return trusted;
     }
 }

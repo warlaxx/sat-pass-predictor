@@ -16,7 +16,7 @@ class TlePropertiesTest {
 
     private static TleProperties properties(Duration refreshAfter, Duration retryAfter, Duration maxAge) {
         return new TleProperties(List.of("https://celestrak.test"),
-                Duration.ofSeconds(3), Duration.ofSeconds(5), refreshAfter, retryAfter, maxAge, 500);
+                Duration.ofSeconds(3), Duration.ofSeconds(5), Duration.ofMinutes(10), refreshAfter, retryAfter, maxAge, 500);
     }
 
     @Test
@@ -52,16 +52,25 @@ class TlePropertiesTest {
     void refusesANonPositiveStoreSize() {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> new TleProperties(List.of("https://celestrak.test"),
-                        Duration.ofSeconds(3), Duration.ofSeconds(5),
+                        Duration.ofSeconds(3), Duration.ofSeconds(5), Duration.ofMinutes(10),
                         Duration.ofHours(2), Duration.ofMinutes(5), Duration.ofDays(7), 0))
                 .withMessageContaining("maximum-size");
+    }
+
+    @Test
+    void refusesANegativeSourceCooldown() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new TleProperties(List.of("https://celestrak.test"),
+                        Duration.ofSeconds(3), Duration.ofSeconds(5), Duration.ofMinutes(-1),
+                        Duration.ofHours(2), Duration.ofMinutes(5), Duration.ofDays(7), 500))
+                .withMessageContaining("source-cooldown");
     }
 
     @Test
     void refusesAnEmptySourceList() {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> new TleProperties(List.of(),
-                        Duration.ofSeconds(3), Duration.ofSeconds(5),
+                        Duration.ofSeconds(3), Duration.ofSeconds(5), Duration.ofMinutes(10),
                         Duration.ofHours(2), Duration.ofMinutes(5), Duration.ofDays(7), 500))
                 .withMessageContaining("base-urls");
     }
@@ -75,7 +84,7 @@ class TlePropertiesTest {
     void refusesABlankSourceInTheList() {
         assertThatIllegalArgumentException()
                 .isThrownBy(() -> new TleProperties(List.of("https://celestrak.test", "  "),
-                        Duration.ofSeconds(3), Duration.ofSeconds(5),
+                        Duration.ofSeconds(3), Duration.ofSeconds(5), Duration.ofMinutes(10),
                         Duration.ofHours(2), Duration.ofMinutes(5), Duration.ofDays(7), 500))
                 .withMessageContaining("base-urls");
     }

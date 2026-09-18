@@ -18,7 +18,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *                       than one entry above, this is also the price of each unreachable
  *                       source before the next one is tried — it is a latency budget now,
  *                       not only a safety net.
- * @param readTimeout    how long to wait for the response body.
+ * @param readTimeout    how long to wait for the response body. Measured against the
+ *                       slowest source, not the fastest: the relay is a second hop and
+ *                       answers in about a second warm and about five cold, so a budget
+ *                       set for a direct call refuses the relay exactly when it is needed.
+ * @param sourceCooldown how long a source that has just failed is tried <em>last</em>
+ *                       instead of in its configured position. Demotion, not exclusion:
+ *                       when every source is cooling the order is the configured one
+ *                       again, so this can never manufacture an outage. Zero disables it.
  * @param refreshAfter   past this age <em>since the last fetch</em>, the sources are
  *                       called again. This is not a validity period: if every call fails,
  *                       the previous snapshot keeps being served.
@@ -37,6 +44,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record TleProperties(List<String> baseUrls,
                             Duration connectTimeout,
                             Duration readTimeout,
+                            Duration sourceCooldown,
                             Duration refreshAfter,
                             Duration retryAfter,
                             Duration maxAge,
@@ -50,6 +58,10 @@ public record TleProperties(List<String> baseUrls,
             throw new IllegalArgumentException("tle.base-urls contains a blank entry");
         }
         baseUrls = List.copyOf(baseUrls);
+        if (sourceCooldown == null || sourceCooldown.isNegative()) {
+            throw new IllegalArgumentException(
+                    "tle.source-cooldown must not be negative");
+        }
         if (refreshAfter == null || refreshAfter.isNegative() || refreshAfter.isZero()) {
             throw new IllegalArgumentException("tle.refresh-after must be strictly positive");
         }
