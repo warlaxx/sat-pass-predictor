@@ -6,6 +6,11 @@ to make sense: if the project stops at milestone 4, what is online stays coheren
 
 Target: a presentable version by **end of November 2026**, mid-December with slack.
 
+Milestones 0 to 10 build a portfolio project. **Phase 2** (milestones 11 and beyond) is a
+different exercise: turning it into something that charges. The two are not the same
+project and the roadmap stops pretending they are — a portfolio piece is judged on what it
+demonstrates, a product on whether anyone pays. Phase 2 starts below milestone 10.
+
 > Milestones 0 to 8 are done. About 4 h remain, before the optional milestone, at roughly
 > 4 h/week — the showcase pass (milestone 9): Docker Compose, the README's physical-model
 > section, and the demo GIF.
@@ -440,9 +445,238 @@ widths, including drag-to-rotate and play/pause staying in sync with the sky cha
 
 ---
 
-## Accepted limitations
+# Phase 2 — From MVP to a product that charges
 
-These choices are deliberate and are to be defended, not hidden:
+## The premise, stated plainly
+
+Three facts decide everything below, and none of them is about code.
+
+**The consumer market is already free.** Heavens-Above, N2YO, Stellarium and a dozen phone
+apps predict passes for nothing, and have for fifteen years. A stargazer will not pay
+€5/month for a prettier version of what their phone already does. Building a subscription
+for that audience is the default plan and it is the one that fails.
+
+**The API is the product.** The thing that is hard to obtain is not a pass chart, it is a
+*reliable, documented, supported* pass-prediction endpoint that someone else's software can
+depend on. That is what `/api/passes` already is: Problem Details, an OpenAPI contract,
+validated inputs, a TLE source chain that survives one source going dark. Milestones 0 to 8
+did not build a website with an API behind it — they built an API with a demo in front of
+it. Phase 2 accepts that inversion instead of fighting it.
+
+**The buyers are narrow and identifiable.** Amateur-radio satellite operators, cubesat and
+ground-station teams, astrophotography and drone tooling, museums and planetariums,
+students on funded projects. Hundreds of them, not millions. That is a feature: hundreds of
+findable people with a budget beats millions of anonymous people without one.
+
+Two constraints bound every plan that follows.
+
+**The arithmetic.** At €29/month, thirty-five paying customers make €1 000/month. That is
+the whole target, and it is a number of *conversations*, not a number of features. Every
+milestone below is graded on whether it moves that number.
+
+**The budget is still ~4 h/week.** Milestones 11 to 16 are about 40 h: four to five months
+before the first euro can legally be taken. Nothing here shortens that; the order exists so
+that no hour is spent on something a later decision would throw away.
+
+---
+
+## Milestone 11 — Know who is calling (≈ 8 h · 2 weeks)
+
+Nothing can be sold that cannot be counted and cut off. This is the first milestone, before
+any payment page, because every one after it depends on identity existing.
+
+- **API keys**, hashed at rest (the database stores a hash, never the key; it is shown once
+  at creation and never again). A key carries a plan, an owner and a state.
+- **Quota and rate limit per key**, refused with `429` and a Problem Details body that says
+  *which* limit was hit and when it resets — the same contract style as the rest of the API.
+- **A usage counter per key and per day.** Without it there is no invoice, no fair-use
+  argument and no idea which endpoint costs money.
+- The anonymous web app keeps working, on a shared public key with a small quota. The demo
+  must never require a signup to be convincing.
+
+**This is where PostgreSQL finally arrives**, and milestone 10 was right to defer it: keys,
+owners and usage counters are a real need, "caching a TLE" was not. One database, arriving
+once, for a reason that can be stated in a sentence.
+
+**Decision to make here, not later: where the API lives.** Today the frontend reaches
+`/api/*` through Vercel, server-side, which is why `render.yaml` says CORS is unnecessary
+and to keep it that way. A customer calls the backend *directly*, from their server or
+their browser. That comment stops being true the day the first key is issued: the API needs
+its own hostname (`api.<domain>`), a CORS policy that is deliberate rather than absent, and
+a versioned path (`/v1/passes`) so that the contract can move without breaking a paying
+integration. Cheap now, expensive after the first customer.
+
+---
+
+## Milestone 12 — Serve a call without paying for it twice (≈ 6 h · 1–2 weeks)
+
+Margin is decided before revenue. Every `/api/passes` call today propagates an orbit over
+the whole window and samples it at 10 s. That is milliseconds of CPU, but it is *linear*:
+a thousand calls for the same satellite over the same city on the same day do the same work
+a thousand times, on a container sized for a free plan.
+
+- **Cache the answer**, keyed on (satellite, rounded site, window, minimum elevation), with
+  a TTL bounded by the TLE epoch — a new TLE invalidates it, which is the physically correct
+  rule rather than an arbitrary duration.
+- **Cache the TLE itself** in PostgreSQL (milestone 10's line item, now with a real reason):
+  it also removes the dependency on CelesTrak answering during a customer's request.
+- Measure before and after: cost per thousand calls, p95 latency. A price cannot be set on a
+  cost that has never been measured.
+
+The honest framing: this milestone produces no visible feature. It is what makes a free tier
+possible without the free tier being the thing that kills the service.
+
+---
+
+## Milestone 13 — Self-serve signup (≈ 8 h · 2 weeks)
+
+A key that requires emailing the author is not a product, it is a favour. Until signup is
+self-serve, every customer costs an hour of your 4 h/week.
+
+- Email + magic link, or GitHub OAuth. **Not** passwords: no reset flow, no storage
+  liability, no 2FA debate, for an audience that has a GitHub account anyway.
+- A dashboard with exactly four things: the key, usage against quota, the plan, a button to
+  regenerate. Nothing else. Every extra screen is time not spent on milestone 17.
+- Keys are created and revoked by their owner, without you.
+
+---
+
+## Milestone 14 — Billing (≈ 8 h · 2 weeks)
+
+- **Stripe Checkout** for subscription, **Stripe Customer Portal** for upgrade, downgrade
+  and cancellation. Neither is a screen you build; both are a redirect. This is the single
+  largest saving in phase 2 — do not build an invoice, a card form or a dunning email.
+- **Webhook** → plan applied to the key. The webhook is the source of truth, not the
+  redirect back from Checkout: the customer closes the tab, the payment succeeds anyway.
+- **Flat tiers, not metered billing.** Metered means usage reporting, proration, surprise
+  invoices and support mail. Flat means a quota and a `429`. A tier can be changed later;
+  an unhappy customer holding a €400 surprise invoice cannot be un-made.
+- Idempotent webhook handling and a replay path. Stripe delivers twice; it is documented,
+  it will happen, and a double upgrade is noticed by nobody while a double *downgrade* is.
+
+A hypothesis to test, not a truth: **Free** 1 000 calls/month, shared key, no SLA ·
+**Hobby €9** 25 000 calls, one key · **Pro €49** 250 000 calls, several keys, e-mail support
+· **Business €199** custom volume, invoice, response-time commitment. The gap between €9 and
+€49 is deliberate: the €9 tier exists so that saying yes is easy, not to make money.
+
+---
+
+## Milestone 15 — What makes it legal to sell (≈ 6 h · 1–2 weeks)
+
+Unglamorous, non-optional, and cheaper before the first payment than after.
+
+- **Terms of service and privacy policy.** Selling from France means GDPR: a legal basis, a
+  retention period, a deletion path, a named data controller. *Mentions légales* are
+  mandatory for a French commercial site.
+- **VAT.** Stripe Tax handles EU VAT-on-digital-services and OSS reporting. Turn it on at
+  the start; retrofitting VAT onto existing subscriptions is genuinely painful.
+- **The status of the underlying data — check this before writing a pricing page.** The TLE
+  chain is CelesTrak first, Space-Track last. Space-Track's user agreement constrains
+  redistribution of its data, and "my customer receives positions derived from it" is not
+  obviously outside that. CelesTrak's terms are their own question. Two outcomes are
+  acceptable: confirm that derived predictions may be served commercially, or disable the
+  Space-Track source for paid traffic and say so in the docs. Discovering this after
+  thirty customers is the one mistake in phase 2 that cannot be fixed by writing code.
+- A company form, eventually. *Micro-entreprise* is enough to invoice legally at this scale
+  and takes an afternoon.
+
+---
+
+## Milestone 16 — Reliability a customer can hold you to (≈ 6 h · 1–2 weeks)
+
+- **Leave the free Render plan.** It sleeps; a sleeping instance answers the first call in
+  thirty seconds. A hobbyist shrugs, an integration times out and opens a support ticket.
+  The first paid tier pays for the paid instance — that is the actual reason to have one.
+- **Uptime monitoring and a public status page.** Being able to point at ninety days of
+  green is a sales argument for an API, and the cheapest one available.
+- **Alerting on the TLE chain.** Every source dark means every prediction stale. Today that
+  is a log line; for a paying customer it is an incident.
+- **A backup of the database and a restore that has been run at least once.** A backup never
+  restored is not a backup.
+- **A deprecation policy in writing**: what `/v1` guarantees and how long a version survives.
+  Integrators buy predictability more than they buy features.
+
+Only now does an SLA mean anything; before this it is a sentence, not a commitment.
+
+---
+
+## Milestone 17 — The first ten customers (ongoing, from milestone 14)
+
+The milestone every engineering roadmap omits and the only one that determines whether any
+of the others mattered. It is not four hours; it is a habit.
+
+- **Publish where the buyers already are**: AMSAT and amateur-radio satellite forums,
+  r/amateursatellites, cubesat and ground-station mailing lists, the Orekit and Skyfield
+  communities, Show HN. The cross-validation of milestone 2 is the credential here — it is
+  the part of this project that an engineer reads and trusts.
+- **Write the docs as the sales page.** For a developer product, the documentation *is* the
+  landing page: a working curl on the first screen, a client library snippet, a plan table.
+- **SEO on the long tail**: "ISS pass prediction API", "satellite pass API", "SGP4 REST API".
+  Low volume, and every visitor is someone with the problem.
+- **Talk to the first ten by hand.** Ask what they were using before and what nearly stopped
+  them integrating. Ten answers reorder milestone 18 better than any guess.
+
+**Kill criterion, agreed in advance**: three months after billing is live, fewer than five
+paying customers means the product hypothesis was wrong — not that the marketing needs more
+effort. Keep the API free, keep it in the portfolio, stop spending the 4 h/week on billing.
+Deciding this now is what stops it becoming a two-year sunk cost.
+
+---
+
+## Milestone 18 — What people actually pay extra for (≈ 12 h, ordered by what milestone 17 hears)
+
+Do not build this list in advance. It is the menu, and customers choose from it.
+
+- **Visible passes** — milestone 10's illumination, which is the one prediction the free
+  tools get wrong or omit. The strongest single candidate for the paid tier.
+- **Doppler shift and range rate per track point** — amateur radio's actual requirement, and
+  the track already carries range at 10 s. A small change, a whole audience.
+- **Webhooks and scheduled alerts** — "call my endpoint 20 minutes before the next pass".
+  Sells on the customer's ops burden, not on orbital mechanics.
+- **Batch endpoints** — many satellites or many sites in one call. Cheap to serve once
+  milestone 12 exists, and the reason a business tier is worth €199.
+- **Longer windows and a full catalogue** beyond the ISS, with the honest SGP4 caveat.
+- **Ground-station pointing exports** — Gpredict, SatNOGS and TLE-format outputs.
+
+---
+
+## Milestone 19 — Natural-language queries (optional, cheap to try)
+
+"When can I see the ISS from Lyon this weekend, if it needs to be high enough to photograph?"
+→ satellite, site, window, minimum elevation. This is argument-filling from a sentence, which
+is what the TypeSafe primitives installed in this environment are for (see
+[CLAUDE.md](CLAUDE.md)); the pass computation itself stays entirely in Orekit, where it
+belongs. A second, related judgment ranks a night's passes by how good they actually are —
+elevation, duration, hour, illumination — which is a scoring problem, not an orbital one.
+
+Worth building only if milestone 17 reports that people ask for it. Listed here so that the
+idea is on the record with its justification, and so that it is not mistaken for the product.
+
+---
+
+## What would make this fail
+
+Written down for the same reason as the accepted limitations below: to be defended, not
+discovered.
+
+- **Nobody pays for a pass API.** The most likely outcome. Milestone 17's kill criterion
+  exists to detect it in three months rather than two years.
+- **Building phase 2 before milestone 9.** An unfinished portfolio project and an unsold
+  product is the worst of both. Finish the showcase pass first; it is 4 h and it is also
+  the thing milestone 17 links to.
+- **Free competitors adding an API.** N2YO already has one. The answer is not more features,
+  it is the validation, the documentation and the support — which is exactly what a solo
+  project can credibly offer and a free service cannot.
+- **Support eating the 4 h/week.** Every hour answering mail is an hour not shipping. This
+  is the real reason milestones 13, 14 and 16 insist on self-serve everything.
+- **The data-rights question answered badly**, and answered late. See milestone 15.
+
+---
+
+# Accepted limitations
+
+These choices are deliberate and are to be defended, not hidden. They belong to the whole
+project, phase 1 and phase 2 alike:
 
 - **SGP4 only.** The model drifts beyond a few days; the forecast window is therefore
   bounded. That is the right answer for TLEs, not a limitation suffered.
