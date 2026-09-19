@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { PassDto } from '../api/passes.model';
-import { compassPoint, elevationColour, formatDuration } from '../format';
+import { compassPoint, elevationColour, formatDuration, isRemarkable, shadowEntry, utcOffsetLabel } from '../format';
 
 /**
  * The full list of passes, and the accessible equivalent of the two visualisations to
@@ -23,20 +23,23 @@ import { compassPoint, elevationColour, formatDuration } from '../format';
   template: `
     <div class="scroller">
     <table>
-      <caption>
+      <caption class="visually-hidden">
         Every pass of the window, in words. This is the text equivalent of the sky chart
-        and the globe: local time and UTC, duration, maximum elevation, and the direction
-        to look at each phase.
+        and the globe: local times, maximum elevation, duration, and the direction to look
+        at each phase.
       </caption>
       <thead>
         <tr>
-          <th scope="col">Rise (local)</th>
-          <th scope="col">UTC</th>
-          <th scope="col" class="right">Duration</th>
-          <th scope="col" class="right">Max elev.</th>
-          <th scope="col">Rise az.</th>
-          <th scope="col">Peak az.</th>
-          <th scope="col">Set az.</th>
+          <th scope="col">Night</th>
+          <th scope="col">Rise <span class="zone">{{ zone() }}</span></th>
+          <th scope="col">Az<span class="visually-hidden">imuth at rise</span></th>
+          <th scope="col">Peak</th>
+          <th scope="col">Elev.<span class="visually-hidden"> maximum</span></th>
+          <th scope="col">Az<span class="visually-hidden">imuth at peak</span></th>
+          <th scope="col">Set</th>
+          <th scope="col">Az<span class="visually-hidden">imuth at set</span></th>
+          <th scope="col">Duration</th>
+          <th scope="col"><span class="visually-hidden">Remarks</span></th>
         </tr>
       </thead>
       <tbody>
@@ -49,15 +52,28 @@ import { compassPoint, elevationColour, formatDuration } from '../format';
             (keydown.enter)="select.emit(pass.aos.instant)"
             (keydown.space)="$event.preventDefault(); select.emit(pass.aos.instant)"
           >
-            <td class="num">{{ pass.aos.instant | date: 'EEE d MMM HH:mm:ss' }}</td>
-            <td class="num dim">{{ pass.aos.instant | date: 'HH:mm:ss' : 'UTC' }}</td>
-            <td class="num right">{{ duration(pass) }}</td>
-            <td class="num right peak" [style.color]="colour(pass)">
-              {{ pass.culmination.elevationDeg | number: '1.0-0' }}&deg;
+            <td class="night">{{ pass.aos.instant | date: 'EEE d MMM' }}</td>
+            <td class="num">{{ pass.aos.instant | date: 'HH:mm:ss' }}</td>
+            <td class="num dim">{{ point(pass.aos.azimuthDeg) }}</td>
+            <td class="num">{{ pass.culmination.instant | date: 'HH:mm:ss' }}</td>
+            <td class="num">
+              <span class="elev"><i [style.background]="colour(pass)"></i>{{ pass.culmination.elevationDeg | number: '1.0-0' }}&deg;</span>
             </td>
-            <td class="num">{{ point(pass.aos.azimuthDeg) }}</td>
-            <td class="num">{{ point(pass.culmination.azimuthDeg) }}</td>
-            <td class="num">{{ point(pass.los.azimuthDeg) }}</td>
+            <td class="num dim">{{ point(pass.culmination.azimuthDeg) }}</td>
+            <td class="num">{{ pass.los.instant | date: 'HH:mm:ss' }}</td>
+            <td class="num dim">{{ point(pass.los.azimuthDeg) }}</td>
+            <td class="num">{{ duration(pass) }}</td>
+            <td class="remarks">
+              @if (shadow(pass); as instant) {
+                <span class="chip num lit">shadow at {{ instant | date: 'HH:mm' }}</span>
+              }
+              @if (remarkable(pass)) {
+                <span class="chip num hot">remarkable</span>
+              }
+              @if (pass.durationSeconds < 60) {
+                <span class="chip num quiet">grazing &lt; 60 s</span>
+              }
+            </td>
           </tr>
         }
       </tbody>
@@ -71,71 +87,100 @@ import { compassPoint, elevationColour, formatDuration } from '../format';
      * information away from exactly the readers who have nothing else.
      */
     .scroller {
+      border: 1px solid var(--line);
+      border-radius: var(--r);
       overflow-x: auto;
     }
 
     table {
       border-collapse: collapse;
+      font-size: 14px;
       width: 100%;
     }
 
-    caption {
+    th {
+      background: var(--panel);
+      border-bottom: 1px solid var(--rule);
       color: var(--ink-3);
-      font-size: 0.82rem;
-      padding-bottom: 0.75rem;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 14px;
       text-align: left;
+      white-space: nowrap;
     }
 
-    th {
-      border-bottom: 1px solid var(--line);
-      color: var(--ink-3);
-      font-family: var(--font-display);
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      padding: 0.4rem 0.6rem;
-      text-align: left;
-      text-transform: uppercase;
-      white-space: nowrap;
+    .zone {
+      font-weight: 400;
     }
 
     td {
       border-bottom: 1px solid var(--line-soft);
-      padding: 0.5rem 0.6rem;
+      height: 50px;
+      padding: 0 14px;
       white-space: nowrap;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
     }
 
     tbody tr {
       cursor: pointer;
     }
 
-    tbody tr:hover,
+    tbody tr:hover {
+      background: var(--panel);
+    }
+
     tbody tr.selected {
-      background: var(--panel-2);
+      background: rgb(252 61 33 / 10%);
     }
 
     tbody tr.selected td:first-child {
-      box-shadow: inset 3px 0 0 var(--accent);
-    }
-
-    .right {
-      text-align: right;
+      box-shadow: inset 3px 0 0 var(--signal);
+      font-weight: 600;
     }
 
     .dim {
-      color: var(--ink-3);
+      color: var(--ink-2);
     }
 
-    .peak {
-      font-weight: 500;
+    .elev {
+      align-items: center;
+      display: inline-flex;
+      gap: 8px;
     }
 
+    .elev i {
+      border-radius: 99px;
+      height: 9px;
+      width: 9px;
+    }
+
+    .chip {
+      border: 1px solid currentColor;
+      border-radius: 99px;
+      display: inline-block;
+      font-size: 12px;
+      margin-right: 6px;
+      padding: 3px 9px;
+    }
+
+    .chip.lit { color: var(--lit); }
+    .chip.hot { color: var(--hot); }
+    .chip.quiet { color: var(--ink-3); }
   `,
 })
 export class PassTable {
   readonly passes = input.required<readonly PassDto[]>();
   readonly selected = input<string | undefined>(undefined);
   readonly select = output<string>();
+
+  /** The offset of the first pass; the table would not span a DST change unnoticed by it alone. */
+  protected readonly zone = computed(() => {
+    const first = this.passes()[0];
+    return first ? `(${utcOffsetLabel(first.aos.instant)})` : '';
+  });
 
   protected duration(pass: PassDto): string {
     return formatDuration(pass.durationSeconds);
@@ -147,5 +192,13 @@ export class PassTable {
 
   protected point(azimuthDeg: number): string {
     return compassPoint(azimuthDeg);
+  }
+
+  protected remarkable(pass: PassDto): boolean {
+    return isRemarkable(pass.culmination.elevationDeg);
+  }
+
+  protected shadow(pass: PassDto): string | undefined {
+    return shadowEntry(pass.track);
   }
 }

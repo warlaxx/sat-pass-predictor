@@ -18,67 +18,110 @@ import { aosUncertaintySeconds, expectedDriftKm, formatAge } from '../format';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @let t = tle();
-    <section class="banner" [class.stale]="isStale()">
-      <div class="row">
-        <span class="label">Orbital elements</span>
-        <span class="num age">{{ age() }} old</span>
-        <span class="source">{{ t.source }}</span>
-      </div>
+    <section class="banner" [class.stale]="isStale()" aria-label="Freshness of the orbital elements">
+      <div class="inner">
+        <svg class="icon" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+          <circle cx="11" cy="11" r="9.5" fill="none" stroke="currentColor" stroke-width="1.6" />
+          <path d="M11 5.5 V11 L14.5 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
 
-      <p class="detail">
-        Epoch <span class="num">{{ t.epoch | date: 'yyyy-MM-dd HH:mm' : 'UTC' }} UTC</span>,
-        fetched <span class="num">{{ t.fetchedAt | date: 'yyyy-MM-dd HH:mm' : 'UTC' }} UTC</span>.
-        Indicative SGP4 position drift:
-        <span class="num">{{ drift().low }} to {{ drift().high }} km</span> since the epoch.
-        Approximate timing scale:
-        <span class="num">{{ uncertainty() === 0 ? 'less than 1 s' : 'about ±' + uncertainty() + ' s' }}</span>.
-        These are rough estimates, not accuracy guarantees.
-      </p>
+        <div class="fact">
+          <span class="label">TLE epoch</span>
+          <span class="num value">{{ t.epoch | date: 'yyyy-MM-dd HH:mm' : 'UTC' }} UTC</span>
+        </div>
+        <div class="fact">
+          <span class="label">Age</span>
+          <span class="num value age">{{ age() }}</span>
+        </div>
+        <div class="fact">
+          <span class="label">Fetched from {{ t.source }}</span>
+          <span class="num value">{{ t.fetchedAt | date: 'yyyy-MM-dd HH:mm' : 'UTC' }} UTC</span>
+        </div>
+
+        <p class="detail">
+          Indicative SGP4 drift at this age:
+          <b class="num">{{ drift().low }} to {{ drift().high }} km</b>, a timing scale of
+          <b class="num">{{ uncertainty() === 0 ? 'less than 1 s' : 'about ±' + uncertainty() + ' s' }}</b>
+          on rise times. Times are shown to the second but are worth no better than this;
+          these are rough estimates, not accuracy guarantees.
+        </p>
+      </div>
     </section>
   `,
   styles: `
     .banner {
-      background: color-mix(in srgb, var(--warn) 8%, var(--panel));
-      border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--line));
-      border-radius: var(--r);
-      padding: 0.85rem 1.1rem;
+      --tone: var(--warn);
+      background: #120d05;
+      border-bottom: 1px solid #3b2a10;
+      padding-block: 22px;
+      padding-inline: max(var(--gutter), (100% - 1280px) / 2);
     }
 
     .banner.stale {
-      background: color-mix(in srgb, var(--hot) 10%, var(--panel));
-      border-color: color-mix(in srgb, var(--hot) 45%, var(--line));
+      --tone: var(--hot);
+      background: #170905;
+      border-bottom-color: #4a1d12;
     }
 
-    .row {
-      align-items: baseline;
+    .inner {
+      align-items: center;
       display: flex;
       flex-wrap: wrap;
-      gap: 0.6rem;
+      gap: 16px 40px;
     }
 
-    .age {
-      color: var(--warn);
-      font-size: 1.05rem;
+    .icon {
+      color: var(--tone);
+      flex-shrink: 0;
     }
 
-    .stale .age {
-      color: var(--hot);
+    .fact {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
 
-    .source {
-      color: var(--ink-3);
-      font-size: 0.8rem;
-      margin-left: auto;
+    .value {
+      color: var(--ink);
+      font-size: 16px;
+    }
+
+    .value.age {
+      color: var(--tone);
+      font-size: 22px;
+      line-height: 1.15;
     }
 
     .detail {
       color: var(--ink-2);
-      font-size: 0.86rem;
-      margin: 0.4rem 0 0;
+      flex: 1 1 30ch;
+      font-size: 14px;
+      line-height: 1.55;
+      margin: 0;
+      max-width: 62ch;
     }
 
-    .detail .num {
-      color: var(--ink);
+    .detail b {
+      color: var(--tone);
+      font-weight: 500;
+    }
+
+    @media (width < 640px) {
+      .banner {
+        padding-block: 18px;
+      }
+
+      .inner {
+        gap: 14px 24px;
+      }
+
+      .icon {
+        align-self: flex-start;
+      }
+
+      .detail {
+        flex-basis: 100%;
+      }
     }
   `,
 })

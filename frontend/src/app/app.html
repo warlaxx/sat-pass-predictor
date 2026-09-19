@@ -1,122 +1,188 @@
-<header class="appbar">
-  <div class="brand">
-    <span class="mark" aria-hidden="true"></span>
-    <h1>Sat Pass Predictor</h1>
-  </div>
-  @if (response(); as loaded) {
-    <p class="context">
-      <span class="num">{{ loaded.satellite.name }}</span>
-      <span class="sep" aria-hidden="true">&middot;</span>
-      <span class="num">{{ loaded.observer.latitudeDeg }}&deg;, {{ loaded.observer.longitudeDeg }}&deg;</span>
-      <span class="sep" aria-hidden="true">&middot;</span>
-      <span class="num">above {{ loaded.minElevationDeg }}&deg;</span>
-    </p>
+<header class="appbar wrap">
+  <svg class="logo" width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+    <circle cx="16" cy="16" r="14.5" fill="none" stroke="#fff" stroke-width="1.6" />
+    <circle cx="16" cy="16" r="9.5" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="2 2.5" />
+    <path d="M5.5 21 Q13 3 26.5 14" fill="none" stroke="var(--signal)" stroke-width="2.4" stroke-linecap="round" />
+    <circle cx="26.5" cy="14" r="2.2" fill="#fff" />
+  </svg>
+  <h1>Sat Pass Predictor</h1>
+  @if (response()) {
+    <nav aria-label="Sections">
+      @for (section of sections; track section.id) {
+        <a [href]="'#' + section.id" [class.current]="activeSection() === section.id"
+           [attr.aria-current]="activeSection() === section.id ? 'location' : null">{{ section.label }}</a>
+      }
+    </nav>
   }
 </header>
 
-<main>
-  <form class="card query" (submit)="$event.preventDefault(); search()">
-    <fieldset>
-      <legend class="label">Query</legend>
+<form class="query wrap" (submit)="$event.preventDefault(); search()">
+  <div class="group">
+    <span class="caption" id="q-satellite">Satellite</span>
+    <label class="field">
+      <span class="visually-hidden">NORAD catalogue number</span>
+      <span class="prefix" aria-hidden="true">NORAD</span>
+      <input class="num w-norad" type="number" min="1" max="99999" required aria-describedby="q-satellite"
+             [value]="form().noradId" (input)="patch('noradId', $any($event.target).value)">
+    </label>
+  </div>
 
-      <label>
-        <span>NORAD</span>
-        <input class="num" type="number" min="1" max="99999" required
-               [value]="form().noradId" (input)="patch('noradId', $any($event.target).value)">
-      </label>
-      <label>
-        <span>Latitude</span>
-        <input class="num" type="number" step="0.0001" min="-90" max="90" required
+  <div class="group">
+    <span class="caption" id="q-observer">Observer</span>
+    <div class="row">
+      <label class="field">
+        <span class="visually-hidden">Latitude, degrees</span>
+        <input class="num w-coord" type="number" step="0.0001" min="-90" max="90" required aria-describedby="q-observer"
                [value]="form().lat" (input)="patch('lat', $any($event.target).value)">
+        <span class="unit" aria-hidden="true">° lat</span>
       </label>
-      <label>
-        <span>Longitude</span>
-        <input class="num" type="number" step="0.0001" min="-180" max="180" required
+      <label class="field">
+        <span class="visually-hidden">Longitude, degrees</span>
+        <input class="num w-coord" type="number" step="0.0001" min="-180" max="180" required aria-describedby="q-observer"
                [value]="form().lon" (input)="patch('lon', $any($event.target).value)">
+        <span class="unit" aria-hidden="true">° lon</span>
       </label>
-      <label>
-        <span>Altitude (m)</span>
-        <input class="num" type="number" step="1" min="-500" max="9000" required
+      <label class="field">
+        <span class="visually-hidden">Altitude, metres</span>
+        <input class="num w-alt" type="number" step="1" min="-500" max="9000" required aria-describedby="q-observer"
                [value]="form().alt" (input)="patch('alt', $any($event.target).value)">
+        <span class="unit" aria-hidden="true">m</span>
       </label>
-      <label>
-        <span>Window (h)</span>
-        <input class="num" type="number" min="1" [max]="maxHours" required
-               [value]="form().hours" (input)="patch('hours', $any($event.target).value)">
-      </label>
-      <label>
-        <span>Min elev. (&deg;)</span>
-        <input class="num" type="number" step="0.5" min="0" max="89" required
-               [value]="form().minElevation" (input)="patch('minElevation', $any($event.target).value)">
-      </label>
+      <button type="button" class="ghost" [disabled]="locating()" (click)="useMyPosition()">
+        {{ locating() ? 'Locating...' : 'Use my position' }}
+      </button>
+    </div>
+  </div>
 
-      <div class="actions">
-        <button type="button" class="ghost" [disabled]="locating()" (click)="useMyPosition()">
-          {{ locating() ? 'Locating...' : 'Use my position' }}
-        </button>
-        <button type="submit" [disabled]="resource.isLoading()">
-          {{ resource.isLoading() ? 'Computing...' : 'Compute passes' }}
-        </button>
-      </div>
-    </fieldset>
+  <div class="group">
+    <span class="caption" id="q-window">Window</span>
+    <label class="field">
+      <span class="visually-hidden">Window, hours</span>
+      <input class="num w-small" type="number" min="1" [max]="maxHours" required aria-describedby="q-window"
+             [value]="form().hours" (input)="patch('hours', $any($event.target).value)">
+      <span class="unit" aria-hidden="true">h</span>
+    </label>
+  </div>
 
-    @if (locationError(); as failure) {
-      <p class="location-error" role="status">{{ failure }}</p>
-    }
-  </form>
+  <div class="group">
+    <span class="caption" id="q-threshold">Threshold</span>
+    <label class="field">
+      <span class="visually-hidden">Minimum elevation, degrees</span>
+      <input class="num w-small" type="number" step="0.5" min="0" max="89" required aria-describedby="q-threshold"
+             [value]="form().minElevation" (input)="patch('minElevation', $any($event.target).value)">
+      <span class="unit" aria-hidden="true">°</span>
+    </label>
+  </div>
 
-  <!--
-    Four states, four answers. The @else chain is ordered by what the reader needs to
-    know first: a failure beats a stale value, and an empty window is a result, not an
-    error.
-  -->
-  @if (!searched()) {
-    <p class="state hint">
-      Pick a satellite and a place, then compute. Defaults: the ISS over Lyon, the next
-      two days, passes above 10&deg;.
-    </p>
-  } @else if (resource.isLoading()) {
-    <p class="state" role="status">Retrieving orbital elements and computing passes. A server starting up can take longer&hellip;</p>
-  } @else if (problem(); as failure) {
+  <button type="submit" class="primary" [disabled]="resource.isLoading()">
+    {{ resource.isLoading() ? 'Computing...' : 'Compute passes' }}
+  </button>
+
+  @if (locationError(); as failure) {
+    <p class="location-error" role="status">{{ failure }}</p>
+  }
+</form>
+
+<!--
+  Four states, four answers. The @else chain is ordered by what the reader needs to
+  know first: a failure beats a stale value, and an empty window is a result, not an
+  error.
+-->
+@if (!searched()) {
+  <p class="state hint wrap">
+    Pick a satellite and a place, then compute. Defaults: the ISS over Lyon, the next
+    two days, passes above 10&deg;.
+  </p>
+} @else if (resource.isLoading()) {
+  <p class="state wrap" role="status">
+    <span class="pulse" aria-hidden="true"></span>
+    Retrieving orbital elements and computing passes. A server starting up can take longer&hellip;
+  </p>
+} @else if (problem(); as failure) {
+  <div class="wrap">
     <section class="state error" role="alert">
       <h2>{{ failure.title }}</h2>
       @if (failure.detail) {
         <p>{{ failure.detail }}</p>
       }
-      <button type="button" (click)="reload()">Try again</button>
+      <button type="button" class="ghost" (click)="reload()">Try again</button>
     </section>
-  } @else if (isEmptyResult()) {
-    <p class="state" role="status">
-      No pass above {{ response()!.minElevationDeg }}&deg; in this window. Lower the
-      threshold, or widen the window.
-    </p>
-  } @else if (response(); as loaded) {
-    <app-tle-banner [tle]="loaded.tle" />
+  </div>
+} @else if (isEmptyResult()) {
+  <p class="state wrap" role="status">
+    No pass above {{ response()!.minElevationDeg }}&deg; in this window. Lower the
+    threshold, or widen the window.
+  </p>
+} @else if (response(); as loaded) {
+  <app-tle-banner [tle]="loaded.tle" />
 
-    <section class="card results">
-      <h2>{{ loaded.passes.length }} passes</h2>
+  @if (selectedPass(); as pass) {
+    <section id="passes" class="hero" aria-labelledby="pass-title">
+      <app-sky-panorama [pass]="pass" [observer]="loaded.observer" [threshold]="loaded.minElevationDeg" />
 
-      <app-pass-ribbon
-        [passes]="loaded.passes"
-        [selected]="selectedPass()?.aos?.instant"
-        (select)="selected.set($event)"
-      />
+      <div class="hero-text wrap">
+        <div class="title-block">
+          <span class="kicker">
+            {{ loaded.satellite.name }} over
+            <span class="num">{{ loaded.observer.latitudeDeg | number: '1.3-4' }}°, {{ loaded.observer.longitudeDeg | number: '1.3-4' }}°</span>,
+            facing {{ facing(pass) }}
+          </span>
+          <h2 id="pass-title">Pass of {{ pass.aos.instant | date: 'd MMM y' }}</h2>
+          <div class="times">
+            <span class="num span">{{ pass.aos.instant | date: 'HH:mm' }} → {{ pass.los.instant | date: 'HH:mm' }}</span>
+            <span class="zone">local time ({{ zone(pass) }})</span>
+          </div>
+          <p class="key">
+            <span><i class="stroke track"></i>trajectory</span>
+            <span><i class="stroke threshold"></i>{{ loaded.minElevationDeg }}° threshold</span>
+            <span><i class="dot"></i>satellite</span>
+          </p>
+        </div>
 
-      @if (selectedPass(); as pass) {
+        <div class="nights">
+          <h3>Passes &ge; {{ loaded.minElevationDeg }}&deg; &mdash; {{ loaded.passes.length }} in {{ nightCount() }} nights</h3>
+          <app-pass-ribbon
+            [passes]="loaded.passes"
+            [selected]="pass.aos.instant"
+            (select)="selected.set($event)"
+          />
+        </div>
+      </div>
+    </section>
+
+    <div class="wrap section">
+      <app-pass-viewer [pass]="pass" [threshold]="loaded.minElevationDeg" [elementsAge]="ageAtRise(pass)">
         <app-globe [pass]="pass" [observer]="loaded.observer" [threshold]="loaded.minElevationDeg" />
-        <app-pass-viewer [pass]="pass" [threshold]="loaded.minElevationDeg" />
-      }
-
-      <app-pass-table
-        [passes]="loaded.passes"
-        [selected]="selectedPass()?.aos?.instant"
-        (select)="selected.set($event)"
-      />
-    </section>
+      </app-pass-viewer>
+    </div>
   }
-</main>
 
-<footer>
-  Elements from CelesTrak, propagated with Orekit (SGP4). No atmospheric refraction below
-  5&deg;. Every instant is computed in UTC; local times are your browser's.
+  <section id="table" class="wrap section table-section" aria-labelledby="table-title">
+    <div class="section-head">
+      <h2 id="table-title">Pass list</h2>
+      <span>Text equivalent of the globe and the sky chart</span>
+    </div>
+    <app-pass-table
+      [passes]="loaded.passes"
+      [selected]="selectedPass()?.aos?.instant"
+      (select)="selected.set($event)"
+    />
+  </section>
+}
+
+<footer class="wrap">
+  <div class="footer-brand">
+    <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="14.5" fill="none" stroke="#fff" stroke-width="1.6" />
+      <circle cx="16" cy="16" r="9.5" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="2 2.5" />
+      <path d="M5.5 21 Q13 3 26.5 14" fill="none" stroke="var(--signal)" stroke-width="2.4" stroke-linecap="round" />
+      <circle cx="26.5" cy="14" r="2.2" fill="#fff" />
+    </svg>
+    <span>Sat Pass Predictor</span>
+  </div>
+  <p>
+    Elements from <a href="https://celestrak.org" rel="noopener">CelesTrak</a>, propagated
+    with Orekit (SGP4). No atmospheric refraction below 5&deg;. Every instant is computed in
+    UTC; local times are your browser's. Coastlines: Natural Earth 110&nbsp;m.
+  </p>
 </footer>

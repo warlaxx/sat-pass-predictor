@@ -5,20 +5,21 @@
  * fonts.googleapis.com fails when that host is unreachable - which is how this file came
  * to be written. A page that fetches them at runtime hands every visitor's IP to a third
  * party, which German and French rulings have already found is not a detail. And the
- * typography is part of the design, not a nicety: a mockup validated in IBM Plex that
+ * typography is part of the design, not a nicety: a mockup validated in Archivo that
  * falls back to Helvetica because a CDN hiccuped is not the same page.
  *
- * Only the six faces the design tokens name are imported, latin subset only.
+ * Archivo is the variable build with its width axis: the display type is set at 75 to
+ * 87.5 % width, which a static weight file cannot do. Its non-latin subsets are declared
+ * but carry a unicode-range, so a browser never downloads them for this page.
  */
-/* The aliases are Sass plumbing: two files may not share a namespace, and three of
-   these are called latin-600.css. Nothing reads them. */
-@use '@fontsource/ibm-plex-sans-condensed/latin-600.css' as display-600;
-@use '@fontsource/ibm-plex-sans-condensed/latin-700.css' as display-700;
-@use '@fontsource/ibm-plex-sans/latin-400.css' as body-400;
-@use '@fontsource/ibm-plex-sans/latin-500.css' as body-500;
-@use '@fontsource/ibm-plex-sans/latin-600.css' as body-600;
-@use '@fontsource/ibm-plex-mono/latin-400.css' as mono-400;
-@use '@fontsource/ibm-plex-mono/latin-500.css' as mono-500;
+/* The aliases are Sass plumbing: two files may not share a namespace, and two of
+   these are called latin-400.css. Nothing reads them. */
+@use '@fontsource-variable/archivo/wdth.css' as display;
+@use '@fontsource/public-sans/latin-400.css' as body-400;
+@use '@fontsource/public-sans/latin-500.css' as body-500;
+@use '@fontsource/public-sans/latin-600.css' as body-600;
+@use '@fontsource/dm-mono/latin-400.css' as mono-400;
+@use '@fontsource/dm-mono/latin-500.css' as mono-500;
 
 /*
  * Design tokens and base styles.
@@ -28,35 +29,54 @@
  * var(--accent) is a component that will be missed the day the palette moves.
  *
  * One dark theme, deliberately. The real use of this application is at night, and a
- * second theme is upkeep with no reader.
+ * second theme is upkeep with no reader. The ground is true black: the page is read
+ * outside, by eyes adapting to the dark, and every grey above zero is glare.
  */
 
 :root {
-  --bg: #0b0f1a;
-  --panel: #141a29;
-  --panel-2: #1a2131;
-  --line: #28314b;
-  --line-soft: #1f2739;
+  --bg: #000000;
+  --panel: #0b0c0f;
+  --line: #23252b;
+  --line-soft: #1b1d22;
+  --line-strong: #34363d;
+  --rule: #3a3d46;
 
-  --ink: #eceff8;
-  --ink-2: #a9b3cd;
-  --ink-3: #6f7b99;
+  --ink: #ffffff;
+  --ink-2: #c4c6cf;
+  --ink-3: #9295a0;
+  --ink-4: #4a4f5c;
+
+  /* The one colour that means "act": the primary button, the playhead, the current tab. */
+  --signal: #fc3d21;
 
   --accent: #96a4ff;
   --accent-dim: #5a67b4;
 
-  /* Semantic, not decorative: these three say something about the pass itself. */
+  /* Semantic, not decorative: these say something about the pass itself. */
   --lit: #f4ad3c;
   --shade: #7d88a8;
   --warn: #e8a33d;
   --hot: #ff8a6b;
   --observer: #57d3a8;
 
-  --r: 14px;
+  --r: 6px;
+  --gutter: 80px;
 
-  --font-display: 'IBM Plex Sans Condensed', system-ui, sans-serif;
-  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-display: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Public Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+}
+
+@media (width < 1100px) {
+  :root {
+    --gutter: 40px;
+  }
+}
+
+@media (width < 640px) {
+  :root {
+    --gutter: 16px;
+  }
 }
 
 * {
@@ -69,66 +89,92 @@ body {
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 1rem;
+}
+
 body {
-  background:
-    radial-gradient(60rem 40rem at 85% -10%, rgb(150 164 255 / 8%), transparent 60%),
-    radial-gradient(50rem 35rem at 10% -15%, rgb(244 173 60 / 6%), transparent 60%),
-    var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 15px;
   line-height: 1.5;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Display type is heavy and narrow: Archivo 800 at 87.5 % width. It is what makes a
+ * heading read as a heading from across a dark room, without growing to fill the page.
+ */
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-stretch: 87.5%;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.02;
   margin: 0;
 }
 
 /*
- * Every measured number wears IBM Plex Mono with tabular figures. Without
- * tabular-nums a column of elevations jitters from row to row, which is exactly the
- * comparison the table exists to make easy.
+ * Every measured number wears DM Mono with tabular figures. Without tabular-nums a
+ * column of elevations jitters from row to row, which is exactly the comparison the
+ * table exists to make easy.
  */
 .num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-weight: 500;
 }
 
+/* Field and figure captions: sentence case, quiet, never shouting in capitals. */
 .label {
-  font-family: var(--font-display);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: var(--ink-3);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
 }
 
 .card {
-  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r);
-  padding: 1rem 1.15rem;
+}
+
+.visually-hidden {
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
 :where(a) {
-  color: var(--accent);
+  color: var(--ink);
+  text-decoration-color: var(--signal);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
 }
 
-:where(button, input, select, a):focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+:where(a):hover {
+  color: var(--signal);
+}
+
+:where(button, input, select, a, tr, summary):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
 }
 
 /* Honoured globally rather than component by component: one place to be wrong. */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   *,
   *::before,
   *::after {

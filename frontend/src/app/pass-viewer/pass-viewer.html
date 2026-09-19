@@ -1,59 +1,131 @@
-<section class="viewer" aria-label="Selected pass">
-  <header>
-    <div><p class="label">Selected pass · {{ pass().aos.instant | date: 'EEE d MMM' }}</p>
-    <h2>Where to look</h2></div>
-    <span class="num">{{ pass().aos.instant | date: 'HH:mm:ss' }} → {{ pass().los.instant | date: 'HH:mm:ss' }}</span>
-  </header>
-  <p class="hint">Horizon at the edge, zenith at the centre. North up, east right. Times are local.</p>
-  <div class="view-grid">
-    <svg viewBox="0 0 360 360" role="img" aria-label="Sky trajectory of the selected pass; exact phase times and directions follow below">
-      <circle class="disc" cx="180" cy="180" r="144" />
-      @for (elevation of [30, 60]; track elevation) {
-        <circle class="grid" cx="180" cy="180" [attr.r]="(90 - elevation) / 90 * 144" />
-        <text x="185" [attr.y]="180 - (90 - elevation) / 90 * 144 + 12">{{ elevation }}°</text>
-      }
-      <path class="grid" d="M36 180H324 M180 36V324" />
-      <circle class="threshold" cx="180" cy="180" [attr.r]="(90 - threshold()) / 90 * 144" />
-      <text class="cardinal" x="180" y="22">N</text><text class="cardinal" x="340" y="184">E</text>
-      <text class="cardinal" x="180" y="346">S</text><text class="cardinal" x="20" y="184">W</text>
-      <polyline class="trajectory" [attr.points]="path()" />
-      @for (tick of ticks(); track tick.instant; let index = $index) {
-        <circle class="tick" [attr.cx]="tick.x" [attr.cy]="tick.y" r="2" />
-        @if (index % 2 === 0) {
-          <text class="time" [attr.x]="tick.x + 7" [attr.y]="tick.y - 7">{{ tick.instant | date: 'HH:mm' }}</text>
-        }
-      }
-      @for (phase of phases(); track phase.name) {
-        <circle class="phase-dot" [attr.cx]="project(phase.point).x" [attr.cy]="project(phase.point).y" r="4">
-          <title>{{ phase.name }} · {{ phase.point.instant | date: 'HH:mm:ss' }} · {{ phase.point.elevationDeg | number: '1.1-1' }}°</title>
-        </circle>
-      }
-      <circle class="satellite" [attr.cx]="project(current()).x" [attr.cy]="project(current()).y" r="4.5" />
-    </svg>
-    <div class="details">
-      <div class="summary"><span class="label">Maximum elevation</span>
-        <strong class="num">{{ pass().culmination.elevationDeg | number: '1.1-1' }}°</strong>
-        <span>{{ duration(pass().durationSeconds) }} above {{ threshold() }}°</span>
+<section class="selected" aria-label="Selected pass">
+  <div class="views">
+    <!-- The globe is projected in, so the two pictures of one pass share a row and one clock. -->
+    <ng-content />
+
+    <article id="sky" class="card view">
+      <header>
+        <h3>Where to look</h3>
+        <span class="num meta">local time ({{ zone() }})</span>
+      </header>
+      <p class="hint">Sky chart: the edge of the disc is the horizon, the centre the zenith, north at the top and east on the right. A mark every minute.</p>
+      <div class="stage">
+        <svg viewBox="0 0 360 360" role="img" aria-label="Sky trajectory of the selected pass; exact phase times and directions follow below">
+          <circle class="disc" cx="180" cy="180" r="144" />
+          @for (elevation of [30, 60]; track elevation) {
+            <circle class="grid" cx="180" cy="180" [attr.r]="(90 - elevation) / 90 * 144" />
+            <text class="ring-label" x="175" [attr.y]="180 - (90 - elevation) / 90 * 144 + 11" text-anchor="end">{{ elevation }}°</text>
+          }
+          <circle class="threshold" cx="180" cy="180" [attr.r]="(90 - threshold()) / 90 * 144" />
+          @for (bearing of rim; track bearing) {
+            <line class="rim" [attr.x1]="180 + 144 * sin(bearing)" [attr.y1]="180 - 144 * cos(bearing)"
+                  [attr.x2]="180 + 137.6 * sin(bearing)" [attr.y2]="180 - 137.6 * cos(bearing)" />
+          }
+          <text class="cardinal north" x="180" y="24">N</text><text class="cardinal" x="340" y="184">E</text>
+          <text class="cardinal" x="180" y="344">S</text><text class="cardinal" x="20" y="184">W</text>
+          <circle class="zenith" cx="180" cy="180" r="1.6" />
+
+          @for (run of runs(); track $index) {
+            <polyline [class]="'trajectory ' + run.kind" [attr.points]="run.points" />
+          }
+          @for (tick of ticks(); track tick.instant) {
+            <circle class="tick" [attr.cx]="tick.x" [attr.cy]="tick.y" r="1.9" />
+            <text class="time" [attr.x]="tick.x - 8" [attr.y]="tick.y - 7" text-anchor="end">{{ tick.instant | date: 'HH:mm' }}</text>
+          }
+          <circle class="phase-dot" [attr.cx]="project(pass().aos).x" [attr.cy]="project(pass().aos).y" r="4.2">
+            <title>Rise · {{ pass().aos.instant | date: 'HH:mm:ss' }}</title>
+          </circle>
+          <circle class="phase-dot end" [attr.cx]="project(pass().los).x" [attr.cy]="project(pass().los).y" r="4.2">
+            <title>Set · {{ pass().los.instant | date: 'HH:mm:ss' }}</title>
+          </circle>
+          <circle class="peak-dot" [attr.cx]="project(pass().culmination).x" [attr.cy]="project(pass().culmination).y" r="5.5">
+            <title>Culmination · {{ pass().culmination.instant | date: 'HH:mm:ss' }}</title>
+          </circle>
+          <text class="peak-label" [attr.x]="project(pass().culmination).x + 11" [attr.y]="project(pass().culmination).y + 4">
+            {{ pass().culmination.elevationDeg | number: '1.0-0' }}°
+          </text>
+          <circle class="halo" [attr.cx]="project(current()).x" [attr.cy]="project(current()).y" r="9" />
+          <circle class="satellite" [attr.cx]="project(current()).x" [attr.cy]="project(current()).y" r="4.2" />
+        </svg>
       </div>
-      @for (phase of phases(); track phase.name) {
-        <div class="phase"><h3>{{ phase.name }}</h3>
-          <p class="num">{{ phase.point.instant | date: 'HH:mm:ss' }} <small>{{ phase.point.instant | date: 'HH:mm:ss': 'UTC' }} UTC</small></p>
-          <span class="num">{{ compass(phase.point.azimuthDeg) }} · {{ phase.point.azimuthDeg | number: '1.1-1' }}° az · {{ phase.point.elevationDeg | number: '1.1-1' }}° elev</span>
-        </div>
+      <p class="legend">
+        @if (illumination()) {
+          <span><i class="stroke lit"></i>visible to the naked eye</span>
+          <span><i class="stroke shade"></i>in the Earth's shadow</span>
+        } @else {
+          <span><i class="stroke neutral"></i>trajectory</span>
+        }
+        <span><i class="stroke threshold-key"></i>{{ threshold() }}° threshold</span>
+        @if (!illumination()) {
+          <span class="note">Illumination not yet calculated; a pass above the horizon is not necessarily visible to the naked eye.</span>
+        }
+      </p>
+    </article>
+  </div>
+
+  <div class="card transport" role="group" aria-label="Pass playback">
+    <button type="button" class="play" (click)="clock.toggle()" [attr.aria-label]="clock.playing() ? 'Pause animation' : 'Play animation'">
+      @if (clock.playing()) {
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="3" y="2" width="4" height="14" /><rect x="11" y="2" width="4" height="14" /></svg>
+      } @else {
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 2 L16 9 L4 16 Z" /></svg>
       }
+    </button>
+
+    <div class="scrubber">
+      <div class="rail" [style.--progress]="progress()" [style.--peak]="peakAt()">
+        <input type="range" [min]="start()" [max]="end()" step="100" [value]="clock.instant()" (input)="scrub($event)"
+          aria-label="Time within the pass" [attr.aria-valuetext]="(clock.instant() | date: 'HH:mm:ss') + ' local time'">
+        <span class="peak-mark" aria-hidden="true"></span>
+      </div>
+      <div class="scale num" aria-hidden="true">
+        <span>{{ start() | date: 'HH:mm' }}</span>
+        <span>peak {{ pass().culmination.instant | date: 'HH:mm' }} · 20×</span>
+        <span>{{ end() | date: 'HH:mm' }}</span>
+      </div>
     </div>
-  </div>
-  <div class="transport" role="group" aria-label="Pass playback">
-    <button type="button" (click)="clock.toggle()" [attr.aria-label]="clock.playing() ? 'Pause animation' : 'Play animation'">{{ clock.playing() ? 'Pause' : 'Play' }}</button>
-    <input type="range" [min]="start()" [max]="end()" step="100" [value]="clock.instant()" (input)="scrub($event)"
-      aria-label="Time within the pass" [attr.aria-valuetext]="(clock.instant() | date: 'HH:mm:ss') + ' local time'">
-    <span class="speed">20×</span>
+
     <div class="readout num">
-      <span>{{ current().instant | date: 'HH:mm:ss' }} <small>local</small></span>
-      <span>{{ current().azimuthDeg | number: '1.1-1' }}° {{ compass(current().azimuthDeg) }} <small>az</small></span>
-      <span>{{ current().elevationDeg | number: '1.1-1' }}° <small>elev</small></span>
-      <span>{{ current().rangeKm | number: '1.0-0' }} <small>km</small></span>
+      <span><b>{{ current().instant | date: 'HH:mm:ss' }}</b> <small>local time</small></span>
+      <span><b>{{ current().azimuthDeg | number: '1.1-1' }}° {{ compass(current().azimuthDeg) }}</b> <small>azimuth</small></span>
+      <span><b>{{ current().elevationDeg | number: '1.1-1' }}°</b> <small>elevation</small></span>
+      <span><b>{{ current().rangeKm | number: '1.0-0' }} km</b> <small>distance</small></span>
     </div>
   </div>
-  <p class="hint legend">Dashed circle: {{ threshold() }}° threshold · Dots every minute · Illumination not yet calculated; a passage above the horizon is not necessarily visible to the naked eye.</p>
+
+  <div class="phases">
+    @for (phase of phases(); track phase.name) {
+      <div class="phase" [attr.data-kind]="phase.kind">
+        <div class="marker" aria-hidden="true"><span class="dot"></span><span class="rule"></span></div>
+        <h3>{{ phase.name }}</h3>
+        <p class="num time">{{ phase.point.instant | date: 'HH:mm:ss' }} <small>{{ phase.point.instant | date: 'HH:mm:ss': 'UTC' }} UTC</small></p>
+        <span class="num where">{{ compass(phase.point.azimuthDeg) }} · {{ phase.point.azimuthDeg | number: '1.1-1' }}° · elev. {{ phase.point.elevationDeg | number: '1.1-1' }}°</span>
+      </div>
+    }
+  </div>
+
+  <div class="tiles">
+    <div class="tile">
+      <span class="label">Duration</span>
+      <strong class="num">{{ minutes() }}</strong>
+      <span class="num sub">above {{ threshold() }}°</span>
+    </div>
+    <div class="tile">
+      <span class="label">Maximum elevation</span>
+      <strong class="num" [style.color]="peakColour()">{{ pass().culmination.elevationDeg | number: '1.1-1' }}°</strong>
+      <span class="num sub">{{ peakWords() }}</span>
+    </div>
+    <div class="tile">
+      <span class="label">Distance at peak</span>
+      <strong class="num">{{ pass().culmination.rangeKm | number: '1.0-0' }} km</strong>
+      <span class="num sub">slant range to the observer</span>
+    </div>
+    @if (elementsAge(); as age) {
+      <div class="tile">
+        <span class="label">Elements age at rise</span>
+        <strong class="num">{{ ageLabel(age) }}</strong>
+        <span class="num sub">{{ timing(age) }}</span>
+      </div>
+    }
+  </div>
 </section>

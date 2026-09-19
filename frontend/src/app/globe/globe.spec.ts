@@ -31,10 +31,12 @@ describe('Globe', () => {
     }).compileComponents();
 
     const fixture = TestBed.createComponent(Globe);
-    await fixture.autoDetectChanges();
     fixture.componentRef.setInput('pass', pass);
     fixture.componentRef.setInput('observer', observer);
     fixture.componentRef.setInput('threshold', 10);
+    await fixture.autoDetectChanges();
+    // The loader's rejection settles after the first render's afterNextRender hook.
+    await fixture.whenStable();
     await fixture.whenStable();
 
     expect(fixture.nativeElement.textContent).toContain('could not load three.js');
