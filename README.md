@@ -189,6 +189,24 @@ modelled. Flags are sampled every 10 s, so short opportunities can be missed and
 shadow-entry times are approximate. The API exposes these conditions separately as
 `track[].illuminated` and `track[].visible`.
 
+## Multi-satellite discovery
+
+The “Next favourable window · 7 days” panel compares up to five distinct NORAD IDs,
+using the observer and minimum elevation from the form. Each satellite gets one existing
+`/api/passes` request with `hours=168`; no new backend contract is required. Results are
+ranked by their first favourable **sample**, which may occur after AOS. The displayed
+interval is the first consecutive run of favourable samples, not the entire pass.
+
+Failures and empty results are reported per satellite. “Earliest” only covers successful
+predictions; each seven-day window starts at that satellite's server computation time.
+Restarting cancels pending browser requests. “Inspect pass” opens the returned prediction
+in the existing table, sky chart and globe without fetching it again. The panel retains
+the searched position and threshold so later form edits do not relabel old results.
+
+The element age at the opportunity is shown, including the wait until the pass: a seven-day
+forecast can rely on substantially older elements than the current TLE age suggests.
+This remains a sampled geometric opportunity, not a brightness or weather forecast.
+
 ## Globe
 
 A terrestrial-frame companion to the sky chart, sharing its clock: three.js (r128, UMD,
@@ -349,7 +367,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] Docker Compose, architecture diagram, physical model
 - [ ] Demo GIF
 - [x] Potential naked-eye visibility (sunlight + observer darkness)
-- [ ] Multi-satellite discovery and next favourable window
+- [x] Multi-satellite discovery and next favourable window
 - [ ] PostgreSQL with API keys and usage counters (milestone 11)
 
 Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
