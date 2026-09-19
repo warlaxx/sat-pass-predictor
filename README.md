@@ -128,6 +128,16 @@ Playback starts paused (including for reduced-motion users). All displayed times
 local/UTC labels. Intermediate readouts interpolate API samples; no orbit is computed in
 the browser. Illumination remains unknown until milestone 10, so the curve is neutral.
 
+## Globe
+
+A terrestrial-frame companion to the sky chart, sharing its clock: three.js (r128, UMD,
+loaded from cdnjs — the one external runtime dependency in the frontend, with an explicit
+fallback message if it cannot load) renders the ground track, the visibility circle and the
+day/night terminator from the same `track` and `subPoint` data, drag to rotate. The ground
+track's two colours are the *ground's* day and night sides (a subsolar-point calculation),
+not the satellite's — that stays unknown, like the sky chart's curve, until milestone 10.
+Details and the decisions behind them: [ROADMAP.md](ROADMAP.md#milestone-8--3d-globe-done).
+
 ## Validation
 
 An astrodynamics computation that is compared to nothing is not a computation, it is an
@@ -208,7 +218,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] REST API `/api/passes` (Problem Details, springdoc)
 - [x] Frontend: shell, pass list, ribbon of nights, TLE age banner
 - [x] Polar sky chart (SVG), shared selection and playback controls
-- [ ] 3D globe: ground track, visibility circle, terminator
+- [x] 3D globe: ground track, visibility circle, terminator
 - [ ] Docker Compose, showcase pass
 - [ ] Naked-eye visible passes, TLE cache (PostgreSQL)
 
