@@ -440,6 +440,11 @@ footer p {
     gap: 14px 16px;
   }
 
+  /* Under 16 px, iOS Safari zooms the page into the field on focus and leaves it zoomed. */
+  .field input {
+    font-size: 16px;
+  }
+
   button.primary {
     margin-left: 0;
     width: 100%;

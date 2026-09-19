@@ -157,10 +157,11 @@ import { Night, groupIntoNights } from './nights';
     }
 
     @media (width < 880px) {
-      /* Five nights per row rather than ten columns two characters wide. */
+      /* Wrapped rows rather than ten columns two characters wide. auto-fit, not a fixed
+         count: a two-night window would otherwise fill two fifths of the width. */
       .ribbon {
         grid-auto-flow: row;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
       }
 
       .bars {
