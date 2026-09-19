@@ -6,6 +6,9 @@ export interface Night {
   readonly key: string;
   /** What the column header shows, e.g. "Tue 22". */
   readonly label: string;
+  /** The two halves of the label, stacked in the ribbon: "Tue" over "22". */
+  readonly weekday: string;
+  readonly day: number;
   /** Spelled out for screen readers, e.g. "Tuesday 22 September". */
   readonly longLabel: string;
   readonly passes: readonly PassDto[];
@@ -38,6 +41,7 @@ function keyOf(evening: Date): string {
 }
 
 const SHORT = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric' });
+const WEEKDAY = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
 const LONG = new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
 /** Exposed for the sky chart and the tests; the ribbon itself only needs the grouping. */
@@ -75,6 +79,8 @@ export function groupIntoNights(passes: readonly PassDto[]): Night[] {
     nights.push({
       key,
       label: SHORT.format(cursor),
+      weekday: WEEKDAY.format(cursor),
+      day: cursor.getDate(),
       longLabel: LONG.format(cursor),
       passes: buckets.get(key) ?? [],
     });

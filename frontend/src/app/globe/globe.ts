@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, effect, inject, input, signal, viewChild } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { ObserverDto, PassDto } from '../api/passes.model';
 import { PassClock } from '../pass-viewer/pass-clock';
 import {
@@ -58,7 +59,7 @@ function buildCoastline(three: ThreeNS, rings: CoastlineRings): LineSegments {
   }
   return new three.LineSegments(
     new three.BufferGeometry().setFromPoints(points),
-    new three.LineBasicMaterial({ color: 0x7d93c6, transparent: true, opacity: 0.85 }),
+    new three.LineBasicMaterial({ color: 0x86a0d6, transparent: true, opacity: 0.9 }),
   );
 }
 
@@ -78,7 +79,7 @@ function buildGraticule(three: ThreeNS): LineSegments {
   }
   return new three.LineSegments(
     new three.BufferGeometry().setFromPoints(points),
-    new three.LineBasicMaterial({ color: 0x2c3b5e, transparent: true, opacity: 0.5 }),
+    new three.LineBasicMaterial({ color: 0x24375e, transparent: true, opacity: 0.8 }),
   );
 }
 
@@ -88,6 +89,7 @@ function buildGraticule(three: ThreeNS): LineSegments {
  */
 @Component({
   selector: 'app-globe',
+  imports: [DatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './globe.html',
   styleUrl: './globe.scss',
@@ -121,7 +123,7 @@ export class Globe {
   // response, outside the change-detection graph, exactly like the reference mockup.
   private yaw = 0;
   private pitch = 0.35;
-  private readonly distance = 3.05;
+  private readonly distance = 3.75;
   private dragging = false;
   private lastPointer = { x: 0, y: 0 };
 
@@ -166,7 +168,7 @@ export class Globe {
 
     const earth = new three.Mesh(
       new three.SphereGeometry(SURFACE_RADIUS, 64, 48),
-      new three.MeshPhongMaterial({ color: 0x14294d, emissive: 0x05080f, specular: 0x16233d, shininess: 8 }),
+      new three.MeshPhongMaterial({ color: 0x10264c, emissive: 0x030814, specular: 0x16233d, shininess: 8 }),
     );
     scene.add(earth);
     scene.add(buildCoastline(three, coastline));
@@ -174,7 +176,7 @@ export class Globe {
     // A thin translucent shell reads as atmospheric haze at the limb.
     scene.add(new three.Mesh(
       new three.SphereGeometry(1.09, 48, 32),
-      new three.MeshBasicMaterial({ color: 0x4b6cb0, transparent: true, opacity: 0.1, side: three.BackSide }),
+      new three.MeshBasicMaterial({ color: 0x4b6cb0, transparent: true, opacity: 0.14, side: three.BackSide }),
     ));
 
     scene.add(new three.AmbientLight(0x2a3a5c, 1));
@@ -189,7 +191,7 @@ export class Globe {
     scene.add(satelliteMarker);
 
     const groundTrackDay = emptyLineSegments(three, 0xeceff8, 0.9);
-    const groundTrackNight = emptyLineSegments(three, 0x46527a, 0.9);
+    const groundTrackNight = emptyLineSegments(three, 0x7d88a8, 0.9);
     const footprint = emptyLine(three, 0x96a4ff, 0.65);
     const sightLine = emptyLine(three, 0xf4ad3c, 0.5);
     scene.add(groundTrackDay); scene.add(groundTrackNight); scene.add(footprint); scene.add(sightLine);

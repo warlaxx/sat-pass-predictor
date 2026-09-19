@@ -5,6 +5,9 @@ import {
   elevationBand,
   formatAge,
   formatDuration,
+  hasIllumination,
+  shadowEntry,
+  utcOffsetLabel,
 } from './format';
 
 describe('elevationBand', () => {
@@ -67,5 +70,28 @@ describe('aosUncertaintySeconds', () => {
     expect(aosUncertaintySeconds(0)).toBe(0);
     expect(aosUncertaintySeconds(86_400)).toBeLessThan(aosUncertaintySeconds(5 * 86_400));
     expect(aosUncertaintySeconds(7 * 86_400)).toBeLessThan(120);
+  });
+});
+
+describe('utcOffsetLabel', () => {
+  it('reads the browser offset of the instant it is given', () => {
+    const instant = '2026-09-22T19:18:54Z';
+    const minutes = -new Date(instant).getTimezoneOffset();
+    const label = utcOffsetLabel(instant);
+    if (minutes === 0) expect(label).toBe('UTC');
+    else expect(label).toMatch(/^UTC[+−]\d{1,2}(:\d{2})?$/);
+  });
+});
+
+describe('shadowEntry', () => {
+  const at = (s: number, illuminated: boolean) => ({ instant: `2026-09-22T19:20:${String(s).padStart(2, '0')}Z`, illuminated });
+
+  it('finds the first sunlit-to-shadow transition', () => {
+    expect(shadowEntry([at(0, true), at(10, true), at(20, false), at(30, false)])).toBe(at(20, false).instant);
+  });
+
+  it('says nothing while the API reports no illumination', () => {
+    expect(shadowEntry([at(0, false), at(10, false)])).toBeUndefined();
+    expect(hasIllumination([at(0, false), at(10, false)])).toBe(false);
   });
 });

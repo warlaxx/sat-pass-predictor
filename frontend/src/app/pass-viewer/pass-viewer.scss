@@ -1,35 +1,142 @@
-:host { display: block; margin-top: 1.8rem; }
-.viewer { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .8rem; padding: 1rem 1.2rem 0; }
-h2, p { margin: 0; }
-header .num { color: var(--ink-2); font-size: .8rem; }
-.label { margin-bottom: .3rem; }
-.hint { color: var(--ink-2); font-size: .8rem; padding: .5rem 1.2rem 1rem; }
-.view-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); background: var(--bg); }
-svg { display: block; width: 100%; max-height: 480px; }
-.disc { fill: var(--panel); stroke: var(--line); }
-.grid { fill: none; stroke: var(--line-soft); }
-.threshold { fill: none; stroke: var(--ink-3); stroke-dasharray: 3 4; }
-text { fill: var(--ink-3); font: 9px var(--font-mono); }
-.cardinal { fill: var(--ink); text-anchor: middle; font-size: 12px; }
-.trajectory { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
-.tick { fill: var(--ink); }
-.time { fill: var(--ink-2); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; }
-.phase-dot { fill: var(--bg); stroke: var(--accent); stroke-width: 2; }
-.satellite { fill: white; stroke: var(--bg); stroke-width: 1.5; }
-.details { padding: 1.5rem; align-self: center; }
-.summary { display: flex; flex-direction: column; gap: .3rem; padding-bottom: .8rem; }
-.summary strong { color: var(--accent); font-size: 2.2rem; font-weight: 500; }
-.summary > span:last-child { font-size: .85rem; color: var(--ink-2); }
-.phase { border-top: 1px solid var(--line-soft); padding: .7rem 0; }
-h3 { font-size: .8rem; font-weight: 500; color: var(--ink-2); margin: 0 0 .25rem; }
-.phase p { font-size: 1rem; }
-.phase > span, small { font-size: .7rem; color: var(--ink-2); }
-small { margin-left: .3rem; }
-.transport { padding: 1rem; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1rem; align-items: center; border-top: 1px solid var(--line); }
-button { border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); border-radius: 8px; padding: .65rem 1rem; cursor: pointer; }
-input { width: 100%; accent-color: var(--accent); }
-.speed { font-size: .75rem; color: var(--ink-2); }
-.readout { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; font-size: .8rem; }
-.legend { padding-top: 0; }
-@media (width < 640px) { .view-grid { grid-template-columns: 1fr; } .details { padding: 1rem; } }
+:host { display: block; }
+
+.selected { display: flex; flex-direction: column; gap: 24px; }
+
+/* The globe and the sky chart side by side: two answers to "where", one from space, one from the ground. */
+.views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: stretch; }
+
+/* The globe card repeats these in its own stylesheet: styles are encapsulated per component. */
+.view { display: flex; flex-direction: column; overflow: hidden; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 22px 22px 6px; }
+h3 { font-size: 26px; letter-spacing: -0.01em; }
+.meta { color: var(--ink-3); font-size: 13px; white-space: nowrap; }
+.hint { color: var(--ink-2); font-size: 14px; line-height: 1.5; margin: 0; max-width: 56ch; padding: 0 22px 18px; }
+.stage { background: var(--bg); aspect-ratio: 1; display: grid; padding: 6.4%; }
+
+svg { display: block; width: 100%; height: 100%; }
+.disc { fill: #05070c; stroke: #2f323a; }
+.grid { fill: none; stroke: #1d2027; }
+.ring-label { fill: var(--ink-3); font: 9.5px var(--font-mono); }
+.threshold { fill: none; stroke: var(--ink-4); stroke-dasharray: 3 4; }
+.rim { stroke: var(--rule); }
+.cardinal { fill: var(--ink-3); font: 700 12.5px var(--font-display); text-anchor: middle; }
+.cardinal.north { fill: var(--ink); }
+.zenith { fill: var(--ink-4); }
+.trajectory { fill: none; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+.trajectory.neutral { stroke: var(--accent); }
+.trajectory.lit { stroke: var(--lit); }
+.trajectory.shade { stroke: var(--shade); stroke-dasharray: 5 5; }
+.tick { fill: #fff; fill-opacity: 0.75; }
+.time { fill: var(--ink-2); font: 9.5px var(--font-mono); paint-order: stroke; stroke: #05070c; stroke-width: 3px; }
+.phase-dot { fill: #05070c; stroke: var(--accent); stroke-width: 2; }
+.phase-dot.end { stroke: var(--shade); }
+.peak-dot { fill: var(--accent); stroke: #000; stroke-width: 1.5; }
+.peak-label { fill: var(--ink); font: 11.5px var(--font-mono); paint-order: stroke; stroke: #05070c; stroke-width: 3px; }
+.halo { fill: none; stroke: #fff; stroke-opacity: 0.35; }
+.satellite { fill: #fff; }
+
+.legend {
+  border-top: 1px solid var(--line-soft); color: var(--ink-2); display: flex; flex-wrap: wrap;
+  font-size: 13px; gap: 8px 20px; margin: 0; margin-top: auto; padding: 14px 22px 16px;
+}
+.legend span { align-items: center; display: inline-flex; gap: 8px; }
+.legend .note { color: var(--ink-3); flex-basis: 100%; font-size: 12px; }
+.stroke { border-top: 2.5px solid; display: inline-block; width: 22px; }
+.stroke.neutral { border-color: var(--accent); }
+.stroke.lit { border-color: var(--lit); }
+.stroke.shade { border-color: var(--shade); border-top-style: dashed; }
+.stroke.threshold-key { border-color: var(--ink-4); border-top-style: dashed; }
+
+/* --- Transport ----------------------------------------------------------------------- */
+
+.transport { align-items: center; display: flex; flex-wrap: wrap; gap: 20px 28px; padding: 20px; }
+
+.play {
+  background: var(--signal); border: 0; border-radius: 99px; cursor: pointer; display: grid;
+  flex-shrink: 0; height: 56px; place-items: center; width: 56px; fill: #fff;
+}
+.play:hover { filter: brightness(1.1); }
+
+.scrubber { display: flex; flex: 0 1 420px; flex-direction: column; gap: 8px; min-width: 220px; }
+
+/*
+ * The native range input, restyled rather than replaced: it keeps the keyboard, the
+ * screen-reader value and the touch target for free. Only its painting is ours: the rail
+ * is filled up to the playhead, and the culmination is a tick on it.
+ */
+.rail { height: 24px; position: relative; }
+.rail input {
+  -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer;
+  height: 24px; inset: 0; margin: 0; position: absolute; width: 100%; z-index: 1;
+}
+.rail input::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, var(--signal) calc(var(--progress) * 100%), #2a2c33 0);
+  border-radius: 2px; height: 4px;
+}
+.rail input::-moz-range-track { background: #2a2c33; border-radius: 2px; height: 4px; }
+.rail input::-moz-range-progress { background: var(--signal); border-radius: 2px; height: 4px; }
+.rail input::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; background: #fff; border: 0; border-radius: 99px;
+  box-shadow: 0 0 0 4px rgb(252 61 33 / 35%); height: 20px; margin-top: -8px; width: 20px;
+}
+.rail input::-moz-range-thumb {
+  background: #fff; border: 0; border-radius: 99px; box-shadow: 0 0 0 4px rgb(252 61 33 / 35%); height: 20px; width: 20px;
+}
+.rail input:focus-visible { outline-offset: 6px; }
+.peak-mark {
+  background: #fff; height: 16px; left: calc(10px + (100% - 20px) * var(--peak)); opacity: 0.5;
+  position: absolute; top: 4px; width: 2px;
+}
+.scale { color: var(--ink-3); display: flex; font-size: 12px; justify-content: space-between; }
+
+.readout { display: flex; flex: 1 1 320px; flex-wrap: wrap; font-size: 15px; gap: 6px 22px; }
+.readout span { white-space: nowrap; }
+.readout b { color: var(--ink); font-weight: 500; }
+.readout small { color: var(--ink-3); font-family: var(--font-body); font-size: 12px; margin-left: 6px; }
+
+/* --- Phases -------------------------------------------------------------------------- */
+
+.phases { display: grid; gap: 32px; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px 0; }
+.phase { display: flex; flex-direction: column; gap: 6px; }
+.marker { align-items: center; display: flex; gap: 12px; margin-bottom: 6px; }
+.dot { background: var(--bg); border: 2px solid var(--accent); border-radius: 99px; flex-shrink: 0; height: 14px; width: 14px; }
+.rule { background: var(--rule); flex-grow: 1; height: 1px; }
+[data-kind='peak'] .dot { background: var(--accent); }
+[data-kind='set'] .dot { border-color: var(--shade); }
+[data-kind='set'] .rule { visibility: hidden; }
+.phase h3 { font-size: 18px; font-weight: 700; }
+.phase .time { font-size: 34px; line-height: 1.1; margin: 0; }
+.phase small { color: var(--ink-3); font-size: 13px; margin-left: 4px; }
+.where { color: var(--ink-2); font-size: 14px; }
+
+/* --- Tiles --------------------------------------------------------------------------- */
+
+.tiles {
+  background: var(--line); border: 1px solid var(--line); border-radius: var(--r); display: grid; gap: 1px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); overflow: hidden;
+}
+.tile { background: var(--bg); display: flex; flex-direction: column; gap: 6px; padding: 26px; }
+.tile strong { font-size: 56px; font-weight: 400; letter-spacing: -0.02em; line-height: 1; }
+.tile .sub { color: var(--ink-3); font-size: 13px; }
+
+@media (width < 1100px) {
+  .tile strong { font-size: 44px; }
+  .phase .time { font-size: 28px; }
+}
+
+@media (width < 880px) {
+  .views { grid-template-columns: 1fr; }
+  .phases { grid-template-columns: 1fr; gap: 20px; }
+  [data-kind] .rule { visibility: hidden; }
+}
+
+@media (width < 640px) {
+  header { padding: 18px 16px 6px; }
+  h3 { font-size: 22px; }
+  .hint { padding: 0 16px 14px; }
+  .legend { padding: 12px 16px 14px; }
+  .transport { padding: 16px; gap: 16px; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tile { padding: 16px; }
+  .tile strong { font-size: 32px; }
+}

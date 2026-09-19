@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { PassDto } from '../api/passes.model';
 import { compassPoint, elevationColour, formatDuration } from '../format';
 import { Night, groupIntoNights } from './nights';
@@ -20,12 +20,12 @@ import { Night, groupIntoNights } from './nights';
  */
 @Component({
   selector: 'app-pass-ribbon',
-  imports: [DecimalPipe],
+  imports: [DatePipe, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="ribbon" role="group" aria-label="Passes by night">
       @for (night of nights(); track night.key) {
-        <div class="night">
+        <div class="night" [class.current]="hasSelected(night)">
           <div class="bars">
             @for (pass of night.passes; track pass.aos.instant) {
               <button
@@ -35,84 +35,125 @@ import { Night, groupIntoNights } from './nights';
                 [style.background]="colour(pass)"
                 [attr.aria-pressed]="pass.aos.instant === selected()"
                 [attr.aria-label]="describe(night, pass)"
+                [attr.title]="night.label + ' · ' + (pass.aos.instant | date: 'HH:mm:ss') + ' · max ' + (pass.culmination.elevationDeg | number: '1.0-0') + '°'"
                 [class.selected]="pass.aos.instant === selected()"
                 (click)="select.emit(pass.aos.instant)"
-              >
-                <span class="peak num">{{ pass.culmination.elevationDeg | number: '1.0-0' }}</span>
-              </button>
+              ></button>
             } @empty {
-              <p class="none" aria-label="{{ night.longLabel }}: no pass">&mdash;</p>
+              <p class="none" aria-label="{{ night.longLabel }}: no pass">&ndash;</p>
             }
           </div>
-          <div class="date label" aria-hidden="true">{{ night.label }}</div>
+          <div class="date" aria-hidden="true">
+            <span class="weekday">{{ night.weekday }}</span>
+            <span class="num">{{ night.day }}</span>
+          </div>
         </div>
       }
     </div>
+    <p class="legend">
+      <span>Bar height = maximum elevation</span>
+      <span><i style="background: var(--accent-dim)"></i>&lt; 25°</span>
+      <span><i style="background: var(--accent)"></i>25–45°</span>
+      <span><i style="background: var(--lit)"></i>45–70°</span>
+      <span><i style="background: var(--hot)"></i>&gt; 70°</span>
+    </p>
   `,
   styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
     .ribbon {
+      column-gap: 6px;
       display: grid;
-      gap: 0.5rem;
       grid-auto-columns: minmax(0, 1fr);
       grid-auto-flow: column;
+      row-gap: 18px;
     }
 
     .night {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+      gap: 8px;
       min-width: 0;
     }
 
     .bars {
       align-items: end;
-      border-bottom: 1px solid var(--line);
       display: flex;
-      gap: 3px;
-      height: 6.5rem;
+      gap: 6px;
+      height: 120px;
       justify-content: center;
     }
 
     .bar {
-      align-items: start;
       border: 0;
-      border-radius: 4px 4px 0 0;
+      border-radius: 2px 2px 0 0;
       cursor: pointer;
-      display: flex;
-      flex: 1 1 0;
-      justify-content: center;
+      flex: 0 1 14px;
       /* A grazing pass is 10 degrees out of 90: without a floor its bar is two pixels
          tall and unclickable, which would hide exactly the passes worth warning about. */
       min-height: 10px;
-      min-width: 0;
-      opacity: 0.68;
-      padding: 2px 0 0;
-      transition: opacity 120ms ease;
+      min-width: 4px;
+      padding: 0;
+      transition: filter 120ms ease;
     }
 
-    .bar:hover,
-    .bar.selected {
-      opacity: 1;
+    .bar:hover {
+      filter: brightness(1.2);
     }
 
     .bar.selected {
-      box-shadow: 0 0 0 1px var(--bg), 0 0 0 2px var(--ink);
-    }
-
-    .peak {
-      color: #10152a;
-      font-size: 0.66rem;
-      line-height: 1;
+      box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--ink);
     }
 
     .none {
-      color: var(--ink-3);
-      margin: 0 0 0.2rem;
+      color: var(--ink-4);
+      margin: 0 0 2px;
     }
 
     .date {
+      border-top: 1px solid var(--rule);
+      color: var(--ink-3);
+      display: flex;
+      flex-direction: column;
+      font-size: 13px;
+      line-height: 1.2;
+      padding-top: 7px;
       text-align: center;
+    }
+
+    .weekday {
+      font-size: 11px;
+    }
+
+    .current .date {
+      color: var(--ink);
+    }
+
+    .legend {
+      color: var(--ink-3);
+      display: flex;
+      flex-wrap: wrap;
+      font-size: 12px;
+      gap: 8px 18px;
+      margin: 0;
+    }
+
+    .legend span {
+      align-items: center;
+      display: inline-flex;
       white-space: nowrap;
+    }
+
+    .legend i {
+      border-radius: 2px;
+      display: inline-block;
+      height: 10px;
+      margin-right: 6px;
+      width: 10px;
     }
 
     @media (width < 880px) {
@@ -123,13 +164,7 @@ import { Night, groupIntoNights } from './nights';
       }
 
       .bars {
-        height: 4.5rem;
-      }
-    }
-
-    @media (width < 640px) {
-      .peak {
-        display: none;
+        height: 96px;
       }
     }
   `,
@@ -148,6 +183,10 @@ export class PassRibbon {
    */
   protected height(pass: PassDto): number {
     return (pass.culmination.elevationDeg / 90) * 100;
+  }
+
+  protected hasSelected(night: Night): boolean {
+    return night.passes.some(pass => pass.aos.instant === this.selected());
   }
 
   protected colour(pass: PassDto): string {

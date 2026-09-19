@@ -1,13 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PassesApi } from './api/passes.service';
 import { PassQuery, DEFAULT_QUERY, MAX_WINDOW_HOURS } from './api/passes.query';
-import { ProblemDetail } from './api/passes.model';
+import { PassDto, ProblemDetail } from './api/passes.model';
 import { TleBanner } from './tle-banner/tle-banner';
 import { PassRibbon } from './pass-ribbon/pass-ribbon';
 import { PassViewer } from './pass-viewer/pass-viewer';
 import { PassTable } from './pass-table/pass-table';
 import { Globe } from './globe/globe';
+import { SkyPanorama } from './sky-panorama/sky-panorama';
+import { facingAzimuth } from './sky-panorama/panorama-geometry';
+import { groupIntoNights } from './pass-ribbon/nights';
+import { compassPoint, utcOffsetLabel } from './format';
 
 const GEOLOCATION_ERRORS: Record<number, string> = {
   1: 'Permission refused. Type the position in instead.',
@@ -30,7 +35,7 @@ function round(value: number, decimals: number): number {
  */
 @Component({
   selector: 'app-root',
-  imports: [TleBanner, PassRibbon, PassTable, PassViewer, Globe],
+  imports: [DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './app.scss',
   templateUrl: './app.html',
@@ -72,6 +77,62 @@ export class App {
       detail: 'The server may be starting. Please try again shortly.',
     };
   });
+
+  protected readonly nightCount = computed(() => groupIntoNights(this.response()?.passes ?? []).length);
+
+  // --- Page sections ------------------------------------------------------
+
+  protected readonly sections = [
+    { id: 'passes', label: 'Passes' },
+    { id: 'globe', label: 'Globe' },
+    { id: 'sky', label: 'Sky chart' },
+    { id: 'table', label: 'Table' },
+  ] as const;
+
+  /**
+   * The section under the reader's eye, for the underline in the header.
+   *
+   * A scroll listener rather than an IntersectionObserver per section: the sections come
+   * and go with the result, and "the last one whose top has passed a third of the
+   * viewport" is one loop over four elements.
+   */
+  protected readonly activeSection = signal<string>('passes');
+
+  constructor() {
+    const destroyRef = inject(DestroyRef);
+    afterNextRender(() => {
+      const update = (): void => {
+        let current: string = this.sections[0].id;
+        for (const section of this.sections) {
+          const element = document.getElementById(section.id);
+          if (element && element.getBoundingClientRect().top < window.innerHeight / 3) current = section.id;
+        }
+        this.activeSection.set(current);
+      };
+      window.addEventListener('scroll', update, { passive: true });
+      destroyRef.onDestroy(() => window.removeEventListener('scroll', update));
+    });
+  }
+
+  protected facing(pass: PassDto): string {
+    return compassPoint(facingAzimuth(pass.track.length ? pass.track : [pass.aos, pass.culmination, pass.los]));
+  }
+
+  protected zone(pass: PassDto): string {
+    return utcOffsetLabel(pass.aos.instant);
+  }
+
+  /**
+   * How old the elements will be when this pass rises: the age the server measured, plus
+   * the wait until the pass. A pass eight days out is predicted from elements eight days
+   * older than the banner says, and its times are worth that much less.
+   */
+  protected ageAtRise(pass: PassDto): number | undefined {
+    const response = this.response();
+    if (!response) return undefined;
+    const wait = (Date.parse(pass.aos.instant) - Date.parse(response.computedAt)) / 1000;
+    return response.tle.ageSeconds + Math.max(0, wait);
+  }
 
   protected readonly isEmptyResult = computed(() => {
     const response = this.response();

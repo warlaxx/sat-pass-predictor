@@ -1,221 +1,451 @@
 :host {
-  display: block;
-  margin: 0 auto;
-  max-width: 68rem;
-  padding: 1.5rem 1rem 3rem;
-}
-
-.appbar {
-  align-items: baseline;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
-}
-
-.brand {
-  align-items: center;
-  display: flex;
-  gap: 0.6rem;
-}
-
-.mark {
-  background: radial-gradient(circle at 30% 30%, var(--accent), var(--accent-dim));
-  border-radius: 50%;
-  box-shadow: 0 0 0 4px rgb(150 164 255 / 12%);
-  height: 0.7rem;
-  width: 0.7rem;
-}
-
-h1 {
-  font-size: 1.3rem;
-}
-
-.context {
-  color: var(--ink-2);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0 0 0 auto;
-  font-size: 0.86rem;
-}
-
-.sep {
-  color: var(--ink-3);
-}
-
-main {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-}
-
-.query fieldset {
-  align-items: end;
-  border: 0;
-  display: grid;
-  gap: 0.75rem 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-  margin: 0;
-  padding: 0;
-}
-
-.query legend {
-  padding: 0 0 0.5rem;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-label span {
-  color: var(--ink-3);
-  font-size: 0.74rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-input {
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.92rem;
-  padding: 0.45rem 0.55rem;
-  width: 100%;
-}
-
-button {
-  background: var(--accent);
-  border: 0;
-  border-radius: 8px;
-  color: #10152a;
-  cursor: pointer;
-  font-family: var(--font-display);
-  font-size: 0.86rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 0.55rem 1rem;
-  white-space: nowrap;
-}
-
-button:disabled {
-  background: var(--accent-dim);
-  cursor: progress;
+  min-height: 100vh;
 }
 
 /*
- * The buttons take a row of their own rather than a cell in the field grid. Sharing the
- * row looked tighter at one width and pushed "Compute passes" out of the card at every
- * other: a label of two words cannot live in a column sized for a six-digit number.
+ * Full-bleed bands, centred content. Every horizontal band of the page - header, query,
+ * banner, hero - runs edge to edge, and what is inside it lines up on one 1280 px column
+ * with the gutter as its minimum margin.
  */
-.actions {
+.wrap {
+  padding-inline: max(var(--gutter), (100% - 1280px) / 2);
+}
+
+.section {
+  padding-top: 96px;
+}
+
+/* --- Header ---------------------------------------------------------------------------- */
+
+.appbar {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
   display: flex;
-  gap: 0.5rem;
-  grid-column: 1 / -1;
-  justify-content: flex-end;
-  margin-top: 0.25rem;
+  gap: 14px;
+  height: 72px;
+}
+
+.logo {
+  display: block;
+  flex-shrink: 0;
+}
+
+h1 {
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+nav {
+  align-items: stretch;
+  align-self: stretch;
+  display: flex;
+  gap: 36px;
+  margin-left: auto;
+}
+
+nav a {
+  border-bottom: 3px solid transparent;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  padding: 25px 0 22px;
+  text-decoration: none;
+}
+
+nav a:hover {
+  border-bottom-color: var(--line-strong);
+  color: var(--ink);
+}
+
+nav a.current {
+  border-bottom-color: var(--signal);
+}
+
+/* --- Query bar ------------------------------------------------------------------------- */
+
+.query {
+  align-items: flex-end;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  padding-block: 18px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.caption {
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* A field is the chip of the mockup made editable: the border belongs to the label, so the unit sits inside it. */
+.field {
+  align-items: baseline;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  cursor: text;
+  display: inline-flex;
+  gap: 6px;
+  padding: 0 14px;
+  transition: border-color 120ms ease;
+}
+
+.field:hover {
+  border-color: var(--ink-4);
+}
+
+.field:focus-within {
+  border-color: var(--ink);
+}
+
+.field input {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  font-size: 15px;
+  outline: none;
+  padding: 9px 0;
+}
+
+.field input::-webkit-inner-spin-button,
+.field input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.prefix,
+.unit {
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.w-norad { width: 6ch; }
+.w-coord { width: 8ch; }
+.w-alt { width: 5ch; }
+.w-small { width: 4ch; }
+
+button {
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 9px 18px;
+  white-space: nowrap;
+}
+
+button.primary {
+  background: var(--signal);
+  border: 1px solid var(--signal);
+  color: #fff;
+  margin-left: auto;
+}
+
+button.primary:hover:not(:disabled) {
+  filter: brightness(1.1);
 }
 
 button.ghost {
   background: transparent;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   color: var(--ink-2);
+  font-weight: 500;
 }
 
 button.ghost:hover:not(:disabled) {
-  border-color: var(--accent-dim);
+  border-color: var(--ink-3);
   color: var(--ink);
+}
+
+button:disabled {
+  cursor: progress;
+  opacity: 0.6;
 }
 
 .location-error {
   color: var(--warn);
-  font-size: 0.82rem;
-  margin: 0.75rem 0 0;
+  flex-basis: 100%;
+  font-size: 13px;
+  margin: 0;
 }
+
+/* --- States ---------------------------------------------------------------------------- */
 
 .state {
   color: var(--ink-2);
   margin: 0;
-  padding: 1.5rem 0;
-  text-align: center;
+  padding-block: 64px;
 }
 
 .state.hint {
   color: var(--ink-3);
 }
 
+.pulse {
+  animation: pulse 1.2s ease-in-out infinite;
+  background: var(--signal);
+  border-radius: 99px;
+  display: inline-block;
+  height: 8px;
+  margin-right: 10px;
+  vertical-align: middle;
+  width: 8px;
+}
+
+@keyframes pulse {
+  50% { opacity: 0.25; }
+}
+
 .state.error {
-  background: color-mix(in srgb, var(--hot) 8%, var(--panel));
-  border: 1px solid color-mix(in srgb, var(--hot) 40%, var(--line));
+  background: rgb(252 61 33 / 8%);
+  border: 1px solid rgb(252 61 33 / 40%);
   border-radius: var(--r);
-  padding: 1.25rem;
+  margin-block: 48px;
+  padding: 24px;
 }
 
 .state.error h2 {
-  color: var(--hot);
-  font-size: 1.05rem;
+  color: var(--ink);
+  font-size: 26px;
 }
 
 .state.error p {
   color: var(--ink-2);
-  margin: 0.4rem 0 1rem;
+  margin: 8px 0 18px;
 }
 
-.state.error button {
-  background: transparent;
-  border: 1px solid var(--line);
-  color: var(--ink);
+/* --- Hero ------------------------------------------------------------------------------ */
+
+.hero {
+  position: relative;
 }
 
-.results h2 {
-  font-size: 1rem;
-  margin-bottom: 0.9rem;
+.hero-text {
+  align-items: flex-end;
+  display: flex;
+  gap: 32px 72px;
+  padding-top: 18px;
 }
 
-/* Without it the table caption reads as a caption for the ribbon above it. */
-.results app-pass-table {
-  display: block;
-  margin-top: 1.5rem;
+.title-block {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
 }
+
+.kicker {
+  color: var(--ink-2);
+  font-size: 16px;
+}
+
+.hero h2 {
+  font-size: clamp(44px, 5.3vw, 76px);
+  font-stretch: 75%;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+}
+
+.times {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.times .span {
+  font-size: clamp(28px, 2.8vw, 40px);
+  letter-spacing: -0.02em;
+}
+
+.zone {
+  color: var(--ink-3);
+  font-size: 14px;
+}
+
+.key {
+  color: var(--ink-2);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 8px 22px;
+  margin: 6px 0 0;
+}
+
+.key span {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.key .stroke {
+  border-top: 2.5px solid;
+  display: inline-block;
+  width: 22px;
+}
+
+.key .stroke.track { border-color: var(--accent); }
+.key .stroke.threshold { border-color: var(--ink-4); border-top-style: dashed; }
+
+.key .dot {
+  background: #fff;
+  border-radius: 99px;
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 25%);
+  display: inline-block;
+  height: 8px;
+  width: 8px;
+}
+
+.nights {
+  display: flex;
+  flex: 0 0 560px;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.nights h3 {
+  font-size: 22px;
+}
+
+/* --- Selected pass and table ----------------------------------------------------------- */
+
+.table-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 112px;
+}
+
+.section-head {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  justify-content: space-between;
+}
+
+.section-head h2 {
+  font-size: clamp(36px, 3.6vw, 52px);
+}
+
+.section-head span {
+  color: var(--ink-3);
+  font-size: 14px;
+}
+
+/* --- Footer ---------------------------------------------------------------------------- */
 
 footer {
-  border-top: 1px solid var(--line-soft);
-  color: var(--ink-3);
-  font-size: 0.78rem;
-  margin-top: 2.5rem;
-  padding-top: 1rem;
+  align-items: flex-start;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 24px 80px;
+  margin-top: auto;
+  padding-block: 48px;
+}
+
+/* The gap above the footer only when there is content to separate it from. */
+.section ~ footer {
+  margin-top: 112px;
+}
+
+.footer-brand {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-stretch: 87.5%;
+  font-weight: 800;
+  gap: 12px;
+  letter-spacing: -0.01em;
+}
+
+footer p {
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 72ch;
 }
 
 /*
- * Two breakpoints, both taken from the validated mockup.
- *
- * 880 px is where the two visualisations of milestones 7 and 8 stop fitting side by side;
- * the page becomes a single column there, and the ribbon rewraps on five nights per row
- * (its own rule, in its own component). 640 px is where a form of six fields in a row
- * becomes six fields two characters wide.
+ * Three breakpoints. 1100 px is where the ribbon stops fitting beside the title and goes
+ * under it. 880 px is where the two visualisations stop fitting side by side (their own
+ * rule, in the viewer) and the section links leave the header. 640 px is a phone.
  */
-@media (width < 880px) {
-  :host {
-    padding: 1rem 1rem 2.5rem;
+@media (width < 1100px) {
+  .hero-text {
+    align-items: stretch;
+    flex-direction: column;
   }
 
-  .context {
-    margin-left: 0;
+  .nights {
+    flex-basis: auto;
+    padding-top: 24px;
+  }
+}
+
+@media (width < 880px) {
+  nav {
+    display: none;
+  }
+
+  .section {
+    padding-top: 64px;
+  }
+
+  .table-section {
+    padding-top: 80px;
+  }
+
+  /* On one column, where to look comes before where it is. */
+  app-globe {
+    order: 1;
   }
 }
 
 @media (width < 640px) {
-  .query fieldset {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .appbar {
+    height: 60px;
   }
 
-  .actions button {
-    flex: 1 1 0;
+  h1 {
+    font-size: 19px;
+  }
+
+  .query {
+    gap: 14px 16px;
+  }
+
+  button.primary {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  footer {
+    flex-direction: column;
   }
 }

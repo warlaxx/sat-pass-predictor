@@ -1,11 +1,11 @@
-<section class="viewer" aria-label="Global view of the selected pass">
+<article id="globe" class="view" aria-label="Global view of the selected pass">
   <header>
-    <div><p class="label">Selected pass</p><h2>Where the satellite is</h2></div>
+    <h3>Where the satellite is</h3>
+    <span class="meta">{{ pass().culmination.instant | date: 'HH:mm:ss' : 'UTC' }} UTC at peak</span>
   </header>
   <p class="hint">
-    Ground track split by Earth's own day/night line — not whether the satellite itself is
-    sunlit, which stays unknown until milestone 10. Drag to rotate; the pass table above is
-    the text equivalent of this view.
+    Ground track split by the Earth's day/night line, not by the satellite's own sunlight
+    (unknown until milestone 10). Drag to rotate; the pass list is the text equivalent.
   </p>
   <div class="stage">
     <canvas #canvas aria-label="Globe: ground track, visibility circle and observer position for the selected pass"></canvas>
@@ -20,13 +20,11 @@
       </p>
     }
   </div>
-  @if (ready()) {
-    <p class="hint legend">
-      <span><i class="dot day"></i>ground track, day side</span>
-      <span><i class="dot night"></i>ground track, night side</span>
-      <span><i class="dot footprint"></i>visibility circle at {{ threshold() }}&deg;</span>
-      <span><i class="dot observer"></i>observer</span>
-      <span><i class="dot satellite"></i>satellite</span>
-    </p>
-  }
-</section>
+  <p class="legend">
+    <span><i class="dot day"></i>ground track, day side</span>
+    <span><i class="dot night"></i>ground track, night side</span>
+    <span><i class="stroke footprint"></i>visibility circle at {{ threshold() }}&deg;</span>
+    <span><i class="dot observer"></i>observer</span>
+    <span><i class="dot satellite"></i>satellite</span>
+  </p>
+</article>

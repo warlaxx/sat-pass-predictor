@@ -90,3 +90,57 @@ const ORBITAL_SPEED_KM_PER_S = 7.66;
 export function aosUncertaintySeconds(ageSeconds: number): number {
   return Math.round(expectedDriftKm(ageSeconds).high / ORBITAL_SPEED_KM_PER_S);
 }
+
+/**
+ * A pass worth going outside for: high enough to clear roofs and trees with room to
+ * spare. The table flags it and the selected-pass tile says so in words.
+ */
+export function isRemarkable(maxElevationDeg: number): boolean {
+  return maxElevationDeg >= 50;
+}
+
+const BAND_WORDS: Record<ElevationBand, string> = {
+  faint: 'grazes the horizon',
+  ordinary: 'clears the rooftops',
+  good: 'high in the sky',
+  overhead: 'almost overhead',
+};
+
+/** The elevation band, said in the words someone standing outside would use. */
+export function describeElevation(maxElevationDeg: number): string {
+  return BAND_WORDS[elevationBand(maxElevationDeg)];
+}
+
+/**
+ * "UTC+2", "UTC−3:30", "UTC" - the browser's offset at a given instant.
+ *
+ * Per instant, not once per page: a window of ten nights can straddle a daylight-saving
+ * change, and the label has to say which side of it each time sits on.
+ */
+export function utcOffsetLabel(instant: string | number): string {
+  const minutes = -new Date(instant).getTimezoneOffset();
+  if (minutes === 0) return 'UTC';
+  const sign = minutes > 0 ? '+' : '−';
+  const hours = Math.floor(Math.abs(minutes) / 60);
+  const rest = Math.abs(minutes) % 60;
+  return `UTC${sign}${hours}${rest ? ':' + String(rest).padStart(2, '0') : ''}`;
+}
+
+/**
+ * The instant the satellite enters (or leaves) the Earth's shadow during a pass, if the
+ * API says it does.
+ *
+ * Reads `illuminated` and nothing else. Until milestone 10 that field is `false` on every
+ * point, so this returns `undefined` and every caller draws the neutral treatment.
+ */
+export function shadowEntry(track: readonly { instant: string; illuminated: boolean }[]): string | undefined {
+  for (let i = 1; i < track.length; i++) {
+    if (track[i - 1].illuminated && !track[i].illuminated) return track[i].instant;
+  }
+  return undefined;
+}
+
+/** True once the API reports illumination at all, i.e. from milestone 10 on. */
+export function hasIllumination(track: readonly { illuminated: boolean }[]): boolean {
+  return track.some(point => point.illuminated);
+}
