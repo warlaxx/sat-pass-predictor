@@ -14,7 +14,7 @@ demonstrates, a product on whether anyone pays. Phase 2 starts below milestone 1
 > Milestones 0 to 9 are done, except the demo GIF of milestone 9, which needs a screen
 > recording rather than code. What remains before phase 2 is milestone 10 — optional, and
 > the one that turns a tracker into a demonstration of the dynamics. Its optical-visibility
-> step is now implemented; the demo GIF and multi-satellite discovery remain.
+> step and multi-satellite discovery are now implemented; the demo GIF remains.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
 milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
@@ -471,7 +471,17 @@ globe renders — checked by hand in a browser, with no failed request left in t
 - [x] The table and selected pass identify favourable samples. Sky chart, panorama and
   globe colour satellite illumination, including passes entirely in eclipse. Sunlight
   alone is never labelled as naked-eye visibility.
-- [ ] Several satellites, next favourable window over 7 days.
+- [x] Several satellites, next favourable window over 7 days: up to five unique NORAD
+  IDs, independent 168 h requests, first consecutive favourable sample interval for each
+  satellite, ordered by visibility onset. Partial failures stay explicit; selecting a
+  result reuses its prediction in the existing views. Browser requests are cancelled on
+  restart. Searched observer/threshold and element age at the opportunity remain visible.
+
+**Discovery scope:** this is an on-demand comparison through the existing API, not a
+catalogue scan or a new batch endpoint. Each request has its own computation time. The
+first opportunity is ranked among successfully computed satellites only. Tests cover ID
+bounds/deduplication, sample-based intervals, ordering, partial failures, empty results,
+request cancellation and opening a result without another fetch.
 - PostgreSQL is deferred to milestone 11, where keys and usage counters justify it.
 
 **Sampling limit:** flags are evaluated on the existing 10 s grid and at AOS, culmination
