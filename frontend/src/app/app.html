@@ -74,19 +74,21 @@
     </label>
   </div>
 
-  <button type="submit" class="primary" [class.computing]="resource.isLoading()" [disabled]="resource.isLoading()">
+  <button type="submit" class="primary" [class.computing]="loading()" [disabled]="loading()">
     <svg class="compute-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="32 18" />
       <circle cx="19" cy="8" r="2.5" fill="currentColor" />
       <circle cx="12" cy="12" r="2" fill="currentColor" />
     </svg>
-    {{ resource.isLoading() ? 'Computing...' : 'Compute passes' }}
+    {{ loading() ? 'Computing...' : 'Compute passes' }}
   </button>
 
   @if (locationError(); as failure) {
     <p class="location-error" role="status">{{ failure }}</p>
   }
 </form>
+
+<app-discovery [query]="form()" (open)="inspect($event)" />
 
 <!--
   Four states, four answers. The @else chain is ordered by what the reader needs to
@@ -98,7 +100,7 @@
     Pick a satellite and a place, then compute. Defaults: the ISS over Lyon, the next
     two days, passes above 10&deg;.
   </p>
-} @else if (resource.isLoading()) {
+} @else if (loading()) {
   <p class="state wrap" role="status">
     <span class="pulse" aria-hidden="true"></span>
     Retrieving orbital elements and computing passes. A server starting up can take longer&hellip;

@@ -1,0 +1,32 @@
+<section aria-labelledby="discovery-title">
+  <h2 id="discovery-title">Next favourable window · 7 days</h2>
+  <p>Compare up to five satellites using the observer and elevation threshold above. Enter NORAD numbers separated by commas.</p>
+  <form (submit)="$event.preventDefault(); find()">
+    <label for="discovery-ids">NORAD numbers</label>
+    <input id="discovery-ids" required [value]="ids()" (input)="ids.set($any($event.target).value)" aria-describedby="discovery-help">
+    <button type="submit">{{ results.isLoading() ? 'Restart search' : 'Find next windows' }}</button>
+  </form>
+  <p id="discovery-help">Potential visibility means a sunlit satellite above a dark observer. Weather and brightness are not modelled. Times below delimit favourable samples, with 10 s resolution; a single sample is not a measured duration.</p>
+  @if (validation()) { <p role="alert">{{ validation() }}</p> }
+  @if (results.isLoading()) {
+    <p role="status">Comparing satellite predictions over seven days…</p>
+  } @else if (search(); as request) {
+    <p class="context">Searched at {{ request.query.lat | number:'1.3-4' }}°, {{ request.query.lon | number:'1.3-4' }}°, {{ request.query.alt }} m · threshold {{ request.query.minElevation }}°. Each window begins when its prediction is computed.</p>
+    @for (opportunity of opportunities(); track opportunity.response.satellite.noradId; let first = $first) {
+      <article>
+        <h3>{{ opportunity.response.satellite.name }} · NORAD {{ opportunity.response.satellite.noradId }}</h3>
+        @if (first) { <strong>Earliest among successful predictions</strong> }
+        <p class="num">{{ opportunity.start | date:'d MMM y HH:mm:ss' }} → {{ opportunity.end | date:'d MMM y HH:mm:ss' }} local</p>
+        <p class="num">{{ opportunity.start | date:'d MMM y HH:mm:ss':'UTC' }} → {{ opportunity.end | date:'d MMM y HH:mm:ss':'UTC' }} UTC</p>
+        <p>TLE age at this opportunity: {{ (opportunity.response.tle.ageSeconds + (toMillis(opportunity.start) - toMillis(opportunity.response.computedAt)) / 1000) / 86400 | number:'1.1-1' }} days. Predictions become less reliable further ahead.</p>
+        <button type="button" (click)="open.emit(opportunity)">Inspect pass</button>
+      </article>
+    }
+    @for (result of empty(); track result.noradId) {
+      <p role="status">{{ result.response!.satellite.name }} ({{ result.noradId }}): no favourable sample in the next seven days.</p>
+    }
+    @for (result of unavailable(); track result.noradId) {
+      <p role="alert">NORAD {{ result.noradId }}: {{ result.error }}</p>
+    }
+  }
+</section>

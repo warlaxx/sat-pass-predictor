@@ -3,7 +3,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ObserverDto, PassDto } from '../api/passes.model';
-import { compassPoint, hasIllumination } from '../format';
+import { compassPoint } from '../format';
 import { PassClock } from '../pass-viewer/pass-clock';
 import { sampleAt } from '../pass-viewer/sky-geometry';
 import {
@@ -136,11 +136,7 @@ export class SkyPanorama {
       .filter(line => line.y > 18);
   });
 
-  /**
-   * Split where the API says the satellite changes light. Until milestone 10 there is no
-   * such change, and the whole arc is one neutral run: amber means "sunlit" on this page,
-   * and a colour that means something is not spent on a guess.
-   */
+  /** Split by satellite illumination reported by the API. */
   protected readonly runs = computed<Run[]>(() => {
     const f = this.frame();
     const track = this.pass().track;
@@ -148,9 +144,6 @@ export class SkyPanorama {
     const azimuths = unwrapAzimuths(track);
     const screen = track.map((point, i) => toScreen(f, azimuths[i], point.elevationDeg));
     const format = (i: number): string => `${screen[i].x.toFixed(1)},${screen[i].y.toFixed(1)}`;
-    if (!hasIllumination(track)) {
-      return [{ kind: 'neutral', points: screen.map((_, i) => format(i)).join(' ') }];
-    }
     const runs: Run[] = [];
     let start = 0;
     for (let i = 1; i <= track.length; i++) {

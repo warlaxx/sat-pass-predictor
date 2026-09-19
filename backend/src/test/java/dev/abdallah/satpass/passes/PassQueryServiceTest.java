@@ -56,8 +56,11 @@ class PassQueryServiceTest {
         // Five passes over 24 h, exactly like the milestone 2 reference: the two raw
         // lines did rebuild the same TLE.
         assertThat(prediction.passes()).hasSize(5);
-        assertThat(prediction.passes().getFirst().aos().instant())
-                .isEqualTo(Instant.parse("2021-02-04T12:16:42.325291143Z"));
+        // Root finding promises 1 ms, not bit-identical nanoseconds: cache/warm-up
+        // order can change the final floating-point rounding by a nanosecond.
+        assertThat(Duration.between(Instant.parse("2021-02-04T12:16:42.325291143Z"),
+                prediction.passes().getFirst().aos().instant()).abs())
+                .isLessThanOrEqualTo(Duration.ofMillis(1));
     }
 
     @Test

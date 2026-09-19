@@ -18,10 +18,9 @@ import java.time.Instant;
  * @param elevationDeg geometric elevation above the horizon, in degrees
  * @param rangeKm      observer-to-satellite distance, in kilometres
  * @param subPoint     the point on the ground directly below the satellite
- * @param illuminated  true if the satellite is lit by the Sun. <b>Always {@code false}
- *                     until milestone 10</b>: the field exists now so that the arrival of
- *                     the eclipse computation changes neither the API contract nor a line
- *                     of frontend code.
+ * @param illuminated true when the entire solar disc is clear of Earth's limb
+ * @param visible     potentially visible: illuminated and observer's Sun at or below
+ *                    -6 degrees. Weather, brightness and obstructions are not modelled.
  */
 public record TrackPoint(
         Instant instant,
@@ -29,9 +28,13 @@ public record TrackPoint(
         double elevationDeg,
         double rangeKm,
         SubSatellitePoint subPoint,
-        boolean illuminated) {
+        boolean illuminated,
+        boolean visible) {
 
     public TrackPoint {
+        if (visible && !illuminated) {
+            throw new IllegalArgumentException("a visible sample must be illuminated");
+        }
         if (instant == null) {
             throw new IllegalArgumentException("sample date is missing");
         }

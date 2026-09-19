@@ -48,17 +48,19 @@
           <circle class="satellite" [attr.cx]="project(current()).x" [attr.cy]="project(current()).y" r="4.2" />
         </svg>
       </div>
+      <p role="status">{{ potentiallyVisible() ? 'Potentially visible during part of this pass.' : 'No favourable visibility sample during this pass.' }}</p>
       <p class="legend">
         @if (illumination()) {
-          <span><i class="stroke lit"></i>visible to the naked eye</span>
-          <span><i class="stroke shade"></i>in the Earth's shadow</span>
+          <span><i class="stroke lit"></i>satellite fully sunlit</span>
+          <span><i class="stroke shade"></i>eclipse / partial eclipse</span>
         } @else {
           <span><i class="stroke neutral"></i>trajectory</span>
         }
         <span><i class="stroke threshold-key"></i>{{ threshold() }}° threshold</span>
         @if (!illumination()) {
-          <span class="note">Illumination not yet calculated; a pass above the horizon is not necessarily visible to the naked eye.</span>
+          <span class="note">No illumination samples available.</span>
         }
+        <span class="note">Potential visibility requires sunlight on the satellite and the Sun at least 6° below your horizon. Weather and brightness are not modelled; transitions are sampled every 10 s.</span>
       </p>
     </article>
   </div>

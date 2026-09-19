@@ -35,7 +35,7 @@ final class PassFixtures {
 
     private static TrackPoint point(Instant instant, double azimuth, double elevation, double range) {
         return new TrackPoint(instant, azimuth, elevation, range,
-                new SubSatellitePoint(38.71, -4.92, 419.6), false);
+                new SubSatellitePoint(38.71, -4.92, 419.6), instant.equals(CULMINATION), instant.equals(CULMINATION));
     }
 
     static SatellitePass pass() {

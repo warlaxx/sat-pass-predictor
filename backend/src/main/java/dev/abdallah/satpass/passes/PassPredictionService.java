@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import org.hipparchus.util.FastMath;
+import org.orekit.bodies.CelestialBody;
 import org.orekit.bodies.GeodeticPoint;
 import org.orekit.bodies.OneAxisEllipsoid;
 import org.orekit.data.DataContext;
@@ -17,6 +18,7 @@ import org.orekit.frames.TopocentricFrame;
 import org.orekit.propagation.SpacecraftState;
 import org.orekit.propagation.analytical.tle.TLE;
 import org.orekit.propagation.analytical.tle.TLEPropagator;
+import org.orekit.propagation.events.EclipseDetector;
 import org.orekit.propagation.events.ElevationDetector;
 import org.orekit.propagation.events.ElevationExtremumDetector;
 import org.orekit.propagation.events.EventsLogger;
@@ -62,9 +64,6 @@ import org.springframework.stereotype.Service;
  *   <li>A pass already under way when the window opens, or still under way when it
  *       closes, is discarded: its AOS or LOS falls outside the computed interval, and
  *       returning a truncated duration would be a silent lie.</li>
- *   <li>{@code illuminated} is {@code false} on every point until milestone 10. The field
- *       exists already so that the API contract does not break the day the eclipse
- *       computation arrives.</li>
  * </ul>
  */
 @Service
@@ -115,6 +114,8 @@ public class PassPredictionService {
 
     private final DataContext dataContext;
     private final OneAxisEllipsoid earth;
+    private final CelestialBody sun;
+    private final EclipseDetector eclipse;
 
     public PassPredictionService(DataContext dataContext) {
         this.dataContext = dataContext;
@@ -123,6 +124,9 @@ public class PassPredictionService {
                 Constants.WGS84_EARTH_EQUATORIAL_RADIUS,
                 Constants.WGS84_EARTH_FLATTENING,
                 dataContext.getFrames().getITRF(IERSConventions.IERS_2010, false));
+        this.sun = dataContext.getCelestialBodies().getSun();
+        // Conservative: partial eclipse is not classified as fully illuminated.
+        this.eclipse = new EclipseDetector(sun, Constants.SUN_RADIUS, earth).withPenumbra();
     }
 
     /**
@@ -410,6 +414,13 @@ public class PassPredictionService {
         TrackingCoordinates seen = trackingCoordinates(state, site);
         GeodeticPoint sub = earth.transform(state.getPosition(), state.getFrame(), state.getDate());
 
+        boolean illuminated = eclipse.g(state) > 0.0;
+        double sunElevation = site.getTrackingCoordinates(
+                sun.getPosition(state.getDate(), state.getFrame()),
+                state.getFrame(), state.getDate()).getElevation();
+        // Civil twilight is a reproducible geometric criterion, not a brightness model.
+        boolean visible = illuminated && sunElevation <= FastMath.toRadians(-6.0);
+
         return new TrackPoint(
                 toInstant(state.getDate()),
                 degreesInCircle(seen.getAzimuth()),
@@ -419,7 +430,7 @@ public class PassPredictionService {
                         FastMath.toDegrees(sub.getLatitude()),
                         FastMath.toDegrees(sub.getLongitude()),
                         sub.getAltitude() / 1000.0),
-                false);
+                illuminated, visible);
     }
 
     private TrackingCoordinates trackingCoordinates(SpacecraftState state, TopocentricFrame site) {

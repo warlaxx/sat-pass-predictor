@@ -1,0 +1,13 @@
+:host { display: block; padding: 28px max(var(--gutter), (100% - 1280px) / 2); border-bottom: 1px solid var(--line); }
+section { max-width: 100%; }
+h2 { font-size: 20px; }
+p { color: var(--ink-2); line-height: 1.6; }
+form { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-block: 18px; }
+input, button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); padding: 10px 14px; border-radius: var(--r); }
+input { max-width: 100%; min-width: 0; box-sizing: border-box; }
+button { cursor: pointer; }
+button:hover { border-color: var(--signal); }
+article { border: 1px solid var(--line); padding: 18px; margin-block: 14px; border-radius: var(--r); }
+article h3 { margin-top: 0; }
+strong { color: var(--lit); }
+.context, #discovery-help { font-size: 13px; }

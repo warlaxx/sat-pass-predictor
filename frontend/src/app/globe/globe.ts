@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { ObserverDto, PassDto } from '../api/passes.model';
 import { PassClock } from '../pass-viewer/pass-clock';
 import {
-  D2R, EARTH_RADIUS_KM, LatLon, destinationPoint, isDaylit, sampleSubPointAt, subsolarPoint, toUnitVector, visibilityRadiusDeg,
+  D2R, EARTH_RADIUS_KM, LatLon, destinationPoint, sampleSubPointAt, subsolarPoint, toUnitVector, visibilityRadiusDeg,
 } from './globe-geometry';
 import { THREE_LOADER } from './three-loader';
 
@@ -217,11 +217,8 @@ export class Globe {
    * Rebuilds the geometry that only changes when a different pass is selected: the two
    * ground-track segments and the Sun direction lighting the terminator.
    *
-   * The split is the ground's own day/night line, not the satellite's — `illuminated`
-   * stays `false` until milestone 10, and this view does not anticipate it. The Sun's
-   * position is fixed at culmination for the whole pass: a pass lasts a few minutes, over
-   * which the true position moves by a fraction of a degree — not worth recomputing every
-   * frame for a shadow line already this simplified.
+   * Track colours use satellite illumination from Orekit. The approximate Sun direction
+   * below only lights Earth's terminator, fixed at culmination for the short pass.
    */
   private buildTrack(pass: PassDto, observer: ObserverDto): void {
     const three = this.three!;
@@ -232,7 +229,7 @@ export class Globe {
     const dayPoints: Vector3[] = [];
     const nightPoints: Vector3[] = [];
     for (let i = 0; i < track.length - 1; i++) {
-      const bucket = isDaylit(track[i].subPoint, sun) ? dayPoints : nightPoints;
+      const bucket = track[i].illuminated ? dayPoints : nightPoints;
       bucket.push(toVector3(three, track[i].subPoint, GROUND_TRACK_RADIUS), toVector3(three, track[i + 1].subPoint, GROUND_TRACK_RADIUS));
     }
     setPoints(three, this.groundTrackDay!, dayPoints);

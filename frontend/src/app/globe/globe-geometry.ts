@@ -34,7 +34,7 @@ export function toUnitVector(point: LatLon, radius = 1): UnitVector {
  * Low-precision solar position (accurate to a few hundredths of a degree — see the
  * Astronomical Almanac's approximate formula). It positions a `DirectionalLight` so the
  * day/night terminator falls where it really does; it is not used to decide whether the
- * satellite itself is sunlit, which stays `false` until milestone 10.
+ * satellite itself is sunlit, which the API calculates separately.
  */
 export function subsolarPoint(instantMs: number): LatLon {
   const julianDate = instantMs / 86400000 + 2440587.5;

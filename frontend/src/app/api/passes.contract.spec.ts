@@ -35,11 +35,11 @@ const CAPTURED_RESPONSE = `
       "durationSeconds": 404,
       "track": [
         { "instant": "2026-09-22T19:18:54Z", "azimuthDeg": 292.5, "elevationDeg": 10.0, "rangeKm": 1553.2,
-          "subPoint": { "latitudeDeg": 38.71, "longitudeDeg": -4.92, "altitudeKm": 419.6 }, "illuminated": false },
+          "subPoint": { "latitudeDeg": 38.71, "longitudeDeg": -4.92, "altitudeKm": 419.6 }, "illuminated": false, "visible": false },
         { "instant": "2026-09-22T19:22:16Z", "azimuthDeg": 22.5, "elevationDeg": 63.1, "rangeKm": 462.7,
-          "subPoint": { "latitudeDeg": 44.02, "longitudeDeg": 3.11, "altitudeKm": 421.3 }, "illuminated": false },
+          "subPoint": { "latitudeDeg": 44.02, "longitudeDeg": 3.11, "altitudeKm": 421.3 }, "illuminated": true, "visible": true },
         { "instant": "2026-09-22T19:25:38Z", "azimuthDeg": 112.4, "elevationDeg": 10.0, "rangeKm": 1551.8,
-          "subPoint": { "latitudeDeg": 48.90, "longitudeDeg": 12.40, "altitudeKm": 423.0 }, "illuminated": false }
+          "subPoint": { "latitudeDeg": 48.90, "longitudeDeg": 12.40, "altitudeKm": 423.0 }, "illuminated": false, "visible": false }
       ]
     }
   ]
@@ -89,10 +89,12 @@ describe('the /api/passes contract', () => {
   it('gives every track point a sub-satellite position and an illumination flag', () => {
     const point: TrackPointDto = response.passes[0].track[1];
     expect(keys(point)).toEqual([
-      'azimuthDeg', 'elevationDeg', 'illuminated', 'instant', 'rangeKm', 'subPoint',
+      'azimuthDeg', 'elevationDeg', 'illuminated', 'instant', 'rangeKm', 'subPoint', 'visible',
     ]);
     expect(keys(point.subPoint)).toEqual(['altitudeKm', 'latitudeDeg', 'longitudeDeg']);
-    // False until milestone 10. The field exists so that the globe need not change then.
-    expect(point.illuminated).toBe(false);
+    // The culmination is favourable; the boundaries are eclipsed.
+    expect(point.illuminated).toBe(true);
+    expect(point.visible).toBe(true);
+    expect(response.passes[0].track[0].visible).toBe(false);
   });
 });

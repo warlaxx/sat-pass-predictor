@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
+import { Discovery, Opportunity } from './discovery/discovery';
 import { Reveal } from './motion/reveal';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PassesApi } from './api/passes.service';
 import { PassQuery, DEFAULT_QUERY, MAX_WINDOW_HOURS } from './api/passes.query';
-import { PassDto, ProblemDetail } from './api/passes.model';
+import { PassDto, PassesResponse, ProblemDetail } from './api/passes.model';
 import { TleBanner } from './tle-banner/tle-banner';
 import { PassRibbon } from './pass-ribbon/pass-ribbon';
 import { PassViewer } from './pass-viewer/pass-viewer';
@@ -36,7 +37,7 @@ function round(value: number, decimals: number): number {
  */
 @Component({
   selector: 'app-root',
-  imports: [Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama],
+  imports: [Discovery, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './app.scss',
   templateUrl: './app.html',
@@ -49,12 +50,14 @@ export class App {
   protected readonly selected = signal<string | undefined>(undefined);
 
   protected readonly resource = this.api.resource;
-  protected readonly response = computed(() => this.resource.hasValue() ? this.resource.value() : undefined);
+  private readonly discovered = signal<PassesResponse | undefined>(undefined);
+  protected readonly loading = computed(() => !this.discovered() && this.resource.isLoading());
+  protected readonly response = computed(() => this.discovered() ?? (this.resource.hasValue() ? this.resource.value() : undefined));
   protected readonly selectedPass = computed(() => {
     const passes = this.response()?.passes ?? [];
     return passes.find(pass => pass.aos.instant === this.selected()) ?? passes[0];
   });
-  protected readonly searched = computed(() => this.api.lastQuery() !== undefined);
+  protected readonly searched = computed(() => !!this.discovered() || this.api.lastQuery() !== undefined);
 
   /**
    * The error, as the API means it to be read.
@@ -65,6 +68,7 @@ export class App {
    * fallback sentence.
    */
   protected readonly problem = computed<ProblemDetail | undefined>(() => {
+    if (this.discovered()) return undefined;
     const error = this.resource.error();
     if (!error) return undefined;
     const body = error instanceof HttpErrorResponse ? error.error : undefined;
@@ -200,7 +204,13 @@ export class App {
     this.form.update((query) => ({ ...query, [field]: parsed }));
   }
 
+  protected inspect(opportunity: Opportunity): void {
+    this.discovered.set(opportunity.response);
+    this.selected.set(opportunity.pass.aos.instant);
+  }
+
   protected search(): void {
+    this.discovered.set(undefined);
     this.selected.set(undefined);
     this.api.search(this.form());
   }

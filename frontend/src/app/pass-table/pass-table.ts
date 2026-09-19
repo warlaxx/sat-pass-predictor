@@ -64,8 +64,13 @@ import { compassPoint, elevationColour, formatDuration, isRemarkable, shadowEntr
             <td class="num dim">{{ point(pass.los.azimuthDeg) }}</td>
             <td class="num">{{ duration(pass) }}</td>
             <td class="remarks">
+              @if (potentiallyVisible(pass)) {
+                <span class="chip lit" title="At least one sample is sunlit with the Sun 6° below your horizon; weather and brightness are not modelled">potentially visible</span>
+              } @else {
+                <span class="chip quiet">no favourable sample</span>
+              }
               @if (shadow(pass); as instant) {
-                <span class="chip num lit">shadow at {{ instant | date: 'HH:mm' }}</span>
+                <span class="chip num lit">shadow ~{{ instant | date: 'HH:mm' }}</span>
               }
               @if (remarkable(pass)) {
                 <span class="chip num hot">remarkable</span>
@@ -200,6 +205,10 @@ export class PassTable {
 
   protected remarkable(pass: PassDto): boolean {
     return isRemarkable(pass.culmination.elevationDeg);
+  }
+
+  protected potentiallyVisible(pass: PassDto): boolean {
+    return pass.track.some(point => point.visible);
   }
 
   protected shadow(pass: PassDto): string | undefined {

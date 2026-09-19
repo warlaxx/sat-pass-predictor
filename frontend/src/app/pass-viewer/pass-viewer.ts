@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input } f
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { PassDto } from '../api/passes.model';
 import {
-  aosUncertaintySeconds, compassPoint, describeElevation, elevationColour, formatAge, hasIllumination,
+  aosUncertaintySeconds, compassPoint, describeElevation, elevationColour, formatAge,
   isRemarkable, utcOffsetLabel,
 } from '../format';
 import { PassClock } from './pass-clock';
@@ -41,10 +41,11 @@ export class PassViewer {
   protected readonly end = computed(() => Date.parse(this.pass().los.instant));
   protected readonly track = computed(() => this.pass().track.length ? this.pass().track : [this.pass().aos, this.pass().culmination, this.pass().los]);
   protected readonly current = computed(() => sampleAt(this.track(), this.clock.instant())!);
-  protected readonly illumination = computed(() => hasIllumination(this.pass().track));
+  protected readonly illumination = computed(() => this.pass().track.length > 0);
+  protected readonly potentiallyVisible = computed(() => this.pass().track.some(point => point.visible));
   protected readonly zone = computed(() => utcOffsetLabel(this.pass().aos.instant));
 
-  /** Same rule as the panorama: split on the API's `illuminated`, neutral until it says anything. */
+  /** Split on satellite illumination; an entirely eclipsed pass is shaded too. */
   protected readonly runs = computed<Run[]>(() => {
     const track = this.track();
     const format = (point: (typeof track)[number]): string => {
