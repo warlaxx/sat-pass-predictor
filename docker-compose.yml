@@ -1,0 +1,46 @@
+# The whole application on one machine, with nothing installed but Docker:
+#
+#   docker compose up --build
+#   open http://localhost:4200
+#
+# Two images, the same two pieces as in production: the API (backend/Dockerfile, which
+# Render builds too) and the frontend served by nginx in place of Vercel. orekit-data is
+# downloaded inside the API image at build time, never at runtime.
+services:
+  api:
+    build:
+      # The root, not backend/: backend/Dockerfile is written against it (see render.yaml).
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      # Optional, as everywhere else: leave them unset and the TLE chain runs on
+      # CelesTrak alone, which says so in its startup log.
+      SPACETRACK_IDENTITY: ${SPACETRACK_IDENTITY:-}
+      SPACETRACK_PASSWORD: ${SPACETRACK_PASSWORD:-}
+    ports:
+      # Exposed for Swagger UI (http://localhost:8080/docs) and curl. The frontend does
+      # not need it: nginx reaches the API over the Compose network. API_PORT / WEB_PORT
+      # move the host side when 8080 or 4200 is already taken by a local dev server.
+      - "${API_PORT:-8080}:8080"
+    healthcheck:
+      # The runtime image has neither curl nor wget, and installing one would grow the
+      # image Render ships for the sake of a local convenience. bash can speak enough HTTP
+      # over /dev/tcp to read one status line.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /actuator/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+
+  web:
+    build:
+      context: frontend
+    environment:
+      API_UPSTREAM: http://api:8080
+    ports:
+      - "${WEB_PORT:-4200}:80"
+    depends_on:
+      # Not started until the API answers: otherwise the first page load races the JVM
+      # and shows an error that is not one.
+      api:
+        condition: service_healthy

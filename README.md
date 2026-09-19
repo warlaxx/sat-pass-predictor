@@ -17,6 +17,43 @@ Java / Spring Boot backend with [Orekit](https://www.orekit.org/), Angular front
 | Frontend  | Angular 22 (standalone, signals, SCSS)  |
 | TLEs      | CelesTrak GP API                        |
 
+## Architecture
+
+```mermaid
+flowchart LR
+    browser([Browser<br/>Angular: list, sky chart, globe])
+
+    subgraph vercel [Vercel — nginx under Docker]
+        static[Static bundle]
+        relay["/tle-upstream<br/>rewrite"]
+    end
+
+    subgraph render [Render — Spring Boot API]
+        controller["PassController<br/>GET /api/passes"]
+        query[PassQueryService]
+        store["TleStore<br/>in-memory, 2 h refresh"]
+        chain["FallbackTleClient<br/>sources tried in order"]
+        predict["PassPredictionService<br/>SGP4 + event detection"]
+        orekit[("Orekit<br/>+ orekit-data")]
+    end
+
+    celestrak[(CelesTrak)]
+    spacetrack[(Space-Track<br/>optional)]
+
+    browser -- page --> static
+    browser -- "/api (proxied)" --> controller
+    controller --> query
+    query --> store --> chain
+    query --> predict --> orekit
+    chain --> celestrak
+    chain --> relay --> celestrak
+    chain -.-> spacetrack
+```
+
+The browser computes nothing: every position the sky chart and the globe draw comes from
+the API's `track`, sampled by Orekit. The API holds no database — TLEs live in memory with
+their age exposed, and a restart simply fetches them again.
+
 ## Prerequisites
 
 - **JDK 25** — the project compiles with `release 25`; an older JDK fails with
@@ -34,7 +71,26 @@ Java / Spring Boot backend with [Orekit](https://www.orekit.org/), Angular front
   first use. It is the command the CI runs, so what passes here passes there.
 - **Node 22 LTS**
 
+## Running it with Docker
+
+Nothing to install but Docker — no JDK, no Node, no Orekit data:
+
+```bash
+docker compose up --build
+```
+
+Then open <http://localhost:4200> (Swagger UI: <http://localhost:8080/docs>). The first
+build takes a few minutes: Maven and npm dependencies, plus the Orekit data set, which is
+downloaded **inside the API image at build time**, never at runtime. `API_PORT` and
+`WEB_PORT` move the host ports when 8080 or 4200 are already taken by a dev server.
+
+The two images are the two production pieces: `backend/Dockerfile` is the image Render
+deploys, and nginx (`frontend/nginx.conf.template`) stands in for Vercel — static files,
+`/api` forwarded server-side, the same caching rules as `vercel.json`.
+
 ## Getting started
+
+For development, without Docker:
 
 ```bash
 # 1. Orekit data (leap seconds, EOP, ephemerides) — ~100 MB, not committed
@@ -138,6 +194,72 @@ track's two colours are the *ground's* day and night sides (a subsolar-point cal
 not the satellite's — that stays unknown, like the sky chart's curve, until milestone 10.
 Details and the decisions behind them: [ROADMAP.md](ROADMAP.md#milestone-8--3d-globe-done).
 
+## Physical model
+
+What the numbers mean, and what they do not. The code says the same thing where it
+happens — mostly in `PassPredictionService`.
+
+### Reference frames
+
+| Frame | What it is | Role here |
+|---|---|---|
+| **TEME** | *True Equator, Mean Equinox* of date. Quasi-inertial, and specific to SGP4: its equinox is neither the true one nor a standard IERS one. | What SGP4 outputs. A TLE is only meaningful in it. |
+| **GCRF** | *Geocentric Celestial Reference Frame*, the inertial IERS frame aligned with the ICRS. | The hub of Orekit's frame tree: TEME reaches ITRF through it. |
+| **ITRF** | *International Terrestrial Reference Frame*, fixed to the Earth's crust and rotating with it. | Where the observer lives: WGS84 ellipsoid, `TopocentricFrame`. |
+
+A classic mistake is to treat SGP4's output as if it were already in an inertial or
+terrestrial frame. The error is not subtle: the ground under Lyon turns at about
+325 m/s, so ignoring the Earth's rotation puts the satellite some 100 km off within the
+five minutes of a pass. Here the satellite's state is expressed in
+TEME and converted to ITRF **at every date**, through precession-nutation, the Earth's
+rotation angle and polar motion (IERS 2010 conventions, full EOP, not the simplified
+model). Elevation and azimuth are then read in the observer's topocentric frame.
+
+### Time scales
+
+| Scale | What it is | Role here |
+|---|---|---|
+| **UTC** | Civil time, kept within 0.9 s of the Earth's rotation by leap seconds. | Every instant the API reads or returns, and TLE epochs. |
+| **TAI** | International Atomic Time, continuous. UTC = TAI − 37 s since 2017. | What Orekit computes in internally, so that a leap second never becomes a jump in a propagation. |
+| **UT1** | The Earth's actual rotation angle, irregular and measured after the fact. | Orients ITRF with respect to the sky. UT1 − UTC comes from the EOP. |
+
+The leap-second table (`tai-utc.dat`) is part of `orekit-data`. Without it, UTC cannot be
+converted at all — which is why the application refuses to start rather than fail at its
+first computation.
+
+### Earth orientation parameters
+
+The EOP, published by the IERS, describe what no formula can predict: UT1 − UTC, polar
+motion (the rotation axis wanders by a few metres over the surface) and small nutation
+corrections. For future dates — every prediction this application makes — Orekit uses the
+*predicted* values of IERS Bulletin A shipped in `orekit-data`.
+
+Their weight, in orders of magnitude: one second of UT1 error is 15 arcseconds of Earth
+rotation, about 465 m at the equator; polar motion is a few metres. Both are far below the
+SGP4 error described next. They are loaded anyway, because a correct frame chain costs
+nothing at runtime, and because the Skyfield comparison can only be exact if the frames
+are.
+
+### Limitations of SGP4
+
+- **The elements are mean elements, not a state.** A TLE is fitted to observations *for
+  SGP4*: fed into any other propagator, it gives a wrong orbit. Orekit never reinterprets
+  it outside `TLEPropagator`.
+- **The error grows with the TLE's age**: about 1 km at the epoch, then roughly 1 to 3 km
+  per day in low Earth orbit, more during a geomagnetic storm, when atmospheric drag
+  departs from the single `B*` term the model has. Hence the TLE age banner, the refusal
+  to predict past seven days of age, and the window capped at ten days.
+- **Manoeuvres are invisible.** An ISS reboost makes every prediction based on the
+  previous TLE wrong until a new one is published.
+- **Positions are geometric.** No atmospheric refraction (about 0.1° near 5° of
+  elevation, more below) and no light-time correction (a few milliseconds at low-orbit
+  distances).
+
+The second point dominates everything else in this list. Two days of age mean 2 to 6 km,
+which the ISS covers in under a second at 7.7 km/s: invisible to a naked-eye observer,
+but still a thousand times the EOP effects above. That is why the banner turns the age
+into a timing order of magnitude instead of hiding it.
+
 ## Validation
 
 An astrodynamics computation that is compared to nothing is not a computation, it is an
@@ -219,7 +341,8 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] Frontend: shell, pass list, ribbon of nights, TLE age banner
 - [x] Polar sky chart (SVG), shared selection and playback controls
 - [x] 3D globe: ground track, visibility circle, terminator
-- [ ] Docker Compose, showcase pass
+- [x] Docker Compose, architecture diagram, physical model
+- [ ] Demo GIF
 - [ ] Naked-eye visible passes, TLE cache (PostgreSQL)
 
 Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
