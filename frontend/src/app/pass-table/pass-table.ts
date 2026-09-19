@@ -90,6 +90,9 @@ import { compassPoint, elevationColour, formatDuration, isRemarkable, shadowEntr
       border: 1px solid var(--line);
       border-radius: var(--r);
       overflow-x: auto;
+      /* Contains the visually-hidden spans of the headers: they are absolutely
+         positioned, and without this they escape the scroller and widen the page. */
+      position: relative;
     }
 
     table {
