@@ -7,7 +7,7 @@ import { ObserverDto, PassDto, TrackPointDto } from '../api/passes.model';
 
 const point = (seconds: number, latitudeDeg: number, longitudeDeg: number): TrackPointDto => ({
   instant: new Date(Date.UTC(2026, 8, 19, 20, 0, seconds)).toISOString(),
-  azimuthDeg: 0, elevationDeg: 20, rangeKm: 1000, illuminated: false,
+  azimuthDeg: 0, elevationDeg: 20, rangeKm: 1000, illuminated: false, visible: false,
   subPoint: { latitudeDeg, longitudeDeg, altitudeKm: 420 },
 });
 const track = [point(0, 45, 4), point(60, 46, 5), point(120, 47, 6)];

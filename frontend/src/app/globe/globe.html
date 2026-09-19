@@ -4,8 +4,7 @@
     <span class="meta">{{ pass().culmination.instant | date: 'HH:mm:ss' : 'UTC' }} UTC at peak</span>
   </header>
   <p class="hint">
-    Ground track split by the Earth's day/night line, not by the satellite's own sunlight
-    (unknown until milestone 10). Drag to rotate; the pass list is the text equivalent.
+    Ground track coloured by sunlight on the satellite. Drag to rotate; the pass list is the text equivalent.
   </p>
   <div class="stage">
     <canvas #canvas aria-label="Globe: ground track, visibility circle and observer position for the selected pass"></canvas>
@@ -21,8 +20,8 @@
     }
   </div>
   <p class="legend">
-    <span><i class="dot day"></i>ground track, day side</span>
-    <span><i class="dot night"></i>ground track, night side</span>
+    <span><i class="dot day"></i>satellite fully sunlit</span>
+    <span><i class="dot night"></i>eclipse / partial eclipse</span>
     <span><i class="stroke footprint"></i>visibility circle at {{ threshold() }}&deg;</span>
     <span><i class="dot observer"></i>observer</span>
     <span><i class="dot satellite"></i>satellite</span>

@@ -182,7 +182,12 @@ minimum elevation drawn as a dashed circle. Minute dots and phase details accomp
 shared clock: play/pause at 20×, scrub, stop at LOS, and reset when selecting another pass.
 Playback starts paused (including for reduced-motion users). All displayed times include
 local/UTC labels. Intermediate readouts interpolate API samples; no orbit is computed in
-the browser. Illumination remains unknown until milestone 10, so the curve is neutral.
+the browser. The curve distinguishes fully sunlit samples from eclipse (including penumbra).
+The selected pass and table identify potential naked-eye visibility: the satellite must
+be fully sunlit and the observer's Sun at or below -6°. Weather and brightness are not
+modelled. Flags are sampled every 10 s, so short opportunities can be missed and
+shadow-entry times are approximate. The API exposes these conditions separately as
+`track[].illuminated` and `track[].visible`.
 
 ## Globe
 
@@ -190,8 +195,8 @@ A terrestrial-frame companion to the sky chart, sharing its clock: three.js (r12
 loaded from cdnjs — the one external runtime dependency in the frontend, with an explicit
 fallback message if it cannot load) renders the ground track, the visibility circle and the
 day/night terminator from the same `track` and `subPoint` data, drag to rotate. The ground
-track's two colours are the *ground's* day and night sides (a subsolar-point calculation),
-not the satellite's — that stays unknown, like the sky chart's curve, until milestone 10.
+track's two colours now show the satellite's illumination computed by Orekit. Earth's
+approximate terminator is only a visual reference and does not determine visibility.
 Details and the decisions behind them: [ROADMAP.md](ROADMAP.md#milestone-8--3d-globe-done).
 
 ## Physical model
@@ -343,7 +348,9 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] 3D globe: ground track, visibility circle, terminator
 - [x] Docker Compose, architecture diagram, physical model
 - [ ] Demo GIF
-- [ ] Naked-eye visible passes, TLE cache (PostgreSQL)
+- [x] Potential naked-eye visibility (sunlight + observer darkness)
+- [ ] Multi-satellite discovery and next favourable window
+- [ ] PostgreSQL with API keys and usage counters (milestone 11)
 
 Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
 (open it in a browser).

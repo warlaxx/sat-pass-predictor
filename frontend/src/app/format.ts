@@ -127,11 +127,9 @@ export function utcOffsetLabel(instant: string | number): string {
 }
 
 /**
- * The instant the satellite enters (or leaves) the Earth's shadow during a pass, if the
- * API says it does.
+ * First sampled entry into eclipse during a pass; up to 10 s after the transition.
  *
- * Reads `illuminated` and nothing else. Until milestone 10 that field is `false` on every
- * point, so this returns `undefined` and every caller draws the neutral treatment.
+ * Reads `illuminated` and nothing else. The first shaded sample bounds the transition.
  */
 export function shadowEntry(track: readonly { instant: string; illuminated: boolean }[]): string | undefined {
   for (let i = 1; i < track.length; i++) {
@@ -140,7 +138,7 @@ export function shadowEntry(track: readonly { instant: string; illuminated: bool
   return undefined;
 }
 
-/** True once the API reports illumination at all, i.e. from milestone 10 on. */
+/** Whether at least one sample is sunlit; false also describes an eclipsed pass. */
 export function hasIllumination(track: readonly { illuminated: boolean }[]): boolean {
   return track.some(point => point.illuminated);
 }

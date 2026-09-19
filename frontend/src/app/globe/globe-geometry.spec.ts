@@ -6,7 +6,7 @@ import {
 
 const point = (seconds: number, latitudeDeg: number, longitudeDeg: number, altitudeKm = 420): TrackPointDto => ({
   instant: new Date(Date.UTC(2026, 8, 19, 20, 0, seconds)).toISOString(),
-  azimuthDeg: 0, elevationDeg: 10, rangeKm: 1000, illuminated: false,
+  azimuthDeg: 0, elevationDeg: 10, rangeKm: 1000, illuminated: false, visible: false,
   subPoint: { latitudeDeg, longitudeDeg, altitudeKm },
 });
 

@@ -173,9 +173,6 @@ class TrackSamplingTest {
             // its altitude. Outside that range, the geometry of the pass is wrong.
             assertThat(point.rangeKm()).isBetween(300.0, 1800.0);
 
-            assertThat(point.illuminated())
-                    .as("the eclipse computation arrives at milestone 10; until then the field is neutral")
-                    .isFalse();
         }));
     }
 

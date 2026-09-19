@@ -19,8 +19,10 @@ export interface TrackPointDto {
   readonly elevationDeg: number;
   readonly rangeKm: number;
   readonly subPoint: SubPointDto;
-  /** Always false until milestone 10. The field exists so the globe need not change. */
+  /** Entire solar disc clear of Earth, excluding penumbra. */
   readonly illuminated: boolean;
+  /** Sunlit with observer Sun elevation ≤ -6°; not a brightness/weather guarantee. */
+  readonly visible: boolean;
 }
 
 export interface SubPointDto {

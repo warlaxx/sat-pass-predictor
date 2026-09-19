@@ -77,7 +77,10 @@ class PassControllerTest {
                 .andExpect(jsonPath("$.passes[0].durationSeconds").value(404))
                 .andExpect(jsonPath("$.passes[0].track.length()").value(3))
                 .andExpect(jsonPath("$.passes[0].track[0].subPoint.altitudeKm").value(419.6))
-                .andExpect(jsonPath("$.passes[0].track[0].illuminated").value(false));
+                .andExpect(jsonPath("$.passes[0].track[0].illuminated").value(false))
+                .andExpect(jsonPath("$.passes[0].track[0].visible").value(false))
+                .andExpect(jsonPath("$.passes[0].track[1].illuminated").value(true))
+                .andExpect(jsonPath("$.passes[0].track[1].visible").value(true));
     }
 
     /**

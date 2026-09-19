@@ -112,11 +112,12 @@ public record PassesResponse(SatelliteDto satellite,
                                 double elevationDeg,
                                 double rangeKm,
                                 SubPointDto subPoint,
-                                boolean illuminated) {
+                                boolean illuminated,
+                                boolean visible) {
 
         static TrackPointDto from(TrackPoint point) {
             return new TrackPointDto(point.instant(), point.azimuthDeg(), point.elevationDeg(),
-                    point.rangeKm(), SubPointDto.from(point.subPoint()), point.illuminated());
+                    point.rangeKm(), SubPointDto.from(point.subPoint()), point.illuminated(), point.visible());
         }
     }
 
