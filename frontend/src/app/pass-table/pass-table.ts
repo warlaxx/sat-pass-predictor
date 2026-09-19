@@ -125,10 +125,11 @@ import { compassPoint, elevationColour, formatDuration, isRemarkable, shadowEntr
     }
 
     tbody tr {
+      transition: background-color var(--motion-fast);
       cursor: pointer;
     }
 
-    tbody tr:hover {
+    tbody tr:hover, tbody tr:focus-visible {
       background: var(--panel);
     }
 

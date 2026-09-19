@@ -178,8 +178,47 @@ h3 {
   *,
   *::before,
   *::after {
+    animation-delay: 0ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    transition-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Shared motion language: short feedback, softer entrances, no layout animation. */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-fast: 180ms ease;
+}
+
+@keyframes section-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal-enter {
+  animation: section-enter 560ms var(--ease-out) both;
+}
+
+/* Keyboard navigation must never wait for decorative motion. */
+.reveal-enter:focus-within {
+  animation: none;
+}
+
+button {
+  transition: transform var(--motion-fast), background-color var(--motion-fast),
+    border-color var(--motion-fast), box-shadow var(--motion-fast), filter var(--motion-fast);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.card {
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast);
+}
+
+.card:focus-within {
+  border-color: var(--accent-dim);
 }
