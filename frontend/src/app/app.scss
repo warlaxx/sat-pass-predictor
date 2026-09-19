@@ -454,3 +454,51 @@ footer p {
     flex-direction: column;
   }
 }
+
+/* Feedback follows the query lifecycle, never a fabricated progress percentage. */
+button.primary {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+  justify-content: center;
+  min-width: 192px;
+}
+
+.compute-icon { flex-shrink: 0; }
+.computing .compute-icon { animation: orbit 1.6s linear infinite; }
+@keyframes orbit { to { transform: rotate(360deg); } }
+
+.field {
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast), background-color var(--motion-fast);
+}
+.field:focus-within {
+  background: var(--panel);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgb(150 164 255 / 12%);
+}
+
+nav a { position: relative; transition: color var(--motion-fast); }
+nav a::after {
+  background: var(--signal);
+  bottom: -3px;
+  content: '';
+  height: 3px;
+  left: 0;
+  position: absolute;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 260ms var(--ease-out);
+  width: 100%;
+}
+nav a.current { border-bottom-color: transparent; }
+nav a.current::after { transform: scaleX(1); }
+
+.state { animation: section-enter 360ms var(--ease-out) both; }
+
+@media (hover: hover) {
+  button.primary:hover:not(:disabled) {
+    box-shadow: 0 4px 20px rgb(252 61 33 / 20%);
+    transform: translateY(-2px);
+  }
+  button.primary:active:not(:disabled) { transform: translateY(0); }
+}

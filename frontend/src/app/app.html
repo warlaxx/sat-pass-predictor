@@ -1,4 +1,4 @@
-<header class="appbar wrap">
+<header class="appbar wrap" appReveal>
   <svg class="logo" width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
     <circle cx="16" cy="16" r="14.5" fill="none" stroke="#fff" stroke-width="1.6" />
     <circle cx="16" cy="16" r="9.5" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="2 2.5" />
@@ -16,7 +16,7 @@
   }
 </header>
 
-<form class="query wrap" (submit)="$event.preventDefault(); search()">
+<form class="query wrap" appReveal (submit)="$event.preventDefault(); search()">
   <div class="group">
     <span class="caption" id="q-satellite">Satellite</span>
     <label class="field">
@@ -74,7 +74,12 @@
     </label>
   </div>
 
-  <button type="submit" class="primary" [disabled]="resource.isLoading()">
+  <button type="submit" class="primary" [class.computing]="resource.isLoading()" [disabled]="resource.isLoading()">
+    <svg class="compute-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="32 18" />
+      <circle cx="19" cy="8" r="2.5" fill="currentColor" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
+    </svg>
     {{ resource.isLoading() ? 'Computing...' : 'Compute passes' }}
   </button>
 
@@ -120,7 +125,7 @@
     <section id="passes" class="hero" aria-labelledby="pass-title">
       <app-sky-panorama [pass]="pass" [observer]="loaded.observer" [threshold]="loaded.minElevationDeg" />
 
-      <div class="hero-text wrap">
+      <div class="hero-text wrap" appReveal>
         <div class="title-block">
           <span class="kicker">
             {{ loaded.satellite.name }} over
@@ -150,14 +155,14 @@
       </div>
     </section>
 
-    <div class="wrap section">
+    <div class="wrap section" appReveal>
       <app-pass-viewer [pass]="pass" [threshold]="loaded.minElevationDeg" [elementsAge]="ageAtRise(pass)">
         <app-globe [pass]="pass" [observer]="loaded.observer" [threshold]="loaded.minElevationDeg" />
       </app-pass-viewer>
     </div>
   }
 
-  <section id="table" class="wrap section table-section" aria-labelledby="table-title">
+  <section appReveal id="table" class="wrap section table-section" aria-labelledby="table-title">
     <div class="section-head">
       <h2 id="table-title">Pass list</h2>
       <span>Text equivalent of the globe and the sky chart</span>

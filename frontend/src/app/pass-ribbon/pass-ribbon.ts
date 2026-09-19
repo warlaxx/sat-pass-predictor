@@ -24,13 +24,14 @@ import { Night, groupIntoNights } from './nights';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="ribbon" role="group" aria-label="Passes by night">
-      @for (night of nights(); track night.key) {
+      @for (night of nights(); track night.key; let nightIndex = $index) {
         <div class="night" [class.current]="hasSelected(night)">
           <div class="bars">
             @for (pass of night.passes; track pass.aos.instant) {
               <button
                 type="button"
                 class="bar"
+                [style.animation-delay.ms]="nightIndex * 45 + $index * 25"
                 [style.height.%]="height(pass)"
                 [style.background]="colour(pass)"
                 [attr.aria-pressed]="pass.aos.instant === selected()"
@@ -98,10 +99,17 @@ import { Night, groupIntoNights } from './nights';
       min-height: 10px;
       min-width: 4px;
       padding: 0;
-      transition: filter 120ms ease;
+      transform-origin: center bottom;
+      animation: bar-enter 480ms var(--ease-out) both;
+      transition: filter var(--motion-fast), box-shadow var(--motion-fast);
     }
 
-    .bar:hover {
+    @keyframes bar-enter {
+      from { opacity: 0; transform: scaleY(0.25); }
+      to { opacity: 1; transform: scaleY(1); }
+    }
+
+    .bar:hover, .bar:focus-visible {
       filter: brightness(1.2);
     }
 
@@ -129,7 +137,10 @@ import { Night, groupIntoNights } from './nights';
       font-size: 11px;
     }
 
+    .date { transition: color var(--motion-fast), border-color var(--motion-fast); }
+
     .current .date {
+      border-top-color: var(--accent);
       color: var(--ink);
     }
 
