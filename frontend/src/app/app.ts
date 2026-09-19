@@ -7,6 +7,7 @@ import { TleBanner } from './tle-banner/tle-banner';
 import { PassRibbon } from './pass-ribbon/pass-ribbon';
 import { PassViewer } from './pass-viewer/pass-viewer';
 import { PassTable } from './pass-table/pass-table';
+import { Globe } from './globe/globe';
 
 const GEOLOCATION_ERRORS: Record<number, string> = {
   1: 'Permission refused. Type the position in instead.',
@@ -29,7 +30,7 @@ function round(value: number, decimals: number): number {
  */
 @Component({
   selector: 'app-root',
-  imports: [TleBanner, PassRibbon, PassTable, PassViewer],
+  imports: [TleBanner, PassRibbon, PassTable, PassViewer, Globe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './app.scss',
   templateUrl: './app.html',

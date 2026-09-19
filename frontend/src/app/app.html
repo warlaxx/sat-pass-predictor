@@ -103,6 +103,7 @@
       />
 
       @if (selectedPass(); as pass) {
+        <app-globe [pass]="pass" [observer]="loaded.observer" [threshold]="loaded.minElevationDeg" />
         <app-pass-viewer [pass]="pass" [threshold]="loaded.minElevationDeg" />
       }
 

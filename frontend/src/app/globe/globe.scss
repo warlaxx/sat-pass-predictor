@@ -1,0 +1,19 @@
+:host { display: block; margin-top: 1.8rem; }
+.viewer { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .8rem; padding: 1rem 1.2rem 0; }
+h2, p { margin: 0; }
+.label { margin-bottom: .3rem; }
+.hint { color: var(--ink-2); font-size: .8rem; padding: .5rem 1.2rem 1rem; }
+.stage { position: relative; background: var(--bg); }
+canvas { display: block; width: 100%; height: 420px; touch-action: none; cursor: grab; }
+canvas.dragging { cursor: grabbing; }
+.fallback { position: absolute; inset: 0; display: grid; place-items: center; margin: 0; padding: 1.5rem; text-align: center; font-size: .8rem; color: var(--ink-3); background: var(--bg); }
+.legend { display: flex; flex-wrap: wrap; gap: .5rem 1.3rem; padding-top: 0; }
+.legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dot.day { background: #eceff8; }
+.dot.night { background: #46527a; }
+.dot.footprint { background: var(--accent); }
+.dot.observer { background: var(--observer); }
+.dot.satellite { background: #ffffff; }
+@media (width < 640px) { canvas { height: 320px; } }

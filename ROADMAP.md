@@ -6,10 +6,9 @@ to make sense: if the project stops at milestone 4, what is online stays coheren
 
 Target: a presentable version by **end of November 2026**, mid-December with slack.
 
-> Milestones 0 to 7 are done. About 10 h remain, before the optional milestone, at roughly
-> 4 h/week — the globe and the showcase. Adding the 3D globe and splitting the
-> frontend more finely cost about ten hours more than the initial roadmap. That is an
-> accepted cost, not a slip: better written down than discovered in December.
+> Milestones 0 to 8 are done. About 4 h remain, before the optional milestone, at roughly
+> 4 h/week — the showcase pass (milestone 9): Docker Compose, the README's physical-model
+> section, and the demo GIF.
 >
 > The backend is finished, apart from milestone 10. Everything that remains is what the
 > project shows rather than what it computes.
@@ -346,25 +345,76 @@ paragraphs of description.
 
 ---
 
-## Milestone 8 — 3D globe (≈ 6 h · 2 weeks)
+## Milestone 8 — 3D globe (done)
 
 The view that answers "where is the ISS, and who else can see it". Complementary to the
 sky chart: one is in a topocentric frame, the other in a terrestrial frame.
 
-**Non-negotiable condition: the globe computes nothing.** It renders what the API returns.
-No propagation in the browser, no `satellite.js` — otherwise the question "which side does
-the authoritative computation?" ruins the whole project.
+**Non-negotiable condition, met: the globe computes nothing.** `GlobeComponent` reads
+`track`, `subPoint`, `observer` and `minElevationDeg` from the same `PassDto` the sky chart
+already has, and shares its `PassClock` — one instant drives both views. three.js (r128,
+UMD), a sphere, Natural Earth 110 m coastline, a graticule and a translucent halo; a
+`DirectionalLight` positioned at the subsolar point makes the day/night terminator fall out
+of ordinary Phong shading, with nothing hand-drawn for it. Observer marker, line of sight,
+and pointer-driven rotation (`OrbitControls` is not in the UMD bundle, so drag handling is
+about thirty lines of pointer events, same as the mockup).
 
-- three.js (r128, UMD). Sphere, Natural Earth 110 m coastline, graticule, halo.
-- Lighting by a `DirectionalLight` pointing along the Sun direction → the **day/night
-  terminator** appears on its own, and visually explains why the pass is visible.
-- Ground track from `subPoint`, split into a lit portion and a shadowed portion.
-- **Visibility circle** around the sub-satellite point:
-  `acos(Re/(Re+h)·cos(10°)) − 10°` ≈ 12.5°, about 1390 km.
-- Observer marker, line of sight during the pass, mouse rotation (pointer events —
-  `OrbitControls` is not in the UMD bundle).
-- **Mandatory fallback** if three.js fails to load: an explicit message in the frame, and
-  the rest of the page stays usable. That is precisely why the sky chart has no dependency.
+**Decision: the ground track is split by the *ground's* day/night line, not the
+satellite's.** The mockup's globe coloured the track by the ISS entering Earth's shadow —
+exactly the fact `illuminated` will carry from milestone 10, and exactly the fact this
+project refused to fake for the sky chart in milestone 7. Colouring the real globe the same
+way here would have quietly reintroduced it through the back door. What *is* available now,
+without propagating anything, is where the Sun already is: a low-precision subsolar-point
+formula (accurate to a fraction of a degree — plenty for a lighting direction, useless as
+an ephemeris) says whether a given `subPoint` sits on the day or the night side of Earth.
+That is a fact about the ground, not about the satellite, and it is what the two-colour
+track now shows. The legend says so explicitly, so the two "shadows" — this one and the
+sky chart's future one — are never read as the same fact.
+
+**Decision: no fabricated context track.** The mockup extends the ground track a couple of
+minutes past AOS and LOS for visual continuity, by slerping the same fabricated sky
+positions it uses everywhere else. There is no equivalent real data outside `[AOS, LOS]`,
+and inventing a plausible-looking extension would be exactly the kind of browser-side
+propagation milestone 8 exists to refuse. The real globe draws the track it was given and
+stops there.
+
+**Decision: the visibility circle uses the real altitude and the real threshold.** The
+mockup hard-codes `HSAT = 420` km and a 10° threshold because it has no API to ask.
+`visibilityRadiusDeg(altitudeKm, minElevationDeg)` takes both from `subPoint.altitudeKm`
+and the query's `minElevationDeg` at the current instant, so a different satellite or a
+different threshold draws a correctly sized circle instead of a plausible-looking one.
+
+**Decision: the Sun's position is fixed at culmination for the whole pass.** Recomputing it
+every frame would cost nothing, but a pass lasts a few minutes, over which the true subsolar
+point moves a fraction of a degree — not worth the churn for a terminator that is already a
+simplification. Consistent with the decision above: this view does not chase precision it
+has already declined to promise.
+
+**Decision: three.js is not bundled.** It is loaded from cdnjs at the same pinned `r128` as
+the mockup, the only external runtime dependency in the frontend. Bundling it would put
+roughly 600 kB used by one component into every visit, including those that never open the
+globe. `@types/three`, pinned to the matching `0.128.0`, is a devDependency only — type
+information at compile time, nothing in the shipped bundle — so the component stays fully
+typed against a library it never imports as a value. The **mandatory fallback** this
+implies is not a hypothetical: `THREE_LOADER` is an injectable indirection precisely so a
+test can exercise "three.js failed to load" without depending on cdnjs being reachable in
+CI, and the same code path is what a real network failure hits in production. The sky chart
+stays independent of all of this, which is exactly why a reader is never left with nothing.
+
+**Decision: the coastline is a static asset, not a bundled constant.** The mockup inlines
+Natural Earth 110 m coastline as a JavaScript literal because it is a single file with
+nowhere else to put it. Angular has somewhere else: `public/coastline-110m.json`, fetched
+once from the app's own origin. Unlike the Google Fonts case in milestone 6, this is not a
+third-party request — the file ships with the build — so there is no visitor-IP trade-off
+to weigh, only a smaller `main.js` and a JSON payload the browser can cache on its own.
+
+**Exit criterion met**: `globe-geometry.spec.ts` pins the subsolar-point formula, the
+destination-point spherical trigonometry, the visibility-radius formula against the
+documented ISS figure (≈ 12.5°), and the `subPoint` interpolation including across the
+antimeridian. `globe.spec.ts` pins the one behaviour worth a component test — the mandatory
+fallback — via the injectable loader. The WebGL rendering itself has no jsdom equivalent to
+assert against; it was checked by hand against the real local API, at desktop and mobile
+widths, including drag-to-rotate and play/pause staying in sync with the sky chart.
 
 ---
 

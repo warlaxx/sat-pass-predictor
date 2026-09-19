@@ -1,0 +1,32 @@
+<section class="viewer" aria-label="Global view of the selected pass">
+  <header>
+    <div><p class="label">Selected pass</p><h2>Where the satellite is</h2></div>
+  </header>
+  <p class="hint">
+    Ground track split by Earth's own day/night line — not whether the satellite itself is
+    sunlit, which stays unknown until milestone 10. Drag to rotate; the pass table above is
+    the text equivalent of this view.
+  </p>
+  <div class="stage">
+    <canvas #canvas aria-label="Globe: ground track, visibility circle and observer position for the selected pass"></canvas>
+    @if (!ready()) {
+      <p class="fallback" role="status">
+        @if (failed()) {
+          The 3D globe could not load three.js. The sky chart and the table remain usable —
+          that is precisely why they depend on no external library.
+        } @else {
+          Loading the globe&hellip;
+        }
+      </p>
+    }
+  </div>
+  @if (ready()) {
+    <p class="hint legend">
+      <span><i class="dot day"></i>ground track, day side</span>
+      <span><i class="dot night"></i>ground track, night side</span>
+      <span><i class="dot footprint"></i>visibility circle at {{ threshold() }}&deg;</span>
+      <span><i class="dot observer"></i>observer</span>
+      <span><i class="dot satellite"></i>satellite</span>
+    </p>
+  }
+</section>
