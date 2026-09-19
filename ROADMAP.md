@@ -11,12 +11,9 @@ different exercise: turning it into something that charges. The two are not the 
 project and the roadmap stops pretending they are — a portfolio piece is judged on what it
 demonstrates, a product on whether anyone pays. Phase 2 starts below milestone 10.
 
-> Milestones 0 to 8 are done. About 4 h remain, before the optional milestone, at roughly
-> 4 h/week — the showcase pass (milestone 9): Docker Compose, the README's physical-model
-> section, and the demo GIF.
->
-> The backend is finished, apart from milestone 10. Everything that remains is what the
-> project shows rather than what it computes.
+> Milestones 0 to 9 are done, except the demo GIF of milestone 9, which needs a screen
+> recording rather than code. What remains before phase 2 is milestone 10 — optional, and
+> the one that turns a tracker into a demonstration of the dynamics.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
 milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
@@ -423,13 +420,44 @@ widths, including drag-to-rotate and play/pause staying in sync with the sky cha
 
 ---
 
-## Milestone 9 — Showcase pass (≈ 4 h · 1 week)
+## Milestone 9 — Showcase pass (done, apart from the demo GIF)
 
-- Multi-stage Dockerfile + `docker-compose.yml` (`orekit-data` downloaded at build time,
+- Multi-stage Dockerfiles + `docker-compose.yml` (`orekit-data` downloaded at build time,
   not at runtime).
-- README: demo GIF, architecture diagram, CI badge.
+- README: architecture diagram, CI badge. **Remaining: the demo GIF** — a screen
+  recording of a pass being played on the sky chart and the globe together.
 - "Physical model" section: frames (TEME / GCRF / ITRF), time scales (UTC / TAI / UT1),
   limitations of SGP4, role of the EOP.
+
+**Decision: the API image is the one Render already builds.** `docker-compose.yml` reuses
+`backend/Dockerfile` as it is, rather than a local variant. One image means the thing a
+reader runs with one command is the thing that is deployed, and a Docker-only fix cannot
+drift away from production.
+
+**Decision: nginx stands in for Vercel, and does the same three things.** Static files,
+`/api` forwarded server-side (so the browser sees one origin and the API still needs no
+CORS), and the same long-lived caching for the fingerprinted bundle. The API address is
+an environment variable substituted at container start, not a rebuild.
+
+**Decision: the healthcheck speaks HTTP through bash, not curl.** The JRE runtime image
+has neither curl nor wget. Installing one would grow the image Render ships for a purely
+local convenience; bash's `/dev/tcp` can read `/actuator/health` in one line. The
+frontend waits for that check, so the first page load never races the JVM's start-up.
+
+**Decision: Vercel Web Analytics is answered with an empty 204 outside Vercel.** `main.ts`
+injects its script unconditionally; under nginx the request is a guaranteed 404 and a red
+line in every console. An empty response lets the script tag load nothing and sends
+nothing anywhere. (The location needs `^~`: without it, the `.js` caching rule, a regex,
+wins over the prefix and the 404 comes back — which is exactly what happened first.)
+
+**Decision: the root `.dockerignore` excludes `orekit-data/`.** The build context is the
+repository root (Render's constraint), and without it every build uploaded 100 MB of data
+to the daemon only for the image to download the same archive itself.
+
+**Exit criterion met**: `docker compose up --build` from a clean checkout builds both
+images, the API turns healthy, and through nginx the page loads, `/api/passes` returns
+real passes from a live CelesTrak TLE, an invalid query returns Problem Details, and the
+globe renders — checked by hand in a browser, with no failed request left in the console.
 
 ---
 

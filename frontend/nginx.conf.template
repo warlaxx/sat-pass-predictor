@@ -1,0 +1,41 @@
+# The Docker counterpart of vercel.json: static files, long-lived caching for the
+# fingerprinted bundle, and /api forwarded server-side so the browser only ever talks to
+# one origin - which is why the API needs no CORS configuration here either.
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+
+    location /api/ {
+        proxy_pass ${API_UPSTREAM};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # The first request after start-up fetches a TLE and propagates a whole window;
+        # nginx's 60 s default is enough, but say so rather than rely on it.
+        proxy_read_timeout 60s;
+    }
+
+    location ~* \.(?:js|css)$ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files $uri =404;
+    }
+
+    location /media/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # main.ts injects Vercel Web Analytics, whose script only exists on Vercel. Outside it
+    # the request is a guaranteed 404 and a red line in every visitor's console; an empty
+    # answer lets the script tag load nothing, and no analytics leave the machine.
+    # ^~ so that the .js rule below, a regex, does not take precedence over this prefix.
+    location ^~ /_vercel/ {
+        access_log off;
+        return 204;
+    }
+
+    # Single-page application: any unknown path is the app's, not a 404.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

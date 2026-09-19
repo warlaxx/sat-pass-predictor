@@ -1,0 +1,11 @@
+# Build context of backend/Dockerfile is the repository root (see render.yaml). Without
+# this file, every build would upload orekit-data (~100 MB, fetched inside the image
+# anyway), node_modules and the git history to the daemon before the first step runs.
+.git
+orekit-data/
+**/target/
+.venv*/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+**/.DS_Store
