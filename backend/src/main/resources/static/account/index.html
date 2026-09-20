@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>API account · Sat Pass Predictor</title>
+  <link rel="stylesheet" href="/account/dashboard.css">
+  <script src="/account/dashboard.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><a class="brand" href="https://sat-pass-predictor-nine.vercel.app">◉ Sat Pass Predictor</a><span>DEVELOPER ACCOUNT</span></header>
+    <h1>Your next integration<br>starts here.</h1>
+    <p class="intro">Predict satellite passes with a documented, independently validated API.</p>
+    <p id="message" role="status" aria-live="polite">Loading your account…</p>
+    <section id="signin" hidden>
+      <h2>One account. One API key.</h2>
+      <p>Sign in with GitHub to create your key and track your usage. No password to manage.</p>
+      <a class="button" href="/oauth2/authorization/github">Continue with GitHub ↗</a>
+    </section>
+    <section id="dashboard" hidden aria-label="API dashboard">
+      <div class="stats">
+        <div><h2>Plan</h2><p id="plan"></p></div>
+        <div><h2>Daily usage · UTC</h2><p id="usage"></p><progress id="quota" aria-label="Daily quota used" max="100" value="0"></progress><small id="reset"></small></div>
+        <div><h2>Rate limit</h2><p id="rate"></p></div>
+      </div>
+      <h2>Your API key</h2>
+      <p id="key-state"></p>
+      <div id="secret-box" hidden>
+        <label for="secret">Copy this key now. It is shown only once.</label>
+        <input id="secret" type="text" readonly autocomplete="off" spellcheck="false">
+        <button id="hide-key" type="button">Hide key</button>
+      </div>
+      <p>Regenerating immediately invalidates your previous key. Usage and quotas stay the same.</p>
+      <div class="actions"><button id="regenerate" type="button">Create API key</button><button id="revoke" class="secondary" type="button">Revoke key</button><button id="refresh" class="secondary" type="button">Refresh usage</button></div>
+      <details id="confirm"><summary>Confirm key revocation</summary><p>Your integrations will stop working until you generate and install a new key.</p><button id="confirm-revoke" type="button">Revoke this key now</button></details>
+      <h2>Make your first call</h2>
+      <pre><code id="example"></code></pre>
+      <p><a href="/docs">Explore the API reference ↗</a></p>
+      <button id="logout" class="secondary" type="button">Sign out</button>
+    </section>
+    <footer>Orbital predictions, with their limits made visible. <a href="https://sat-pass-predictor-nine.vercel.app">Try the public demo ↗</a></footer>
+  </main>
+</body>
+</html>

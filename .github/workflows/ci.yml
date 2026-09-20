@@ -98,3 +98,6 @@ jobs:
       - name: Run frontend tests
         working-directory: frontend
         run: npm test -- --watch=false
+
+      - name: Verify account dashboard interactions
+        run: node --test scripts/account-dashboard.test.mjs

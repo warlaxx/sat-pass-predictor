@@ -176,7 +176,8 @@ A Blueprint setting does not automatically update a manually created service.
 Failed sources remain available but move to the end for ten minutes. When nothing has
 been fetched, a failed attempt is remembered for 15 seconds to avoid serial network calls
 from queued requests. Existing snapshots retain the five-minute retry interval and the
-seven-day age limit. This store is still in memory: a restart loses it, and no timeout
+seven-day age limit. Without database activation this store is still in memory: a restart loses it. With
+`api-access.enabled`, snapshots survive restarts as described below. No timeout
 setting guarantees availability during an upstream outage.
 
 ## Not paying for a call twice
@@ -397,6 +398,17 @@ watched continuously, and the Java test takes care of that. The script is to be 
 hand whenever the reference changes — which is exactly what the comment at the top of the
 JSON file asks for.
 
+## Self-serve API account
+
+The backend's `/account/` page lets a GitHub user create, regenerate and revoke their
+API key and inspect UTC daily usage. Self-serve preview limits are 100 calls/day and
+10/minute. Rotation preserves quota usage; secrets are shown only once.
+
+Accounts are opt-in and require PostgreSQL plus a GitHub OAuth App. Setup, security
+boundaries and the production release gate: [self-serve accounts](docs/self-serve-accounts.md).
+The new account page is implemented and locally tested; real GitHub authentication and
+production activation still need verification. Billing is not implemented.
+
 ## Roadmap
 
 Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
@@ -416,6 +428,9 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] Multi-satellite discovery and next favourable window
 - [x] Optional PostgreSQL with hashed API keys, quotas and persistent usage counters (milestone 11)
 - [x] Answer cache invalidated by the TLE, persistent elements, measured cost per call (milestone 12)
+- [x] GitHub self-serve accounts and key dashboard (milestone 13; production activation pending)
+- [ ] Real production GitHub login, issuance and revocation smoke test
+- [ ] Billing, commercial readiness and first customers (milestones 14–17)
 
 Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
 (open it in a browser).

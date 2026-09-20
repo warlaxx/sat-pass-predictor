@@ -55,6 +55,7 @@ class AccessServicePostgresTest {
                 new TransactionTemplate(new DataSourceTransactionManager(source)), clock);
     }
     @BeforeEach void reset() {
+        jdbc.update("DELETE FROM customer_accounts");
         jdbc.update("DELETE FROM api_usage");
         jdbc.update("DELETE FROM api_keys WHERE plan != 'demo'");
         jdbc.update("UPDATE api_keys SET minute_start = NULL, minute_used = 0, active = true, daily_limit = 200, minute_limit = 20");
@@ -135,4 +136,73 @@ class AccessServicePostgresTest {
         service.admit(key.secret(), false);
         assertThat(service.usage(key.id()).getFirst().get("requests")).isEqualTo(1L);
     }
+    AccountService accounts() {
+        return new AccountService(jdbc, new TransactionTemplate(new DataSourceTransactionManager(source)), service, clock);
+    }
+
+    @Test void selfServeRotationKeepsQuotaAndInvalidatesOldSecret() {
+        var accounts = accounts();
+        accounts.register("123");
+        accounts.register("123");
+        assertThat(accounts.dashboard("123").keyId()).isNull();
+        var first = accounts.regenerate("123");
+        service.admit(first.secret(), false);
+        var next = accounts.regenerate("123");
+        assertThat(next.id()).isEqualTo(first.id());
+        assertThat(next.secret()).isNotEqualTo(first.secret());
+        assertThatThrownBy(() -> service.admit(first.secret(), false)).isInstanceOf(AccessFailure.class);
+        assertThat(accounts.dashboard("123").usedToday()).isEqualTo(1);
+        assertThat(accounts.dashboard("123").minuteLimit()).isEqualTo(10);
+        jdbc.update("UPDATE api_keys SET daily_limit = 1 WHERE id = ?", first.id());
+        assertThatThrownBy(() -> service.admit(next.secret(), false))
+                .isInstanceOfSatisfying(AccessFailure.class, e -> assertThat(e.status()).isEqualTo(429));
+        accounts.revoke("123");
+        assertThat(accounts.dashboard("123").active()).isFalse();
+        assertThatThrownBy(() -> service.admit(next.secret(), false))
+                .isInstanceOfSatisfying(AccessFailure.class, e -> assertThat(e.status()).isEqualTo(401));
+        accounts.regenerate("123");
+        assertThat(accounts.dashboard("123").dailyLimit()).isEqualTo(1);
+        assertThat(accounts.dashboard("123").usedToday()).isEqualTo(1);
+        now.set(Instant.parse("2026-09-20T00:00:00Z"));
+        assertThat(accounts.dashboard("123").usedToday()).isZero();
+    }
+
+    @Test void selfServeOwnersCannotChangeAnotherAccountsKey() {
+        var accounts = accounts();
+        accounts.register("123"); accounts.register("456");
+        var first = accounts.regenerate("123");
+        var second = accounts.regenerate("456");
+        accounts.revoke("123");
+        accounts.regenerate("123");
+        service.admit(second.secret(), false);
+        assertThat(accounts.dashboard("456").keyId()).isEqualTo(second.id());
+        assertThat(accounts.dashboard("456").usedToday()).isEqualTo(1);
+        assertThat(first.id()).isNotEqualTo(second.id());
+        assertThatThrownBy(() -> accounts.regenerate("789")).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> accounts.register("a-login-name")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test void concurrentSelfServeCreationProducesOnlyOneKeyAndNoQuotaReset() throws Exception {
+        accounts().register("123");
+        var start = new CountDownLatch(1);
+        try (var workers = Executors.newFixedThreadPool(8)) {
+            var jobs = new java.util.ArrayList<java.util.concurrent.Future<AccessService.IssuedKey>>();
+            for (int i = 0; i < 8; i++) jobs.add(workers.submit(() -> { start.await(); return accounts().regenerate("123"); }));
+            start.countDown();
+            var ids = new java.util.HashSet<UUID>();
+            int valid = 0;
+            var issued = new java.util.ArrayList<AccessService.IssuedKey>();
+            for (var job : jobs) issued.add(job.get(15, java.util.concurrent.TimeUnit.SECONDS));
+            for (var key : issued) {
+                ids.add(key.id());
+                try { service.admit(key.secret(), false); valid++; }
+                catch (AccessFailure e) { assertThat(e.status()).isEqualTo(401); }
+            }
+            assertThat(ids).hasSize(1);
+            assertThat(valid).isEqualTo(1);
+            assertThat(accounts().dashboard("123").usedToday()).isEqualTo(1);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM api_keys WHERE owner = 'github:123'", Long.class)).isEqualTo(1);
+        }
+    }
+
 }

@@ -24,6 +24,8 @@
   </properties>
 
   <dependencies>
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-oauth2-client</artifactId></dependency>
+    <dependency><groupId>org.springframework.security</groupId><artifactId>spring-security-test</artifactId><scope>test</scope></dependency>
     <!-- Explicitly configured only when api-access.enabled; no implicit local database. -->
     <dependency><groupId>org.springframework</groupId><artifactId>spring-jdbc</artifactId></dependency>
     <dependency><groupId>com.zaxxer</groupId><artifactId>HikariCP</artifactId></dependency>
