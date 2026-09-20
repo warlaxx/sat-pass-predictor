@@ -1,5 +1,7 @@
-# Orekit data: downloaded by scripts/fetch-orekit-data.sh, never committed.
-orekit-data/
+# Orekit data: downloaded by scripts/fetch-orekit-data.sh, never committed. No trailing
+# slash, so a symlink counts too: in a git worktree the data set is not re-downloaded,
+# it is linked to the one the main checkout already holds.
+orekit-data
 
 # Java / Maven
 target/

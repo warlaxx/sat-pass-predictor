@@ -11,10 +11,11 @@ different exercise: turning it into something that charges. The two are not the 
 project and the roadmap stops pretending they are — a portfolio piece is judged on what it
 demonstrates, a product on whether anyone pays. Phase 2 starts below milestone 10.
 
-> Milestones 0 to 9 are done, except the demo GIF of milestone 9, which needs a screen
-> recording rather than code. What remains before phase 2 is milestone 10 — optional, and
-> the one that turns a tracker into a demonstration of the dynamics. Its optical-visibility
-> step and multi-satellite discovery are now implemented; the demo GIF remains.
+> Milestones 0 to 10 are done, except the demo GIF of milestone 9, which needs a screen
+> recording rather than code. Phase 2 has started: milestone 11 (keys, quotas, persistent
+> counters) and milestone 12 (answer cache, persistent TLEs, measured cost) are
+> implemented, both behind the same opt-in database. Next is milestone 13, self-serve
+> signup — the first one whose absence costs an hour of the weekly budget per customer.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
 milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
@@ -575,23 +576,68 @@ integration. Cheap now, expensive after the first customer.
 
 ---
 
-## Milestone 12 — Serve a call without paying for it twice (≈ 6 h · 1–2 weeks)
+## Milestone 12 — Serve a call without paying for it twice (done)
 
 Margin is decided before revenue. Every `/api/passes` call today propagates an orbit over
 the whole window and samples it at 10 s. That is milliseconds of CPU, but it is *linear*:
 a thousand calls for the same satellite over the same city on the same day do the same work
 a thousand times, on a container sized for a free plan.
 
-- **Cache the answer**, keyed on (satellite, rounded site, window, minimum elevation), with
-  a TTL bounded by the TLE epoch — a new TLE invalidates it, which is the physically correct
-  rule rather than an arbitrary duration.
-- **Cache the TLE itself** in PostgreSQL (milestone 10's line item, now with a real reason):
-  it also removes the dependency on CelesTrak answering during a customer's request.
-- Measure before and after: cost per thousand calls, p95 latency. A price cannot be set on a
-  cost that has never been measured.
+- [x] **Cache the answer**, keyed on satellite, observer, window and minimum elevation,
+  invalidated by the elements rather than by a clock: the entry records the two TLE lines
+  it was computed from, and a republished TLE is a miss. That is the physically correct
+  rule — the elements are the only input that changes on its own. A maximum age
+  (`prediction-cache.max-age`, 5 min) sits on top of it, and it bounds something else
+  entirely: the window starts at the instant of the request, so an entry served later
+  describes a window that starts slightly in the past. The response has always carried
+  `computedAt`, so the answer stays self-describing rather than becoming wrong.
+- [x] **Cache the TLE itself** in PostgreSQL (`tle_snapshots`, one row per satellite).
+  A stored row is treated exactly like elements held in memory, which is what decides
+  what it saves: within `tle.refresh-after` it is served as it is and the first call
+  after a restart owes nothing to CelesTrak; past it, a refresh is attempted at once and
+  the row only protects against that refresh failing — by serving its own elements with
+  their real age, up to the seven-day limit past which nothing is served. The row is
+  deleted only when the catalogue says the object is gone. Follows `api-access.enabled`;
+  the default demo is unchanged.
+- [x] Measured before and after, with `scripts/measure-passes.sh` and the two meters it
+  reads (`satpass.predictions`, `satpass.prediction.duration`).
 
-The honest framing: this milestone produces no visible feature. It is what makes a free tier
-possible without the free tier being the thing that kills the service.
+**The measurement.** 200 sequential calls, ISS over Lyon, 48 h window, JDK 25 on an
+Apple M-series laptop — an order of magnitude, not a datacenter benchmark:
+
+| Workload | p50 | p95 | Propagation per 1 000 calls |
+|---|---|---|---|
+| Same request repeated, cache off | 112.7 ms | 121.9 ms | 112 s |
+| Same request repeated, cache on | 2.4 ms | 3.3 ms | ~0 s |
+| 200 distinct observers, cache on | 113.4 ms | 120.8 ms | 112 s |
+
+The last column is elapsed time inside the propagation and **not** CPU time: a Micrometer
+timer measures a duration, and nothing here samples a thread's CPU clock. On a
+single-threaded run the two are close, and the distinction matters the moment the number
+is used to size a container.
+
+Two numbers matter here and the third is the honest one. A repeated call costs about
+**a fiftieth** of what it cost, and 112 s of propagation per thousand calls becomes
+nothing. The
+third row is the workload the cache cannot help — every request genuinely different — and
+it shows the cache costs nothing measurable when it never hits: 113.4 ms against 112.7 ms
+is inside the noise of the first row. That is the result to keep: the free tier is now
+bounded by *distinct* requests, not by requests.
+
+**What was deliberately not done.** The observer is not rounded onto a grid. Serving one
+caller a computation made for another position means either echoing coordinates they did
+not send, or echoing theirs while the passes belong elsewhere — and this API publishes the
+observer it computed for. A 0.01° grid is about 1.1 km, some 0.16° of elevation at
+low-orbit range, larger than the refraction already declined; the workload that actually
+repeats, one integration polling the same coordinates, hits with exact keys anyway.
+
+**What this does not change.** Quota accounting is a `preHandle` interceptor, so a cached
+answer still counts against the key's daily and minute limits: a customer pays for the
+call, not for the CPU. `Cache-Control: no-store` still goes out, because a shared proxy
+cache serving one customer's answer to another is a different thing entirely from this
+process reusing its own work. And the honest framing of the whole milestone: it produces
+no visible feature. It is what makes a free tier possible without the free tier being the
+thing that kills the service.
 
 ---
 

@@ -25,10 +25,28 @@ CORS origins are comma-separated exact origins without trailing slashes. Empty d
 cross-origin browser calls; server clients do not need CORS. Only `/v1/**` allows
 configured origins. CORS is not authentication. Keep private keys on client servers.
 
+Enabling the database also turns on the persistent TLE store (`tle_snapshots`, added by
+migration V2): one row per satellite, written on every successful fetch, read when a key
+is not in memory. It follows `API_ACCESS_ENABLED` and has no switch of its own — a state
+where keys are stored but elements are not would be one more thing to reason about during
+an incident, for no benefit. Its effect depends on the row's age, because a stored
+snapshot is treated exactly like one held in memory. Within `tle.refresh-after` (2 h) it
+is served as it is, and the first call after a restart does not wait on CelesTrak. Older
+than that, a refresh is attempted immediately, and the row's value is then to survive
+that refresh failing: its own elements are served with their real age, until
+`tle.max-age` (7 d), past which the request fails as it always has. A row is never a way
+to serve elements the age rules would otherwise refuse. A database that is down costs
+nothing here: reads and writes are swallowed and logged, and the store falls back to the
+in-memory behaviour of the default deployment.
+
 Customers use the backend HTTPS hostname directly, currently
 `https://sat-pass-predictor-api.onrender.com/v1/passes`. A future `api.<domain>` should
 point to the same backend; no frontend rewrite is required. The demo keeps `/api/passes`.
 Do not cache these responses at a proxy: the backend sends `Cache-Control: no-store`.
+That is about *shared* caches, and it is unrelated to the backend reusing its own
+computation (see the README). A cached answer still passes through admission: quota
+accounting is a `preHandle` interceptor, so it counts against the key's daily and minute
+limits exactly like a computed one. A customer pays for the call, not for the CPU.
 
 ## Operator commands
 
@@ -85,4 +103,11 @@ Normal `./mvnw verify` verifies the database-free deployment. Set `TEST_DATABASE
 Use a test database where the user can create schemas. Tests create a random schema
 and drop only that schema afterwards. CI provides PostgreSQL 16 and runs these tests
 on every pull request. They cover hashing, revocation, shared quotas, UTC resets,
-persistence across service instances and concurrent admission.
+persistence across service instances and concurrent admission, plus the TLE store's
+round trip, its upsert guard against an older fetch overwriting a newer one, deletion,
+and a corrupt row being ignored rather than propagated.
+
+Cost per call is measured, not assumed: `scripts/measure-passes.sh` drives a running
+instance and reports p50/p95 alongside the server's own propagation timer. Run it once
+with `PREDICTION_CACHE_ENABLED=false` for the baseline. It targets `/api/passes`, the
+anonymous demo identity, so a measurement run does not consume a customer's quota.

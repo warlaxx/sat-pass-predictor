@@ -46,6 +46,15 @@ import org.springframework.stereotype.Component;
  * <em>attempt</em>, not just its last success, and no new attempt is made before
  * {@code tle.retry-after} has elapsed.
  *
+ * <h2>Surviving a restart</h2>
+ * The in-memory store is empty when the process starts, so the first request for a
+ * satellite has always been a network call — served at CelesTrak's availability rather
+ * than this service's. A {@link TleSnapshotRepository} removes that, when one is
+ * configured: a cold key is loaded from the database first and then treated exactly like
+ * an entry that was already held, refresh rules included. Nothing else changes, which is
+ * the point — persistence is a source of the <em>first</em> snapshot, not a second set of
+ * rules about when elements are usable.
+ *
  * <h2>One network call per satellite</h2>
  * Refreshing happens inside {@code asMap().compute(...)}, which Caffeine makes atomic per
  * key: ten concurrent requests for the ISS produce one call to CelesTrak, not ten.
@@ -60,12 +69,17 @@ public class TleStore {
 
     private final TleClient client;
     private final TleProperties properties;
+    private final TleSnapshotRepository repository;
     private final Clock clock;
     private final Cache<Integer, Entry> store;
 
-    public TleStore(TleClient client, TleProperties properties, Clock clock) {
+    public TleStore(TleClient client,
+                    TleProperties properties,
+                    TleSnapshotRepository repository,
+                    Clock clock) {
         this.client = client;
         this.properties = properties;
+        this.repository = repository;
         this.clock = clock;
         this.store = Caffeine.newBuilder()
                 .maximumSize(properties.maximumSize())
@@ -91,15 +105,24 @@ public class TleStore {
      * @throws TleTooOldException      the only available TLE is too old to be of use.
      */
     public TleSnapshot get(int noradId) {
-        Entry entry = store.asMap().compute(noradId, (id, existing) -> {
+        Entry entry = store.asMap().compute(noradId, (id, cold) -> {
             Instant now = clock.instant();
+            // A key absent from memory may still be known to the database. Loading it here
+            // rather than in a warm-up keeps one code path: what comes back is an ordinary
+            // entry, and the refresh test below decides its fate like any other.
+            Entry existing = cold != null ? cold : stored(id);
             if (existing != null && !shouldAttemptRefresh(existing, now)) {
                 return existing;
             }
             try {
-                return new Entry(client.fetch(id), now, null);
+                TleSnapshot fetched = client.fetch(id);
+                repository.save(fetched);
+                return new Entry(fetched, now, null);
             } catch (TleNotFoundException e) {
-                return null; // Caffeine removes the entry: the satellite left the catalogue.
+                // Caffeine removes the entry, and the row goes with it: an object that
+                // left the catalogue must not come back at the next restart.
+                repository.remove(id);
+                return null;
             } catch (TleUnavailableException e) {
                 if (existing == null || existing.snapshot() == null) {
                     log.warn("Initial TLE fetch failed for {}: {}", id, e.getMessage(), e);
@@ -121,6 +144,19 @@ public class TleStore {
             throw new TleUnavailableException("No orbital elements fetched yet; retry in 15 seconds", entry.failure());
         }
         return checkAge(entry.snapshot());
+    }
+
+    /**
+     * The persisted snapshot as an entry, or {@code null} when nothing is stored.
+     *
+     * <p>{@code lastAttempt} is the fetch date and not the current instant: loading a row
+     * is not an attempt to renew it. Elements stored three days ago are therefore due for
+     * a refresh the moment they are read, which is the correct behaviour after a restart.
+     */
+    private Entry stored(int noradId) {
+        return repository.find(noradId)
+                .map(snapshot -> new Entry(snapshot, snapshot.fetchedAt(), null))
+                .orElse(null);
     }
 
     /**

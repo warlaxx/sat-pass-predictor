@@ -9,6 +9,7 @@ import dev.abdallah.satpass.TleFixtures;
 import dev.abdallah.satpass.domain.ObserverLocation;
 import dev.abdallah.satpass.domain.TleSnapshot;
 import dev.abdallah.satpass.tle.TleStore;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -38,7 +39,18 @@ class PassQueryServiceTest {
     private PassQueryService serviceAt(Instant now, TleSnapshot snapshot) {
         TleStore store = mock(TleStore.class);
         when(store.get(25544)).thenReturn(snapshot);
-        return new PassQueryService(store, predictionService, Clock.fixed(now, ZoneOffset.UTC));
+        return new PassQueryService(store, predictionService, uncachedPredictions(),
+                Clock.fixed(now, ZoneOffset.UTC));
+    }
+
+    /**
+     * A cache that never serves an answer twice, so that every assertion below is about
+     * the computation and not about what a previous test left behind.
+     */
+    private static PredictionCache uncachedPredictions() {
+        return new PredictionCache(
+                new PredictionCacheProperties(false, Duration.ofMinutes(5), 10),
+                new SimpleMeterRegistry());
     }
 
     private static TleSnapshot referenceSnapshot(Instant fetchedAt) {
