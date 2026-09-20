@@ -1,6 +1,8 @@
 package dev.abdallah.satpass.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +21,9 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI satPassOpenApi() {
-        return new OpenAPI().info(new Info()
+        return new OpenAPI().components(new Components().addSecuritySchemes("apiKey",
+                new SecurityScheme().type(SecurityScheme.Type.APIKEY).in(SecurityScheme.In.HEADER).name("X-API-Key")))
+                .info(new Info()
                 .title("sat-pass-predictor")
                 .version("0.0.1")
                 .description("""

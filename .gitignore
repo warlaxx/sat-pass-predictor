@@ -23,3 +23,7 @@ npm-debug.log*
 *.iml
 .vscode/
 .DS_Store
+.neon
+.env.local
+
+.env.*.local

@@ -23,8 +23,10 @@ services:
     healthCheckPath: /actuator/health
     autoDeploy: true
     envVars:
-      # The frontend never calls this host directly - Vercel proxies /api server-side -
-      # so no CORS configuration is needed on this side. Keep it that way.
+      # The demo uses the Vercel /api proxy. Clients call /v1 directly.
+      # Enable API_ACCESS_ENABLED only after configuring API_DATABASE_URL,
+      # API_DATABASE_USERNAME and API_DATABASE_PASSWORD (see docs/api-access.md).
+      # API_ALLOWED_ORIGINS explicitly allows browser clients; empty by default.
       #
       # No -Dtle.base-url override here any more. It used to carry the only working TLE
       # endpoint, which made a deployment setting load-bearing for the application to

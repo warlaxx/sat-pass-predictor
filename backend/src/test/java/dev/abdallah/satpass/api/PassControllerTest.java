@@ -33,6 +33,8 @@ import org.springframework.test.web.servlet.MockMvc;
  * tests slow and would fail them for reasons that are none of their business — the
  * correctness of the computation is established by the milestone 2 reference.
  */
+@org.springframework.context.annotation.Import({dev.abdallah.satpass.config.TimeConfig.class,
+        dev.abdallah.satpass.access.AccessWebConfiguration.class})
 @WebMvcTest(PassController.class)
 class PassControllerTest {
 

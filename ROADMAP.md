@@ -535,7 +535,7 @@ that no hour is spent on something a later decision would throw away.
 
 ---
 
-## Milestone 11 — Know who is calling (≈ 8 h · 2 weeks)
+## Milestone 11 — Know who is calling (implemented; deployment opt-in)
 
 Nothing can be sold that cannot be counted and cut off. This is the first milestone, before
 any payment page, because every one after it depends on identity existing.
@@ -553,7 +553,19 @@ any payment page, because every one after it depends on identity existing.
 owners and usage counters are a real need, "caching a TLE" was not. One database, arriving
 once, for a reason that can be stated in a sentence.
 
-**Decision to make here, not later: where the API lives.** Today the frontend reaches
+**Implemented:** `/v1/passes` requires `X-API-Key`; `/api/passes` keeps the anonymous
+demo on a shared identity (200/day, 20/minute). PostgreSQL admission locks serialize
+checks and increments across instances. Keys are issued/revoked through an operator CLI;
+only SHA-256 hashes are stored. UTC daily counters and fixed minute windows persist.
+Admission counts even if subsequent validation or prediction fails; rejected admission
+does not count. See [the activation runbook](docs/api-access.md). Database access is
+explicitly disabled by default to preserve the existing deployment.
+
+**API hosting decision:** clients call the backend directly at `/v1/passes`, with an
+exact CORS allowlist. The existing Render hostname is usable now; configuring a custom
+`api.<domain>` and provisioning PostgreSQL remain deployment actions.
+
+**Original hosting rationale:** Today the frontend reaches
 `/api/*` through Vercel, server-side, which is why `render.yaml` says CORS is unnecessary
 and to keep it that way. A customer calls the backend *directly*, from their server or
 their browser. That comment stops being true the day the first key is issued: the API needs

@@ -17,6 +17,22 @@ jobs:
     # The suite runs in about a minute. Anything past this is a hang, and a hung job
     # burns six hours of runner time by default.
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: satpass
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_DB: satpass_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U satpass -d satpass_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/satpass_test
+      TEST_DATABASE_USERNAME: satpass
+      TEST_DATABASE_PASSWORD: test-only
     steps:
       - uses: actions/checkout@v4
 
