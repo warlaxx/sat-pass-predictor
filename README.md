@@ -51,8 +51,9 @@ flowchart LR
 ```
 
 The browser computes nothing: every position the sky chart and the globe draw comes from
-the API's `track`, sampled by Orekit. The API holds no database — TLEs live in memory with
-their age exposed, and a restart simply fetches them again.
+the API's `track`, sampled by Orekit. TLEs live in memory with their age exposed, and a restart fetches them again.
+Optional PostgreSQL stores API keys and usage counters: see [API access](docs/api-access.md)
+for activation, quotas and operator commands. The default demo still starts without a database.
 
 ## Prerequisites
 
@@ -368,7 +369,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [ ] Demo GIF
 - [x] Potential naked-eye visibility (sunlight + observer darkness)
 - [x] Multi-satellite discovery and next favourable window
-- [ ] PostgreSQL with API keys and usage counters (milestone 11)
+- [x] Optional PostgreSQL with hashed API keys, quotas and persistent usage counters (milestone 11)
 
 Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
 (open it in a browser).

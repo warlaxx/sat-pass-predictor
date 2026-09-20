@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * The only entry point of the API.
+ * The demo entry point and shared implementation of the versioned API.
  *
  * <p>Every bound is set here, in annotations, and not further down in the computation. A
  * latitude of 300 degrees or a ten-year window must be refused before a propagation
@@ -58,10 +58,14 @@ public class PassController {
             @ApiResponse(responseCode = "200", description = "Passes found (the list may be empty)"),
             @ApiResponse(responseCode = "400", description = "Missing or out-of-bounds parameter",
                     content = @io.swagger.v3.oas.annotations.media.Content),
+            @ApiResponse(responseCode = "401", description = "Missing, invalid or revoked API key",
+                    content = @io.swagger.v3.oas.annotations.media.Content),
+            @ApiResponse(responseCode = "429", description = "Daily quota or minute rate limit reached; Retry-After and resetsAt indicate the reset",
+                    content = @io.swagger.v3.oas.annotations.media.Content),
             @ApiResponse(responseCode = "404", description = "NORAD number absent from the CelesTrak catalogue",
                     content = @io.swagger.v3.oas.annotations.media.Content),
             @ApiResponse(responseCode = "503",
-                    description = "No usable TLE: CelesTrak unreachable with nothing in memory,"
+                    description = "API accounting unavailable or no usable TLE: CelesTrak unreachable with nothing in memory,"
                             + " or elements too old. The type field tells the two apart.",
                     content = @io.swagger.v3.oas.annotations.media.Content)})
     public PassesResponse passes(

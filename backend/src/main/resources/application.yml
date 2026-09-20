@@ -81,3 +81,12 @@ management:
     web:
       exposure:
         include: health,info
+
+# Explicit opt-in: legacy demo runs without a database, /v1 fails closed until enabled.
+api-access:
+  enabled: ${API_ACCESS_ENABLED:false}
+  database-url: ${API_DATABASE_URL:}
+  database-username: ${API_DATABASE_USERNAME:}
+  database-password: ${API_DATABASE_PASSWORD:}
+  # Comma-separated exact origins; empty means no browser cross-origin access.
+  allowed-origins: ${API_ALLOWED_ORIGINS:}
