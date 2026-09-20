@@ -51,9 +51,12 @@ flowchart LR
 ```
 
 The browser computes nothing: every position the sky chart and the globe draw comes from
-the API's `track`, sampled by Orekit. TLEs live in memory with their age exposed, and a restart fetches them again.
-Optional PostgreSQL stores API keys and usage counters: see [API access](docs/api-access.md)
-for activation, quotas and operator commands. The default demo still starts without a database.
+the API's `track`, sampled by Orekit. TLEs live in memory with their age exposed, and an
+identical request is answered from the last computation rather than propagated again —
+see [Not paying for a call twice](#not-paying-for-a-call-twice). Optional PostgreSQL
+stores API keys, usage counters and the TLEs themselves: see
+[API access](docs/api-access.md) for activation, quotas and operator commands. The default
+demo still starts without a database, and a restart then fetches the elements again.
 
 ## Prerequisites
 
@@ -175,6 +178,42 @@ been fetched, a failed attempt is remembered for 15 seconds to avoid serial netw
 from queued requests. Existing snapshots retain the five-minute retry interval and the
 seven-day age limit. This store is still in memory: a restart loses it, and no timeout
 setting guarantees availability during an upstream outage.
+
+## Not paying for a call twice
+
+Propagating a 48 h window and sampling it at 10 s costs about 110 ms of CPU. That is
+cheap and it is *linear*: a thousand identical calls do the work a thousand times. Two
+things stop that, and neither changes what the API answers.
+
+**An answer is reused when the elements have not changed.** The cache is keyed on the
+satellite, the observer, the window and the minimum elevation, and it is invalidated by
+the TLE it was computed from rather than by a clock — a republished TLE is a miss, which
+is the physically correct rule since the elements are the only input that changes on its
+own. A maximum age (`prediction-cache.max-age`, five minutes) bounds something else: the
+window starts at the instant of the request, so an entry served later describes a window
+that starts slightly in the past, and the `computedAt` in the response is the one of the
+computation it comes from. The observer is **not** rounded onto a grid: serving a
+computation made for a nearby point would mean publishing an observer that was not the
+one computed for. `PREDICTION_CACHE_ENABLED=false` turns the whole thing off.
+
+**The elements themselves survive a restart**, when a database is configured: one row per
+satellite in `tle_snapshots`, so the first call after a deploy is answered at this
+service's availability rather than CelesTrak's. Nothing expires there either — the
+seven-day limit is applied when the elements are served, not when they are stored — and
+the row is deleted only when the catalogue no longer has the object.
+
+Measured rather than asserted, with `scripts/measure-passes.sh` against a local instance
+(200 sequential calls, ISS over Lyon, 48 h, JDK 25 on an Apple M-series laptop):
+
+| Workload | p50 | p95 | Propagation per 1 000 calls |
+|---|---|---|---|
+| Same request repeated, cache off | 112.7 ms | 121.9 ms | 112 s of CPU |
+| Same request repeated, cache on | 2.4 ms | 3.3 ms | ~0 s |
+| 200 distinct observers, cache on | 113.4 ms | 120.8 ms | 112 s of CPU |
+
+The third row is the point of the table: on a workload the cache cannot help, it costs
+nothing measurable. The two meters behind those numbers, `satpass.predictions` and
+`satpass.prediction.duration`, are on `/actuator/metrics`.
 
 ## Sky chart
 
@@ -370,6 +409,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] Potential naked-eye visibility (sunlight + observer darkness)
 - [x] Multi-satellite discovery and next favourable window
 - [x] Optional PostgreSQL with hashed API keys, quotas and persistent usage counters (milestone 11)
+- [x] Answer cache invalidated by the TLE, persistent elements, measured cost per call (milestone 12)
 
 Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
 (open it in a browser).

@@ -47,7 +47,7 @@ class TleStoreTest {
     void setUp() {
         client = mock(TleClient.class);
         clock = new MutableClock(START);
-        store = new TleStore(client, properties(), clock);
+        store = new TleStore(client, properties(), TleSnapshotRepository.NONE, clock);
     }
 
     private static TleProperties properties() {

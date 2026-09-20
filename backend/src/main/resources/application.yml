@@ -76,11 +76,30 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+# Reuse of an already computed answer. Off by default in no environment: the cost it
+# removes is the whole of milestone 12, and a deployment that wants the raw propagation
+# back (a measurement, a bisection) sets enabled to false rather than editing code.
+prediction-cache:
+  enabled: ${PREDICTION_CACHE_ENABLED:true}
+  # Not a validity period for the physics - new elements evict the entry whatever its
+  # age. This bounds how far in the past the window start, and the computedAt the
+  # response carries, is allowed to be.
+  max-age: ${PREDICTION_CACHE_MAX_AGE:5m}
+  # Each entry holds the sampled track of every pass in its window; a 168 h window over a
+  # low orbit is on the order of a hundred kilobytes, so this bounds memory, not entries.
+  maximum-size: ${PREDICTION_CACHE_MAXIMUM_SIZE:500}
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        # metrics is here for milestone 12: the cache hit ratio and the p95 of the
+        # propagation are the two numbers a price is set from, and neither can be read
+        # from a log. No key, quota or customer data goes through it - but request
+        # counts and JVM internals do, so a deployment that would rather not publish
+        # its traffic sets MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE back to
+        # "health,info" and measures from a shell on the instance.
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health,info,metrics}
 
 # Explicit opt-in: legacy demo runs without a database, /v1 fails closed until enabled.
 api-access:
