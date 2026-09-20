@@ -9,7 +9,10 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -98,6 +101,63 @@ class PredictionCacheTest {
         // Seven distinct requests, and exactly one repetition among the eight calls.
         assertThat(computations).hasValue(7);
         assertThat(count("hit")).isOne();
+    }
+
+    @Test
+    void twoWindowsThatDifferByANanosecondAreTwoRequests() {
+        TleSnapshot elements = snapshot(TleFixtures.issLine1(), TleFixtures.issLine2());
+
+        ask(LYON, Duration.ofSeconds(1), 10.0, elements, NOW);
+        ask(LYON, Duration.ofSeconds(1).plusNanos(1), 10.0, elements, NOW);
+
+        // findPasses takes an arbitrary Duration and the propagation uses its
+        // nanoseconds. A key that kept only whole seconds would hand the second caller
+        // the first one's answer.
+        assertThat(computations).hasValue(2);
+    }
+
+    @Test
+    void concurrentIdenticalRequestsPropagateOnce() throws Exception {
+        TleSnapshot elements = snapshot(TleFixtures.issLine1(), TleFixtures.issLine2());
+        int callers = 8;
+        CountDownLatch ready = new CountDownLatch(callers);
+        CountDownLatch go = new CountDownLatch(1);
+        List<Thread> threads = new ArrayList<>();
+
+        for (int i = 0; i < callers; i++) {
+            Thread thread = new Thread(() -> {
+                ready.countDown();
+                try {
+                    go.await();
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+                cache.get(ISS, LYON, WINDOW, 10.0, elements, NOW, () -> {
+                    computations.incrementAndGet();
+                    // Long enough that a getIfPresent-then-put cache would let every
+                    // other caller in before the first one stored anything.
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                    }
+                    return new PassPrediction(elements, LYON, 10.0, NOW, List.of());
+                });
+            });
+            threads.add(thread);
+            thread.start();
+        }
+        assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+        go.countDown();
+        for (Thread thread : threads) {
+            thread.join(5_000);
+        }
+
+        // The whole economy of this cache: one propagation, seven hits. Without atomic
+        // population the eight callers would race and propagate eight times.
+        assertThat(computations).hasValue(1);
+        assertThat(count("hit")).isEqualTo(callers - 1.0);
     }
 
     @Test

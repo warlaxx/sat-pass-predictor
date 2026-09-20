@@ -29,8 +29,13 @@ Enabling the database also turns on the persistent TLE store (`tle_snapshots`, a
 migration V2): one row per satellite, written on every successful fetch, read when a key
 is not in memory. It follows `API_ACCESS_ENABLED` and has no switch of its own — a state
 where keys are stored but elements are not would be one more thing to reason about during
-an incident, for no benefit. Its effect is on the first call after a restart, which is
-served from the row instead of waiting on CelesTrak. A database that is down costs
+an incident, for no benefit. Its effect depends on the row's age, because a stored
+snapshot is treated exactly like one held in memory. Within `tle.refresh-after` (2 h) it
+is served as it is, and the first call after a restart does not wait on CelesTrak. Older
+than that, a refresh is attempted immediately, and the row's value is then to survive
+that refresh failing: its own elements are served with their real age, until
+`tle.max-age` (7 d), past which the request fails as it always has. A row is never a way
+to serve elements the age rules would otherwise refuse. A database that is down costs
 nothing here: reads and writes are swallowed and logged, and the store falls back to the
 in-memory behaviour of the default deployment.
 

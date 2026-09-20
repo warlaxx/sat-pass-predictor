@@ -18,11 +18,19 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * once per call, because a persistent store that has quietly stopped persisting is worth
  * noticing before the next restart discovers it.
  *
- * <h2>The query timeout is short on purpose</h2>
+ * <h2>The query timeout is short on purpose, and it is not the whole budget</h2>
  * These calls happen while holding a key's lock inside {@code TleStore}, so their budget
  * is part of a request's latency. Two seconds is far more than a primary-key lookup on a
- * table with a few hundred rows needs, and far less than the pool's own connection
- * timeout — which is the failure this bound is really there to cut short.
+ * table with a few hundred rows needs.
+ *
+ * <p>It bounds the <em>statement</em>, not the call. Acquiring a connection happens
+ * first and answers to the pool, whose {@code connectionTimeout} is three seconds, so a
+ * request that arrives while the pool is exhausted waits up to five seconds before the
+ * failure is swallowed here. That is stated rather than tightened: the pool is shared
+ * with quota accounting, which has a budget of its own chosen in milestone 11, and
+ * halving a shared timeout to shorten one caller's worst case would silently change how
+ * fast admission gives up. Five seconds sits well inside the fifteen-second per-source
+ * budget the TLE chain already spends on the same lock.
  *
  * <h2>A write never goes backwards</h2>
  * Two instances can fetch the same satellite at nearly the same time. The {@code WHERE}

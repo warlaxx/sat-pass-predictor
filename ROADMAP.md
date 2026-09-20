@@ -592,10 +592,13 @@ a thousand times, on a container sized for a free plan.
   describes a window that starts slightly in the past. The response has always carried
   `computedAt`, so the answer stays self-describing rather than becoming wrong.
 - [x] **Cache the TLE itself** in PostgreSQL (`tle_snapshots`, one row per satellite).
-  A restart no longer puts CelesTrak in the request path: the first call for a satellite
-  is answered from the stored elements, and the refresh rules then apply to them exactly
-  as they would to elements held in memory. The row is deleted only when the catalogue
-  says the object is gone. Follows `api-access.enabled`; the default demo is unchanged.
+  A stored row is treated exactly like elements held in memory, which is what decides
+  what it saves: within `tle.refresh-after` it is served as it is and the first call
+  after a restart owes nothing to CelesTrak; past it, a refresh is attempted at once and
+  the row only protects against that refresh failing — by serving its own elements with
+  their real age, up to the seven-day limit past which nothing is served. The row is
+  deleted only when the catalogue says the object is gone. Follows `api-access.enabled`;
+  the default demo is unchanged.
 - [x] Measured before and after, with `scripts/measure-passes.sh` and the two meters it
   reads (`satpass.predictions`, `satpass.prediction.duration`).
 
@@ -604,12 +607,18 @@ Apple M-series laptop — an order of magnitude, not a datacenter benchmark:
 
 | Workload | p50 | p95 | Propagation per 1 000 calls |
 |---|---|---|---|
-| Same request repeated, cache off | 112.7 ms | 121.9 ms | 112 s of CPU |
+| Same request repeated, cache off | 112.7 ms | 121.9 ms | 112 s |
 | Same request repeated, cache on | 2.4 ms | 3.3 ms | ~0 s |
-| 200 distinct observers, cache on | 113.4 ms | 120.8 ms | 112 s of CPU |
+| 200 distinct observers, cache on | 113.4 ms | 120.8 ms | 112 s |
+
+The last column is elapsed time inside the propagation and **not** CPU time: a Micrometer
+timer measures a duration, and nothing here samples a thread's CPU clock. On a
+single-threaded run the two are close, and the distinction matters the moment the number
+is used to size a container.
 
 Two numbers matter here and the third is the honest one. A repeated call costs about
-**a fiftieth** of what it cost, and 112 s of CPU per thousand calls becomes nothing. The
+**a fiftieth** of what it cost, and 112 s of propagation per thousand calls becomes
+nothing. The
 third row is the workload the cache cannot help — every request genuinely different — and
 it shows the cache costs nothing measurable when it never hits: 113.4 ms against 112.7 ms
 is inside the noise of the first row. That is the result to keep: the free tier is now

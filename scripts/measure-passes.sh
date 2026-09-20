@@ -3,8 +3,11 @@
 # rather than on an impression. Two figures come out of it:
 #
 #   * latency as the caller sees it, p50 and p95, including HTTP and JSON serialisation;
-#   * CPU actually spent propagating, read from the server's own timer, which is the only
-#     one of the two that scales with the bill.
+#   * time spent inside the propagation, read from the server's own timer. That is
+#     elapsed time, not CPU time: a Micrometer Timer measures a duration, and nothing
+#     here samples the thread's CPU clock. On a single-threaded run of this kind the two
+#     are close, but they are not the same number and the output does not pretend they
+#     are.
 #
 # Run it twice, once with PREDICTION_CACHE_ENABLED=false on the server and once with the
 # default, and the difference is milestone 12. The endpoint is /api/passes: the anonymous
@@ -47,6 +50,18 @@ while [[ $# -gt 0 ]]; do
     *) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
+
+# Both are divisors further down - the call count for the percentiles, the observer
+# cycle in the request loop. Zero would not produce a wrong measurement, it would
+# produce an arithmetic error halfway through one.
+positive() { # positive <flag> <value>
+  if ! [[ "$2" =~ ^[0-9]+$ ]] || [[ "$2" -lt 1 ]]; then
+    echo "$1 must be a positive integer (got '$2')" >&2
+    exit 2
+  fi
+}
+positive --calls "$CALLS"
+positive --distinct "$DISTINCT"
 
 TIMINGS="$(mktemp)"
 trap 'rm -f "$TIMINGS"' EXIT
@@ -108,6 +123,6 @@ awk -v bh="${BEFORE_HIT:-0}" -v ah="${AFTER_HIT:-0}" \
     }
     printf "  cache      %d hit / %d miss  (%.1f%% served without propagating)\n",
            hits, misses, 100 * hits / (hits + misses)
-    printf "  propagation %8.3f s of CPU for %d calls\n", seconds, calls
+    printf "  propagation %8.3f s elapsed for %d calls (not CPU time)\n", seconds, calls
     printf "  per 1000 calls %6.2f s of propagation\n", 1000 * seconds / calls
   }'

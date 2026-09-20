@@ -181,8 +181,8 @@ setting guarantees availability during an upstream outage.
 
 ## Not paying for a call twice
 
-Propagating a 48 h window and sampling it at 10 s costs about 110 ms of CPU. That is
-cheap and it is *linear*: a thousand identical calls do the work a thousand times. Two
+Propagating a 48 h window and sampling it at 10 s takes about 110 ms. That is cheap and
+it is *linear*: a thousand identical calls do the work a thousand times. Two
 things stop that, and neither changes what the API answers.
 
 **An answer is reused when the elements have not changed.** The cache is keyed on the
@@ -197,9 +197,12 @@ computation made for a nearby point would mean publishing an observer that was n
 one computed for. `PREDICTION_CACHE_ENABLED=false` turns the whole thing off.
 
 **The elements themselves survive a restart**, when a database is configured: one row per
-satellite in `tle_snapshots`, so the first call after a deploy is answered at this
-service's availability rather than CelesTrak's. Nothing expires there either — the
-seven-day limit is applied when the elements are served, not when they are stored — and
+satellite in `tle_snapshots`. A stored row is treated exactly like elements held in
+memory, so what it saves depends on its age: younger than `tle.refresh-after` (2 h) it is
+served as it is, and the first call after a deploy owes nothing to CelesTrak. Older, and a
+refresh is attempted immediately — the row then only protects against that refresh
+failing, which it does by serving its own elements with their real age, up to the
+seven-day limit past which nothing is served at all. Nothing expires in the table itself;
 the row is deleted only when the catalogue no longer has the object.
 
 Measured rather than asserted, with `scripts/measure-passes.sh` against a local instance
@@ -207,13 +210,16 @@ Measured rather than asserted, with `scripts/measure-passes.sh` against a local 
 
 | Workload | p50 | p95 | Propagation per 1 000 calls |
 |---|---|---|---|
-| Same request repeated, cache off | 112.7 ms | 121.9 ms | 112 s of CPU |
+| Same request repeated, cache off | 112.7 ms | 121.9 ms | 112 s |
 | Same request repeated, cache on | 2.4 ms | 3.3 ms | ~0 s |
-| 200 distinct observers, cache on | 113.4 ms | 120.8 ms | 112 s of CPU |
+| 200 distinct observers, cache on | 113.4 ms | 120.8 ms | 112 s |
 
 The third row is the point of the table: on a workload the cache cannot help, it costs
 nothing measurable. The two meters behind those numbers, `satpass.predictions` and
-`satpass.prediction.duration`, are on `/actuator/metrics`.
+`satpass.prediction.duration`, are on `/actuator/metrics`. The last column is **elapsed
+time inside the propagation, not CPU time** — a Micrometer timer measures a duration, and
+nothing here samples a thread's CPU clock. On this single-threaded run the two are close;
+they are not the same quantity.
 
 ## Sky chart
 

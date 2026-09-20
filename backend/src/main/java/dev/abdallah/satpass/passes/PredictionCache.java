@@ -66,7 +66,12 @@ public class PredictionCache {
                double latitudeDeg,
                double longitudeDeg,
                double altitudeMeters,
-               long windowSeconds,
+               // The Duration itself, not its seconds: the propagation uses its
+               // nanoseconds, and findPasses takes an arbitrary Duration even though the
+               // controller only ever builds whole hours. Truncating here would let
+               // PT1S and PT1.000000001S share an answer, and the narrower contract of
+               // one caller is not a licence to round for every other.
+               Duration window,
                double minElevationDeg) {
 
         static Key of(int noradId, ObserverLocation observer, Duration window, double minElevationDeg) {
@@ -76,7 +81,7 @@ public class PredictionCache {
                     observer.latitudeDeg() + 0.0,
                     observer.longitudeDeg() + 0.0,
                     observer.altitudeMeters() + 0.0,
-                    window.toSeconds(),
+                    window,
                     minElevationDeg + 0.0);
         }
     }
@@ -128,14 +133,19 @@ public class PredictionCache {
             return record(computation);
         }
         Key key = Key.of(noradId, observer, window, minElevationDeg);
-        PassPrediction cached = cache.getIfPresent(key);
-        if (cached != null && isUsable(cached, elements, now)) {
-            hits.increment();
-            return cached;
-        }
-        PassPrediction fresh = record(computation);
-        cache.put(key, fresh);
-        return fresh;
+        // compute, not getIfPresent-then-put: Caffeine makes the mapping function atomic
+        // per key, so ten concurrent requests for the same thing produce one propagation
+        // and nine hits instead of ten propagations racing to store the same answer.
+        // That is the same trade-off, for the same reason, that TleStore makes around a
+        // network call — a computation runs while the key's lock is held, and only
+        // callers asking for the identical answer wait for it.
+        return cache.asMap().compute(key, (ignored, cached) -> {
+            if (cached != null && isUsable(cached, elements, now)) {
+                hits.increment();
+                return cached;
+            }
+            return record(computation);
+        });
     }
 
     private PassPrediction record(Supplier<PassPrediction> supplier) {
