@@ -1,0 +1,29 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; background: #10120f; color: #ecede4; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; }
+main { max-width: 1000px; margin: auto; padding: 36px 28px; }
+header { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-bottom: 28px; border-bottom: 1px solid #353a30; }
+header span, small { font: 12px ui-monospace, monospace; color: #b5bbab; }
+a { color: #d5ed85; text-underline-offset: 4px; }
+.brand { font-weight: 650; color: #ecede4; text-decoration: none; }
+h1 { font-size: clamp(34px, 6vw, 64px); line-height: 1.05; font-weight: 500; letter-spacing: -.04em; margin: 52px 0 20px; }
+h2 { font-size: 14px; font-weight: 600; }
+p { line-height: 1.65; }
+.intro, footer { color: #b5bbab; }
+section { margin-top: 30px; padding: 28px; background: #1a1e16; border: 1px solid #353a30; border-radius: 12px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding-bottom: 28px; margin-bottom: 24px; border-bottom: 1px solid #353a30; }
+.stats p { font-size: 21px; margin: 12px 0; }
+progress { display: block; width: 100%; height: 6px; accent-color: #d5ed85; margin-bottom: 12px; }
+button, .button { display: inline-block; background: #d5ed85; color: #18210a; border: 1px solid #d5ed85; border-radius: 6px; padding: 12px 18px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+.secondary { color: #ecede4; background: transparent; border-color: #687257; }
+button:disabled { opacity: .5; cursor: wait; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }
+input { display: block; width: 100%; font: 15px ui-monospace, monospace; padding: 14px; margin: 10px 0; background: #10120f; color: #d5ed85; border: 1px solid #687257; border-radius: 4px; }
+#secret-box { border-left: 3px solid #d5ed85; padding: 12px; margin: 20px 0; }
+#message { color: #d5ed85; min-height: 26px; }
+pre { padding: 20px; background: #10120f; overflow-x: auto; line-height: 1.7; border-radius: 6px; }
+details { margin: 20px 0; }
+footer { margin-top: 38px; font-size: 13px; line-height: 1.8; }
+:focus-visible { outline: 3px solid #d5ed85; outline-offset: 4px; }
+@media (max-width: 640px) { main { padding: 24px 16px; } header { flex-wrap: wrap; } section { padding: 20px; } .stats { grid-template-columns: 1fr; gap: 8px; } }

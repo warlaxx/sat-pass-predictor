@@ -109,3 +109,20 @@ api-access:
   database-password: ${API_DATABASE_PASSWORD:}
   # Comma-separated exact origins; empty means no browser cross-origin access.
   allowed-origins: ${API_ALLOWED_ORIGINS:}
+
+# Self-serve login requires the database above and a GitHub OAuth App. No passwords.
+account:
+  enabled: ${ACCOUNT_ENABLED:false}
+  github-client-id: ${GITHUB_CLIENT_ID:}
+  github-client-secret: ${GITHUB_CLIENT_SECRET:}
+  # Exact externally visible backend origin, also registered as GitHub's callback origin.
+  base-url: ${ACCOUNT_BASE_URL:http://localhost:8080}
+
+server:
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: ${ACCOUNT_COOKIE_SECURE:true}

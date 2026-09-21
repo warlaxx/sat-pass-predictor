@@ -14,8 +14,9 @@ demonstrates, a product on whether anyone pays. Phase 2 starts below milestone 1
 > Milestones 0 to 10 are done, except the demo GIF of milestone 9, which needs a screen
 > recording rather than code. Phase 2 has started: milestone 11 (keys, quotas, persistent
 > counters) and milestone 12 (answer cache, persistent TLEs, measured cost) are
-> implemented, both behind the same opt-in database. Next is milestone 13, self-serve
-> signup — the first one whose absence costs an hour of the weekly budget per customer.
+> implemented, both behind the same opt-in database. Milestone 13 now implements
+> GitHub self-serve accounts and key management; production OAuth activation and a real
+> login smoke test remain. Next implementation milestone: 14, billing.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
 milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
@@ -641,7 +642,7 @@ thing that kills the service.
 
 ---
 
-## Milestone 13 — Self-serve signup (≈ 8 h · 2 weeks)
+## Milestone 13 — Self-serve signup (implemented; production activation pending)
 
 A key that requires emailing the author is not a product, it is a favour. Until signup is
 self-serve, every customer costs an hour of your 4 h/week.
@@ -651,6 +652,27 @@ self-serve, every customer costs an hour of your 4 h/week.
 - A dashboard with exactly four things: the key, usage against quota, the plan, a button to
   regenerate. Nothing else. Every extra screen is time not spent on milestone 17.
 - Keys are created and revoked by their owner, without you.
+
+**Implemented:** GitHub OAuth through Spring Security, with a backend-hosted dashboard
+at `/account/`. The immutable GitHub ID owns one key. Creation, regeneration and
+revocation are self-serve; regeneration preserves usage and limits on the same key row.
+The raw key is shown only once. Authenticated mutations and logout require CSRF,
+account responses use `no-store`, and database failures fail closed.
+
+**Preview offer:** 100 calls/day and 10/minute, displayed as “Free preview” (the
+existing internal `standard` plan). The monthly commercial tiers below are still
+hypotheses; this milestone does not promise or implement them.
+
+**Verification:** PostgreSQL tests cover owner isolation, concurrent first issuance,
+rotation/revocation and retained quotas. Web tests cover the session/CSRF boundary,
+OAuth state rejection and the public landing page. DOM tests cover key display,
+revocation and session expiry. Existing backend/frontend tests and builds also run.
+
+**Remaining release gate:** configure the production PostgreSQL/OAuth App, then run
+one real GitHub login → issue → API call → regenerate → revoke → logout flow.
+Local OAuth tests use a simulated identity; they cannot certify a live provider exchange.
+Sessions are in memory: use one instance, or configure sticky/shared sessions before
+scaling. See [the activation runbook](docs/self-serve-accounts.md).
 
 ---
 

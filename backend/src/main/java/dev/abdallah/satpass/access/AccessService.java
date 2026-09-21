@@ -78,9 +78,7 @@ public class AccessService {
         if (owner == null || owner.isBlank() || owner.length() > 200 || dailyLimit < 1 || minuteLimit < 1) {
             throw new IllegalArgumentException("Owner (1–200 characters) and positive limits are required");
         }
-        byte[] entropy = new byte[32];
-        random.nextBytes(entropy);
-        String secret = "spp_" + Base64.getUrlEncoder().withoutPadding().encodeToString(entropy);
+        String secret = newSecret();
         UUID id = UUID.randomUUID();
         jdbc.update("INSERT INTO api_keys (id, key_hash, owner, plan, daily_limit, minute_limit) VALUES (?, ?, ?, 'standard', ?, ?)",
                 id, hash(secret), owner, dailyLimit, minuteLimit);
@@ -94,6 +92,12 @@ public class AccessService {
 
     public List<Map<String, Object>> usage(UUID id) {
         return jdbc.queryForList("SELECT usage_day, endpoint, requests FROM api_usage WHERE key_id = ? ORDER BY usage_day DESC", id);
+    }
+
+    String newSecret() {
+        byte[] entropy = new byte[32];
+        random.nextBytes(entropy);
+        return "spp_" + Base64.getUrlEncoder().withoutPadding().encodeToString(entropy);
     }
 
     // High-entropy random credentials, not human passwords: SHA-256 needs no slow password KDF.
