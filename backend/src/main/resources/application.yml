@@ -126,3 +126,11 @@ server:
         http-only: true
         same-site: lax
         secure: ${ACCOUNT_COOKIE_SECURE:true}
+
+# Off until Stripe sandbox and commercial release gates have been verified.
+billing:
+  enabled: ${BILLING_ENABLED:false}
+  secret-key: ${STRIPE_SECRET_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  hobby-price: ${STRIPE_HOBBY_PRICE:}
+  pro-price: ${STRIPE_PRO_PRICE:}

@@ -407,7 +407,10 @@ API key and inspect UTC daily usage. Self-serve preview limits are 100 calls/day
 Accounts are opt-in and require PostgreSQL plus a GitHub OAuth App. Setup, security
 boundaries and the production release gate: [self-serve accounts](docs/self-serve-accounts.md).
 The new account page is implemented and locally tested; real GitHub authentication and
-production activation still need verification. Billing is not implemented.
+production activation still need verification. Opt-in Stripe Checkout, Customer Portal
+and signed webhook billing are implemented; a real Stripe sandbox lifecycle remains
+unverified. Hobby/Pro quotas use UTC calendar months, with one key per account.
+See [billing setup, quota contract and replay](docs/billing.md).
 
 ## Roadmap
 
@@ -430,7 +433,9 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] Answer cache invalidated by the TLE, persistent elements, measured cost per call (milestone 12)
 - [x] GitHub self-serve accounts and key dashboard (milestone 13; production activation pending)
 - [ ] Real production GitHub login, issuance and revocation smoke test
-- [ ] Billing, commercial readiness and first customers (milestones 14–17)
+- [x] Stripe Checkout/Portal, signed webhooks and monthly quotas (milestone 14; sandbox activation pending)
+- [ ] Real Stripe sandbox lifecycle and production billing activation
+- [ ] Commercial readiness and first customers (milestones 15–17)
 
 Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
 (open it in a browser).

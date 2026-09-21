@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/account/api")
 @ConditionalOnProperty(name = "account.enabled", havingValue = "true")
 public class AccountController {
+    @org.springframework.beans.factory.annotation.Value("${billing.enabled:false}")
+    private boolean billingEnabled;
+    @GetMapping("/billing")
+    public ResponseEntity<?> billing() { return privateResponse(java.util.Map.of("enabled", billingEnabled)); }
     private final AccountService accounts;
     public AccountController(AccountService accounts) { this.accounts = accounts; }
 

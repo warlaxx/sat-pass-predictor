@@ -26,9 +26,16 @@ async function refresh() {
   current = await request('/account/api/me');
   el('signin').hidden = true; el('dashboard').hidden = false;
   el('plan').textContent = current.plan === 'standard' ? 'Free preview' : current.plan;
-  el('usage').textContent = `${current.usedToday} / ${current.dailyLimit} calls`;
-  el('quota').max = current.dailyLimit; el('quota').value = current.usedToday;
-  el('reset').textContent = `Usage for ${current.usageDay}. Resets at 00:00 UTC.`;
+  const monthly = current.monthlyLimit != null;
+  const used = monthly ? current.usedMonth : current.usedToday;
+  const limit = monthly ? current.monthlyLimit : current.dailyLimit;
+  el('usage-label').textContent = monthly ? 'Monthly usage · UTC' : 'Daily usage · UTC';
+  el('usage').textContent = `${used} / ${limit} calls`;
+  el('quota').max = limit; el('quota').value = used;
+  el('reset').textContent = monthly ? `Usage for ${current.usageDay.slice(0, 7)}. Resets on the first day of the next month at 00:00 UTC.` : `Usage for ${current.usageDay}. Resets at 00:00 UTC.`;
+  const billing = await request('/account/api/billing');
+  el('billing').hidden = !billing.enabled;
+  el('hobby').hidden = monthly; el('pro').hidden = monthly;
   el('rate').textContent = `${current.minuteLimit} calls / minute`;
   el('key-state').textContent = !current.keyId ? 'No key created yet.' : current.active ? `Active · ${current.keyId}` : 'Key revoked.';
   el('regenerate').textContent = current.keyId ? 'Regenerate API key' : 'Create API key';
@@ -54,6 +61,15 @@ el('regenerate').addEventListener('click', () => action(async () => {
   el('message').textContent = 'Key generated. Copy it before leaving this page.';
   await refresh();
 }));
+async function openBilling(path) {
+  const result = await request(path, 'POST');
+  const url = new URL(result.url);
+  if (url.protocol !== 'https:' || !['checkout.stripe.com', 'billing.stripe.com'].includes(url.hostname)) throw new Error('Invalid billing redirect.');
+  clearSecret();
+  location.assign(url.href);
+}
+for (const plan of ['hobby', 'pro']) el(plan).addEventListener('click', () => action(() => openBilling(`/account/api/billing/checkout?plan=${plan}`)));
+el('portal').addEventListener('click', () => action(() => openBilling('/account/api/billing/portal')));
 el('hide-key').addEventListener('click', clearSecret);
 el('revoke').addEventListener('click', () => { el('confirm').open = true; el('confirm-revoke').focus(); });
 el('confirm-revoke').addEventListener('click', () => action(async () => {

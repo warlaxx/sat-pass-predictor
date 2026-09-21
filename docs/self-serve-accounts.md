@@ -59,8 +59,8 @@ Leave secure cookies enabled for every HTTPS deployment.
   concurrent creation/rotation and admission. Revocation blocks subsequent
   admission; a prediction already admitted may finish.
 - Self-serve keys start with **100 calls/day, 10/minute**, labelled “Free preview”.
-  The existing database plan is `standard`. These are preview limits, **not**
-  the monthly billing tiers hypothesized for milestone 14.
+  The existing database plan is `standard`. Opt-in [billing](billing.md) adds
+  Hobby/Pro calendar-month quotas; key rotation preserves those entitlements too.
 - State-changing requests and logout require a session-bound CSRF token from
   `GET /account/api/csrf`. Session cookies are HttpOnly, SameSite=Lax, Secure by
   default, and expire after 30 minutes of inactivity. Spring Security rotates

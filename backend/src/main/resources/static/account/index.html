@@ -21,9 +21,15 @@
     <section id="dashboard" hidden aria-label="API dashboard">
       <div class="stats">
         <div><h2>Plan</h2><p id="plan"></p></div>
-        <div><h2>Daily usage · UTC</h2><p id="usage"></p><progress id="quota" aria-label="Daily quota used" max="100" value="0"></progress><small id="reset"></small></div>
+        <div><h2 id="usage-label">Daily usage · UTC</h2><p id="usage"></p><progress id="quota" aria-label="Daily quota used" max="100" value="0"></progress><small id="reset"></small></div>
         <div><h2>Rate limit</h2><p id="rate"></p></div>
       </div>
+      <section id="billing" hidden aria-label="Subscription">
+        <h2>Your subscription</h2>
+        <p>Hobby: 25,000 calls per UTC calendar month, 30/minute. Pro: 250,000 calls per UTC calendar month, 120/minute. One key per account. Stripe displays the price and applicable tax before you pay.</p>
+        <p>Plan changes keep existing usage. After payment, refresh to see the confirmed plan.</p>
+        <div class="actions"><button id="hobby" type="button">Subscribe to Hobby</button><button id="pro" type="button">Subscribe to Pro</button><button id="portal" class="secondary" type="button">Manage subscription</button></div>
+      </section>
       <h2>Your API key</h2>
       <p id="key-state"></p>
       <div id="secret-box" hidden>

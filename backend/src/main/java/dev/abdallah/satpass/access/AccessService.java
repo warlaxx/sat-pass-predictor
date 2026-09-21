@@ -52,11 +52,21 @@ public class AccessService {
                     Long.class, id, day);
             Instant oldMinute = key.get("minute_start") == null ? null : ((Timestamp) key.get("minute_start")).toInstant();
             int minuteUsed = minute.equals(oldMinute) ? ((Number) key.get("minute_used")).intValue() : 0;
-            if (daily >= ((Number) key.get("daily_limit")).longValue()) {
+            boolean paid = PaidQuota.active(key, now);
+            if (paid) {
+                LocalDate month = day.withDayOfMonth(1);
+                long used = jdbc.queryForObject("SELECT COALESCE(SUM(requests), 0) FROM api_usage WHERE key_id = ? AND usage_day >= ? AND usage_day < ?",
+                        Long.class, id, month, month.plusMonths(1));
+                if (used >= ((Number) key.get("monthly_limit")).longValue()) {
+                    throw new AccessFailure("monthly-quota-exceeded", 429, "The monthly request quota has been reached.",
+                            month.plusMonths(1).atStartOfDay().toInstant(ZoneOffset.UTC));
+                }
+            }
+            if (!paid && daily >= ((Number) key.get("daily_limit")).longValue()) {
                 throw new AccessFailure("daily-quota-exceeded", 429, "The daily request quota has been reached.",
                         day.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
             }
-            if (minuteUsed >= ((Number) key.get("minute_limit")).intValue()) {
+            if (minuteUsed >= PaidQuota.minuteLimit(key, now)) {
                 throw new AccessFailure("rate-limit-exceeded", 429, "The per-minute request limit has been reached.",
                         minute.plusSeconds(60));
             }

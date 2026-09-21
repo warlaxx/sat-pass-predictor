@@ -16,7 +16,9 @@ demonstrates, a product on whether anyone pays. Phase 2 starts below milestone 1
 > counters) and milestone 12 (answer cache, persistent TLEs, measured cost) are
 > implemented, both behind the same opt-in database. Milestone 13 now implements
 > GitHub self-serve accounts and key management; production OAuth activation and a real
-> login smoke test remain. Next implementation milestone: 14, billing.
+> login smoke test remain. Milestone 14 now implements opt-in Stripe billing and
+> calendar-month paid quotas; a real Stripe sandbox lifecycle and commercial launch
+> gates remain. Next milestone: 15, commercial/legal readiness.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
 milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
@@ -676,7 +678,7 @@ scaling. See [the activation runbook](docs/self-serve-accounts.md).
 
 ---
 
-## Milestone 14 — Billing (≈ 8 h · 2 weeks)
+## Milestone 14 — Billing (implemented; Stripe sandbox activation pending)
 
 - **Stripe Checkout** for subscription, **Stripe Customer Portal** for upgrade, downgrade
   and cancellation. Neither is a screen you build; both are a redirect. This is the single
@@ -688,6 +690,29 @@ scaling. See [the activation runbook](docs/self-serve-accounts.md).
   an unhappy customer holding a €400 surprise invoice cannot be un-made.
 - Idempotent webhook handling and a replay path. Stripe delivers twice; it is documented,
   it will happen, and a double upgrade is noticed by nobody while a double *downgrade* is.
+
+**Implemented on 21 September 2026:** backend-created Stripe Checkout and Customer
+Portal sessions, authenticated/CSRF-protected billing buttons, signed webhooks,
+transactional event deduplication and fresh subscription reconciliation. Replays and
+out-of-order deliveries cannot restore an old plan. Revoked keys stay revoked.
+Paid entitlements expire at the subscription period end if renewal events are lost.
+
+**Quota decision:** retain Free preview at 100/day and 10/minute. Hobby receives
+25,000 per UTC calendar month and 30/minute; Pro 250,000 per UTC calendar month and
+120/minute. Both currently have one key. Usage survives every plan change and key
+rotation. Paid periods in Stripe and quota calendar months are deliberately distinct.
+Actual prices come from the configured Stripe prices; no public price is promised.
+
+**Verification:** PostgreSQL, signed HTTP webhook, Stripe SDK loopback and dashboard
+interaction tests cover quota boundaries, duplicates, concurrent processing, rollback,
+failed payment states, cancellation, Checkout reuse and owner isolation.
+
+**Remaining:** configure and exercise a real Stripe sandbox subscription lifecycle,
+including portal invoicing/proration and Tax settings, then complete milestones
+15–16 before accepting payment. No live charge, deployment or Stripe resource has
+been created. See [billing setup and replay](docs/billing.md).
+
+The original offer below remains a hypothesis, **not the implemented contract**:
 
 A hypothesis to test, not a truth: **Free** 1 000 calls/month, shared key, no SLA ·
 **Hobby €9** 25 000 calls, one key · **Pro €49** 250 000 calls, several keys, e-mail support
