@@ -22,7 +22,7 @@ public class AccountService {
     }
 
     public record Dashboard(UUID keyId, String plan, boolean active, long usedToday,
-                            int dailyLimit, int minuteLimit, LocalDate usageDay) {}
+                            int dailyLimit, int minuteLimit, LocalDate usageDay, Long usedMonth, Integer monthlyLimit) {}
 
     public void register(String githubId) {
         validate(githubId);
@@ -37,11 +37,16 @@ public class AccountService {
                     WHERE key_id = k.id AND usage_day = ?) AS used_today
                 FROM customer_accounts a JOIN api_keys k ON k.id = a.key_id WHERE a.github_id = ?
                 """, day, githubId);
-        if (rows.isEmpty()) return new Dashboard(null, "standard", false, 0, 100, 10, day);
+        if (rows.isEmpty()) return new Dashboard(null, "standard", false, 0, 100, 10, day, null, null);
         var row = rows.getFirst();
-        return new Dashboard((UUID) row.get("id"), (String) row.get("plan"), (Boolean) row.get("active"),
+        boolean paid = PaidQuota.active(row, clock.instant());
+        LocalDate month = day.withDayOfMonth(1);
+        Long monthly = paid ? jdbc.queryForObject("SELECT COALESCE(SUM(requests), 0) FROM api_usage WHERE key_id = ? AND usage_day >= ? AND usage_day < ?",
+                Long.class, row.get("id"), month, month.plusMonths(1)) : null;
+        return new Dashboard((UUID) row.get("id"), paid ? (String) row.get("billing_plan") : (String) row.get("plan"), (Boolean) row.get("active"),
                 ((Number) row.get("used_today")).longValue(), ((Number) row.get("daily_limit")).intValue(),
-                ((Number) row.get("minute_limit")).intValue(), day);
+                PaidQuota.minuteLimit(row, clock.instant()), day, monthly,
+                paid ? ((Number) row.get("monthly_limit")).intValue() : null);
     }
 
     public AccessService.IssuedKey regenerate(String githubId) {

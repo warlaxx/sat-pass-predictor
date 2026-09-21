@@ -55,6 +55,7 @@ class AccessServicePostgresTest {
                 new TransactionTemplate(new DataSourceTransactionManager(source)), clock);
     }
     @BeforeEach void reset() {
+        jdbc.update("DELETE FROM billing_events");
         jdbc.update("DELETE FROM customer_accounts");
         jdbc.update("DELETE FROM api_usage");
         jdbc.update("DELETE FROM api_keys WHERE plan != 'demo'");
@@ -203,6 +204,124 @@ class AccessServicePostgresTest {
             assertThat(accounts().dashboard("123").usedToday()).isEqualTo(1);
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM api_keys WHERE owner = 'github:123'", Long.class)).isEqualTo(1);
         }
+    }
+
+    dev.abdallah.satpass.billing.BillingGateway gateway;
+    dev.abdallah.satpass.billing.BillingService billing() {
+        return new dev.abdallah.satpass.billing.BillingService(jdbc,
+                new TransactionTemplate(new DataSourceTransactionManager(source)), gateway,
+                new dev.abdallah.satpass.billing.BillingProperties(true, "sk_test_x", "whsec_x", "price_hobby", "price_pro"));
+    }
+    AccessService.IssuedKey billingAccount() {
+        accounts().register("123");
+        var key = accounts().regenerate("123");
+        jdbc.update("UPDATE customer_accounts SET stripe_customer_id = 'cus_test' WHERE github_id = '123'");
+        gateway = org.mockito.Mockito.mock(dev.abdallah.satpass.billing.BillingGateway.class);
+        return key;
+    }
+    void entitlement(String plan, int quota, String until) {
+        org.mockito.Mockito.when(gateway.entitlement("cus_test")).thenReturn(
+                new dev.abdallah.satpass.billing.BillingGateway.Entitlement(plan, quota,
+                        until == null ? null : Instant.parse(until), plan != null));
+    }
+    @Test void billingReplayReconcilesCurrentStatePreservesRevocationAndRollsBackFailures() {
+        var key = billingAccount();
+        service.admit(key.secret(), false);
+        entitlement("hobby", 25000, "2026-10-19T12:00:00Z");
+        billing().reconcile("evt_new", "cus_test");
+        billing().reconcile("evt_new", "cus_test");
+        org.mockito.Mockito.verify(gateway, org.mockito.Mockito.times(1)).entitlement("cus_test");
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("hobby");
+        assertThat(accounts().dashboard("123").usedMonth()).isEqualTo(1);
+        accounts().revoke("123");
+        entitlement("pro", 250000, "2026-10-19T12:00:00Z");
+        billing().reconcile("evt_older_delivered_later", "cus_test");
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("pro");
+        assertThat(accounts().dashboard("123").active()).isFalse();
+        org.mockito.Mockito.when(gateway.entitlement("cus_test")).thenThrow(new dev.abdallah.satpass.billing.BillingUnavailable());
+        assertThatThrownBy(() -> billing().reconcile("evt_retry", "cus_test")).isInstanceOf(dev.abdallah.satpass.billing.BillingUnavailable.class);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM billing_events WHERE event_id = 'evt_retry'", Integer.class)).isZero();
+        org.mockito.Mockito.reset(gateway);
+        entitlement(null, 0, null);
+        billing().reconcile("evt_retry", "cus_test");
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("standard");
+        assertThat(accounts().dashboard("123").usedToday()).isEqualTo(1);
+        assertThat(accounts().dashboard("123").active()).isFalse();
+    }
+    @Test void monthlyQuotaSurvivesRotationAndResetsOnlyAtUtcMonthBoundary() {
+        var key = billingAccount();
+        entitlement("hobby", 2, "2026-11-01T00:00:00Z");
+        billing().reconcile("evt_1", "cus_test");
+        service.admit(key.secret(), false);
+        now.set(Instant.parse("2026-09-20T00:00:00Z"));
+        service.admit(key.secret(), false);
+        var rotated = accounts().regenerate("123");
+        assertThatThrownBy(() -> service.admit(rotated.secret(), false)).isInstanceOfSatisfying(AccessFailure.class, e -> {
+            assertThat(e.code()).isEqualTo("monthly-quota-exceeded");
+            assertThat(e.resetsAt()).isEqualTo(Instant.parse("2026-10-01T00:00:00Z"));
+        });
+        now.set(Instant.parse("2026-10-01T00:00:00Z"));
+        service.admit(rotated.secret(), false);
+        assertThat(accounts().dashboard("123").usedMonth()).isEqualTo(1);
+        now.set(Instant.parse("2026-11-01T00:00:00Z"));
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("standard");
+        assertThat(accounts().dashboard("123").minuteLimit()).isEqualTo(10);
+        jdbc.update("UPDATE api_keys SET daily_limit = 1 WHERE id = ?", key.id());
+        service.admit(rotated.secret(), false);
+        assertThatThrownBy(() -> service.admit(rotated.secret(), false)).isInstanceOfSatisfying(AccessFailure.class,
+                e -> assertThat(e.code()).isEqualTo("daily-quota-exceeded"));
+    }
+    @Test void checkoutReusesPendingSessionAndExistingSubscriptionsUsePortal() {
+        billingAccount();
+        entitlement(null, 0, null);
+        var checkout = new dev.abdallah.satpass.billing.BillingGateway.Checkout("cs_1", "https://checkout.stripe.com/1", "open");
+        org.mockito.Mockito.when(gateway.checkout("cus_test", "price_hobby", "satpass-checkout-123-0")).thenReturn(checkout);
+        org.mockito.Mockito.when(gateway.retrieveCheckout("cs_1")).thenReturn(checkout);
+        assertThat(billing().checkout("123", "hobby")).isEqualTo(checkout.url());
+        assertThat(billing().checkout("123", "hobby")).isEqualTo(checkout.url());
+        assertThatThrownBy(() -> billing().checkout("123", "pro")).isInstanceOf(IllegalArgumentException.class);
+        org.mockito.Mockito.verify(gateway, org.mockito.Mockito.times(1)).checkout(org.mockito.Mockito.any(), org.mockito.Mockito.any(), org.mockito.Mockito.any());
+        entitlement("hobby", 25000, "2026-10-19T12:00:00Z");
+        assertThatThrownBy(() -> billing().checkout("123", "pro")).isInstanceOf(IllegalArgumentException.class);
+        org.mockito.Mockito.when(gateway.portal("cus_test")).thenReturn("https://billing.stripe.com/1");
+        assertThat(billing().portal("123")).isEqualTo("https://billing.stripe.com/1");
+        accounts().register("456");
+        assertThatThrownBy(() -> billing().portal("456")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> billing().checkout("456", "hobby")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> billing().checkout("123", "price_attacker")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test void concurrentBillingEventsApplyOnceAndMonthlyAdmissionCannotOverspend() throws Exception {
+        var key = billingAccount();
+        entitlement("hobby", 7, "2026-10-19T12:00:00Z");
+        try (var workers = Executors.newFixedThreadPool(8)) {
+            var jobs = new java.util.ArrayList<java.util.concurrent.Future<?>>();
+            for (int i = 0; i < 8; i++) jobs.add(workers.submit(() -> billing().reconcile("evt_same", "cus_test")));
+            for (var job : jobs) job.get(15, java.util.concurrent.TimeUnit.SECONDS);
+            org.mockito.Mockito.verify(gateway, org.mockito.Mockito.times(1)).entitlement("cus_test");
+            var admissions = new java.util.ArrayList<java.util.concurrent.Future<Boolean>>();
+            for (int i = 0; i < 20; i++) admissions.add(workers.submit(() -> {
+                try { instance().admit(key.secret(), false); return true; }
+                catch (AccessFailure failure) { assertThat(failure.code()).isEqualTo("monthly-quota-exceeded"); return false; }
+            }));
+            int accepted = 0;
+            for (var job : admissions) if (job.get(15, java.util.concurrent.TimeUnit.SECONDS)) accepted++;
+            assertThat(accepted).isEqualTo(7);
+        }
+    }
+    @Test void expiredCheckoutAndCancellationAdvanceIdempotencyGeneration() {
+        billingAccount(); entitlement(null, 0, null);
+        jdbc.update("UPDATE customer_accounts SET checkout_id = 'cs_old' WHERE github_id = '123'");
+        org.mockito.Mockito.when(gateway.retrieveCheckout("cs_old")).thenReturn(
+                new dev.abdallah.satpass.billing.BillingGateway.Checkout("cs_old", null, "expired"));
+        org.mockito.Mockito.when(gateway.checkout("cus_test", "price_pro", "satpass-checkout-123-1")).thenReturn(
+                new dev.abdallah.satpass.billing.BillingGateway.Checkout("cs_new", "https://checkout.stripe.com/new", "open"));
+        assertThat(billing().checkout("123", "pro")).endsWith("/new");
+        org.mockito.Mockito.when(gateway.retrieveCheckout("cs_new")).thenReturn(
+                new dev.abdallah.satpass.billing.BillingGateway.Checkout("cs_new", null, "complete"));
+        billing().reconcile("evt_canceled", "cus_test");
+        assertThat(jdbc.queryForObject("SELECT checkout_attempt FROM customer_accounts WHERE github_id = '123'", Integer.class)).isEqualTo(2);
+        assertThat(jdbc.queryForMap("SELECT checkout_id FROM customer_accounts WHERE github_id = '123'").get("checkout_id")).isNull();
     }
 
 }

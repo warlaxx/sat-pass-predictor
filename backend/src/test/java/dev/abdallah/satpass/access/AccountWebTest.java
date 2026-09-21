@@ -65,7 +65,7 @@ class AccountWebTest {
     }
 
     @Test void dashboardDoesNotReturnTheSecretAndCsrfCanBeRead() throws Exception {
-        when(accounts.dashboard("123")).thenReturn(new AccountService.Dashboard(UUID.randomUUID(), "standard", true, 7, 100, 10, LocalDate.of(2026, 9, 20)));
+        when(accounts.dashboard("123")).thenReturn(new AccountService.Dashboard(UUID.randomUUID(), "standard", true, 7, 100, 10, LocalDate.of(2026, 9, 20), null, null));
         mvc.perform(get("/account/api/me").with(owner())).andExpect(status().isOk())
                 .andExpect(jsonPath("$.usedToday").value(7)).andExpect(jsonPath("$.secret").doesNotExist());
         mvc.perform(get("/account/api/csrf").with(owner())).andExpect(status().isOk())
