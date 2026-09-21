@@ -1,6 +1,10 @@
 package dev.abdallah.satpass.access;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
+import dev.abdallah.satpass.billing.BillingService;
+import dev.abdallah.satpass.billing.BillingProperties;
+import dev.abdallah.satpass.billing.StripeGateway;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -55,6 +59,7 @@ class AccessServicePostgresTest {
                 new TransactionTemplate(new DataSourceTransactionManager(source)), clock);
     }
     @BeforeEach void reset() {
+        jdbc.update("DELETE FROM billing_events");
         jdbc.update("DELETE FROM customer_accounts");
         jdbc.update("DELETE FROM api_usage");
         jdbc.update("DELETE FROM api_keys WHERE plan != 'demo'");
@@ -203,6 +208,107 @@ class AccessServicePostgresTest {
             assertThat(accounts().dashboard("123").usedToday()).isEqualTo(1);
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM api_keys WHERE owner = 'github:123'", Long.class)).isEqualTo(1);
         }
+    }
+
+    BillingService billing(StripeGateway stripe) {
+        return new BillingService(jdbc,
+                new TransactionTemplate(new DataSourceTransactionManager(source)), stripe,
+                new BillingProperties(true, "sk_test", "whsec_test", "price_hobby", "price_pro"),
+                "https://api.example");
+    }
+
+    @Test void webhookIsAtomicIdempotentAndUsesCurrentStateAcrossReplayAndRotation() throws Exception {
+        var stripe = mock(StripeGateway.class);
+        accounts().register("123");
+        var key = accounts().regenerate("123");
+        service.admit(key.secret(), false);
+        accounts().revoke("123");
+        jdbc.update("UPDATE customer_accounts SET stripe_customer_id = 'cus_test' WHERE github_id = '123'");
+        when(stripe.entitlement("cus_test")).thenReturn(new StripeGateway.Entitlement("pro", true));
+        billing(stripe).reconcile("evt_upgrade", "cus_test");
+        billing(stripe).reconcile("evt_upgrade", "cus_test");
+        verify(stripe, times(1)).entitlement("cus_test");
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("pro");
+        assertThat(accounts().dashboard("123").monthlyLimit()).isEqualTo(250000);
+        assertThat(accounts().dashboard("123").active()).isFalse();
+        accounts().regenerate("123");
+        assertThat(accounts().dashboard("123").usedThisMonth()).isEqualTo(1);
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("pro");
+        when(stripe.entitlement("cus_test")).thenThrow(new IllegalStateException("outage"));
+        assertThatThrownBy(() -> billing(stripe).reconcile("evt_cancel", "cus_test")).isInstanceOf(IllegalStateException.class);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM billing_events WHERE event_id = 'evt_cancel'", Integer.class)).isZero();
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("pro");
+        doReturn(new StripeGateway.Entitlement("free", false)).when(stripe).entitlement("cus_test");
+        billing(stripe).reconcile("evt_cancel", "cus_test");
+        billing(stripe).reconcile("evt_older_upgrade", "cus_test");
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("free");
+        assertThat(accounts().dashboard("123").usedThisMonth()).isEqualTo(1);
+    }
+
+    @Test void monthlyQuotaSpansDaysResetsAtUtcMonthAndSurvivesRotation() {
+        accounts().register("123");
+        var key = accounts().regenerate("123");
+        jdbc.update("INSERT INTO api_usage VALUES (?, '2026-09-01', 'passes', 999)", key.id());
+        service.admit(key.secret(), false);
+        now.set(Instant.parse("2026-09-30T23:59:00Z"));
+        var rotated = accounts().regenerate("123");
+        assertThatThrownBy(() -> service.admit(rotated.secret(), false)).isInstanceOfSatisfying(AccessFailure.class, e -> {
+            assertThat(e.code()).isEqualTo("monthly-quota-exceeded");
+            assertThat(e.resetsAt()).isEqualTo(Instant.parse("2026-10-01T00:00:00Z"));
+        });
+        assertThat(accounts().dashboard("123").usedThisMonth()).isEqualTo(1000);
+        now.set(Instant.parse("2026-10-01T00:00:00Z"));
+        service.admit(rotated.secret(), false);
+        assertThat(accounts().dashboard("123").usedThisMonth()).isEqualTo(1);
+    }
+
+    @Test void paidAccountWithoutKeyReceivesItsPlanWhenFirstKeyIsCreated() throws Exception {
+        var stripe = mock(StripeGateway.class);
+        accounts().register("123");
+        jdbc.update("UPDATE customer_accounts SET stripe_customer_id = 'cus_test' WHERE github_id = '123'");
+        when(stripe.entitlement("cus_test")).thenReturn(new StripeGateway.Entitlement("hobby", true));
+        billing(stripe).reconcile("evt_paid", "cus_test");
+        assertThat(accounts().dashboard("123").monthlyLimit()).isEqualTo(25000);
+        accounts().regenerate("123");
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("hobby");
+        assertThat(accounts().dashboard("123").monthlyLimit()).isEqualTo(25000);
+    }
+
+    @Test void checkoutRetriesReuseSessionAndExistingSubscribersGoToPortal() throws Exception {
+        var stripe = mock(StripeGateway.class);
+        accounts().register("123");
+        when(stripe.customer("123")).thenReturn("cus_test");
+        doReturn(new StripeGateway.Entitlement("free", false)).when(stripe).entitlement("cus_test");
+        var session = new StripeGateway.Checkout("cs_test", "https://checkout.stripe.com/test", "open");
+        when(stripe.checkout("cus_test", "price_hobby", "https://api.example", 1)).thenReturn(session);
+        when(stripe.checkout("cs_test")).thenReturn(session);
+        assertThat(billing(stripe).checkout("123", "hobby")).isEqualTo(session.url());
+        assertThat(billing(stripe).checkout("123", "pro")).isEqualTo(session.url());
+        verify(stripe, times(1)).checkout("cus_test", "price_hobby", "https://api.example", 1);
+        when(stripe.entitlement("cus_test")).thenReturn(new StripeGateway.Entitlement("hobby", true));
+        when(stripe.portal("cus_test", "https://api.example")).thenReturn("https://billing.stripe.com/test");
+        assertThat(billing(stripe).checkout("123", "pro")).isEqualTo("https://billing.stripe.com/test");
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("free"); // Redirects never grant access.
+        assertThatThrownBy(() -> billing(stripe).checkout("123", "price_attacker")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test void concurrentDuplicateWebhooksCommitOnlyOnce() throws Exception {
+        var stripe = mock(StripeGateway.class);
+        accounts().register("123");
+        accounts().regenerate("123");
+        jdbc.update("UPDATE customer_accounts SET stripe_customer_id = 'cus_test' WHERE github_id = '123'");
+        when(stripe.entitlement("cus_test")).thenReturn(new StripeGateway.Entitlement("hobby", true));
+        var start = new CountDownLatch(1);
+        try (var workers = Executors.newFixedThreadPool(4)) {
+            var jobs = new java.util.ArrayList<java.util.concurrent.Future<?>>();
+            for (int i = 0; i < 4; i++) jobs.add(workers.submit(() -> {
+                start.await(); billing(stripe).reconcile("evt_concurrent", "cus_test"); return null;
+            }));
+            start.countDown();
+            for (var job : jobs) job.get(15, java.util.concurrent.TimeUnit.SECONDS);
+        }
+        verify(stripe, times(1)).entitlement("cus_test");
+        assertThat(accounts().dashboard("123").plan()).isEqualTo("hobby");
     }
 
 }

@@ -83,3 +83,32 @@ test('lost refresh does not discard the only copy of a newly issued key', async 
   assert.equal(el('secret').value, '');
   dom.window.close();
 });
+
+test('billing controls are opt-in and monthly usage is displayed', async () => {
+  const { dom, el } = setup(path => path.endsWith('/billing') ? [200, { enabled: true }]
+    : [200, { ...dashboard, plan: 'hobby', usedThisMonth: 1200, monthlyLimit: 25000 }]);
+  await settle();
+  assert.equal(el('billing').hidden, false);
+  assert.equal(el('usage').textContent, '1200 / 25000 calls');
+  assert.equal(el('quota').max, 25000);
+  assert.match(el('reset').textContent, /first day of the month/);
+  dom.window.close();
+});
+
+test('checkout is CSRF-protected and a billing failure leaves the account usable', async () => {
+  const { dom, el, requests } = setup(path => {
+    if (path.endsWith('/csrf')) return [200, { headerName: 'X-CSRF-TOKEN', token: 'csrf-value' }];
+    if (path.includes('/checkout')) return [503, { detail: 'Billing unavailable. Please retry.' }];
+    if (path.endsWith('/billing')) return [200, { enabled: true }];
+    return [200, dashboard];
+  });
+  await settle(); el('hobby').click(); await settle();
+  const checkout = requests.find(r => r.path.includes('/checkout'));
+  assert.equal(checkout.path, '/account/api/billing/checkout?plan=hobby');
+  assert.equal(checkout.method, 'POST');
+  assert.equal(checkout.headers['X-CSRF-TOKEN'], 'csrf-value');
+  assert.equal(el('hobby').disabled, false);
+  assert.equal(el('dashboard').hidden, false);
+  assert.equal(el('message').textContent, 'Billing unavailable. Please retry.');
+  dom.window.close();
+});

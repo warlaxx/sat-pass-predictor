@@ -456,3 +456,10 @@ What that covers, concretely:
 
 A tool that writes code does not excuse you from being able to defend it. This section
 exists so that the repository is judged on what it demonstrates, not on what it hides.
+
+### Subscription billing (milestone 14)
+
+Opt-in Stripe Checkout and Customer Portal are available on the account dashboard.
+Signed, idempotent webhooks apply Free/Hobby/Pro monthly quotas without resetting
+usage on key rotation or plan changes. See [configuration, replay and sandbox
+acceptance](docs/billing.md). Stripe production activation remains pending.

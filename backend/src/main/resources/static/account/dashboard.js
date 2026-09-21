@@ -25,10 +25,13 @@ async function request(path, method = 'GET') {
 async function refresh() {
   current = await request('/account/api/me');
   el('signin').hidden = true; el('dashboard').hidden = false;
+  el('billing').hidden = !(await request('/account/api/billing')).enabled;
   el('plan').textContent = current.plan === 'standard' ? 'Free preview' : current.plan;
-  el('usage').textContent = `${current.usedToday} / ${current.dailyLimit} calls`;
-  el('quota').max = current.dailyLimit; el('quota').value = current.usedToday;
-  el('reset').textContent = `Usage for ${current.usageDay}. Resets at 00:00 UTC.`;
+  const used = current.usedThisMonth ?? current.usedToday;
+  const limit = current.monthlyLimit ?? current.dailyLimit;
+  el('usage').textContent = `${used} / ${limit} calls`;
+  el('quota').max = limit; el('quota').value = used;
+  el('reset').textContent = `Usage for ${current.usageDay.slice(0, 7)}. Resets on the first day of the month at 00:00 UTC.`;
   el('rate').textContent = `${current.minuteLimit} calls / minute`;
   el('key-state').textContent = !current.keyId ? 'No key created yet.' : current.active ? `Active · ${current.keyId}` : 'Key revoked.';
   el('regenerate').textContent = current.keyId ? 'Regenerate API key' : 'Create API key';
@@ -73,3 +76,14 @@ action(async () => {
     throw error;
   }
 });
+
+for (const plan of ['hobby', 'pro']) {
+  el(plan).addEventListener('click', () => action(async () => {
+    const result = await request(`/account/api/billing/checkout?plan=${plan}`, 'POST');
+    location.assign(result.url);
+  }));
+}
+el('portal').addEventListener('click', () => action(async () => {
+  const result = await request('/account/api/billing/portal', 'POST');
+  location.assign(result.url);
+}));

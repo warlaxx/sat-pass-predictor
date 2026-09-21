@@ -676,7 +676,7 @@ scaling. See [the activation runbook](docs/self-serve-accounts.md).
 
 ---
 
-## Milestone 14 — Billing (≈ 8 h · 2 weeks)
+## Milestone 14 — Billing (implemented; Stripe activation pending)
 
 - **Stripe Checkout** for subscription, **Stripe Customer Portal** for upgrade, downgrade
   and cancellation. Neither is a screen you build; both are a redirect. This is the single
@@ -693,6 +693,20 @@ A hypothesis to test, not a truth: **Free** 1 000 calls/month, shared key, no SL
 **Hobby €9** 25 000 calls, one key · **Pro €49** 250 000 calls, several keys, e-mail support
 · **Business €199** custom volume, invoice, response-time commitment. The gap between €9 and
 €49 is deliberate: the €9 tier exists so that saying yes is easy, not to make money.
+
+**Implemented:** opt-in Stripe Checkout and Customer Portal, signed webhooks with
+transactional deduplication, current-state reconciliation for out-of-order events,
+and a documented Stripe resend path. Self-serve Free/Hobby/Pro keys have monthly
+quotas (1,000 / 25,000 / 250,000), retained through plan changes and rotation.
+The dashboard shows monthly usage and hosted billing actions. One key per account
+is supported; multi-key Pro and custom Business remain hypotheses. The anonymous
+demo and existing operator keys retain their previous limits.
+
+**Verification:** real PostgreSQL migrations/accounting/rollback tests, signed
+webhook and session/CSRF tests, Stripe HTTP contract fixtures and dashboard DOM
+tests. **Release gate:** configure Stripe sandbox/live prices, Portal and webhook,
+then complete the provider acceptance flow in [the billing runbook](docs/billing.md).
+No payment was made and no production billing was activated by implementation.
 
 ---
 

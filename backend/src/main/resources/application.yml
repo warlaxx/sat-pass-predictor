@@ -126,3 +126,11 @@ server:
         http-only: true
         same-site: lax
         secure: ${ACCOUNT_COOKIE_SECURE:true}
+
+# Opt-in flat subscriptions; prices are recurring monthly EUR prices provisioned in Stripe.
+billing:
+  enabled: ${BILLING_ENABLED:false}
+  secret-key: ${STRIPE_SECRET_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  hobby-price: ${STRIPE_HOBBY_PRICE:}
+  pro-price: ${STRIPE_PRO_PRICE:}

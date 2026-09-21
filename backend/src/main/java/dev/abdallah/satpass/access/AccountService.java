@@ -1,5 +1,6 @@
 package dev.abdallah.satpass.access;
 
+import dev.abdallah.satpass.billing.BillingService;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -22,7 +23,7 @@ public class AccountService {
     }
 
     public record Dashboard(UUID keyId, String plan, boolean active, long usedToday,
-                            int dailyLimit, int minuteLimit, LocalDate usageDay) {}
+                            int dailyLimit, int minuteLimit, LocalDate usageDay, long usedThisMonth, int monthlyLimit) {}
 
     public void register(String githubId) {
         validate(githubId);
@@ -34,14 +35,21 @@ public class AccountService {
         LocalDate day = LocalDate.now(clock.withZone(ZoneOffset.UTC));
         var rows = jdbc.queryForList("""
                 SELECT k.*, (SELECT COALESCE(SUM(requests), 0) FROM api_usage
-                    WHERE key_id = k.id AND usage_day = ?) AS used_today
+                    WHERE key_id = k.id AND usage_day = ?) AS used_today, (SELECT COALESCE(SUM(requests), 0) FROM api_usage
+                    WHERE key_id = k.id AND usage_day >= ? AND usage_day < ?) AS used_month
                 FROM customer_accounts a JOIN api_keys k ON k.id = a.key_id WHERE a.github_id = ?
-                """, day, githubId);
-        if (rows.isEmpty()) return new Dashboard(null, "standard", false, 0, 100, 10, day);
+                """, day, day.withDayOfMonth(1), day.withDayOfMonth(1).plusMonths(1), githubId);
+        if (rows.isEmpty()) {
+            String plan = jdbc.queryForObject("SELECT plan FROM customer_accounts WHERE github_id = ?", String.class, githubId);
+            return new Dashboard(null, plan, false, 0, Integer.MAX_VALUE,
+                    BillingService.minuteLimit(plan), day, 0,
+                    BillingService.monthlyLimit(plan));
+        }
         var row = rows.getFirst();
         return new Dashboard((UUID) row.get("id"), (String) row.get("plan"), (Boolean) row.get("active"),
                 ((Number) row.get("used_today")).longValue(), ((Number) row.get("daily_limit")).intValue(),
-                ((Number) row.get("minute_limit")).intValue(), day);
+                ((Number) row.get("minute_limit")).intValue(), day, ((Number) row.get("used_month")).longValue(),
+                ((Number) row.get("monthly_limit")).intValue());
     }
 
     public AccessService.IssuedKey regenerate(String githubId) {
@@ -51,6 +59,10 @@ public class AccountService {
             if (keyId == null) {
                 var issued = access.issue("github:" + githubId, 100, 10);
                 jdbc.update("UPDATE customer_accounts SET key_id = ? WHERE github_id = ?", issued.id(), githubId);
+                String plan = jdbc.queryForObject("SELECT plan FROM customer_accounts WHERE github_id = ?", String.class, githubId);
+                jdbc.update("UPDATE api_keys SET plan = ?, monthly_limit = ?, daily_limit = 2147483647, minute_limit = ? WHERE id = ?",
+                        plan, BillingService.monthlyLimit(plan),
+                        BillingService.minuteLimit(plan), issued.id());
                 return issued;
             }
             String secret = access.newSecret();

@@ -1,7 +1,7 @@
 # Self-serve API accounts
 
 Milestone 13 adds GitHub login and a small dashboard at the **backend** origin's
-`/account/`: create a key, see UTC daily usage, regenerate, revoke and sign out.
+`/account/`: create a key, see UTC monthly usage, regenerate, revoke and sign out.
 The demo links there directly. Sessions never cross the Vercel/Render boundary;
 no credentialed CORS or frontend proxy is needed. `/api/passes` and `/v1/passes`
 continue using the milestone 11 admission rules.
@@ -49,7 +49,7 @@ Leave secure cookies enabled for every HTTPS deployment.
 - The account is registered after successful OAuth state verification, before
   redirecting to the dashboard. The GitHub access token is removed from the
   authorized-client session store once identity is established.
-- `GET /account/api/me` returns key ID, plan, active state, daily usage and
+- `GET /account/api/me` returns key ID, plan, active state, daily and monthly usage and
   limits. It never returns a hash or raw key.
 - `POST /account/api/key` creates or regenerates the caller's key and returns
   its raw secret **once**. `DELETE /account/api/key` revokes it. Neither accepts
@@ -58,9 +58,9 @@ Leave secure cookies enabled for every HTTPS deployment.
   daily/minute limits and all counters. Account and key row locks serialize
   concurrent creation/rotation and admission. Revocation blocks subsequent
   admission; a prediction already admitted may finish.
-- Self-serve keys start with **100 calls/day, 10/minute**, labelled “Free preview”.
-  The existing database plan is `standard`. These are preview limits, **not**
-  the monthly billing tiers hypothesized for milestone 14.
+- Since milestone 14, self-serve keys start on **Free: 1,000 calls per UTC calendar
+  month, 10/minute**. Existing self-serve keys migrate without losing usage. See
+  [billing](billing.md) for opt-in paid plans and activation.
 - State-changing requests and logout require a session-bound CSRF token from
   `GET /account/api/csrf`. Session cookies are HttpOnly, SameSite=Lax, Secure by
   default, and expire after 30 minutes of inactivity. Spring Security rotates

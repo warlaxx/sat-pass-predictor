@@ -50,6 +50,14 @@ public class AccessService {
             Instant minute = now.truncatedTo(ChronoUnit.MINUTES);
             long daily = jdbc.queryForObject("SELECT COALESCE(SUM(requests), 0) FROM api_usage WHERE key_id = ? AND usage_day = ?",
                     Long.class, id, day);
+            if (key.get("monthly_limit") != null) {
+                LocalDate month = day.withDayOfMonth(1);
+                long monthly = jdbc.queryForObject("SELECT COALESCE(SUM(requests), 0) FROM api_usage WHERE key_id = ? AND usage_day >= ? AND usage_day < ?",
+                        Long.class, id, month, month.plusMonths(1));
+                if (monthly >= ((Number) key.get("monthly_limit")).longValue())
+                    throw new AccessFailure("monthly-quota-exceeded", 429, "The monthly request quota has been reached.",
+                            month.plusMonths(1).atStartOfDay().toInstant(ZoneOffset.UTC));
+            }
             Instant oldMinute = key.get("minute_start") == null ? null : ((Timestamp) key.get("minute_start")).toInstant();
             int minuteUsed = minute.equals(oldMinute) ? ((Number) key.get("minute_used")).intValue() : 0;
             if (daily >= ((Number) key.get("daily_limit")).longValue()) {

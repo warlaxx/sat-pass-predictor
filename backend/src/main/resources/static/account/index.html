@@ -21,8 +21,14 @@
     <section id="dashboard" hidden aria-label="API dashboard">
       <div class="stats">
         <div><h2>Plan</h2><p id="plan"></p></div>
-        <div><h2>Daily usage · UTC</h2><p id="usage"></p><progress id="quota" aria-label="Daily quota used" max="100" value="0"></progress><small id="reset"></small></div>
+        <div><h2>Monthly usage · UTC</h2><p id="usage"></p><progress id="quota" aria-label="Monthly quota used" max="100" value="0"></progress><small id="reset"></small></div>
         <div><h2>Rate limit</h2><p id="rate"></p></div>
+      </div>
+      <div id="billing" hidden>
+        <h2>Subscription</h2>
+        <p>Free: 1,000 calls/month. Hobby: €9/month for 25,000 calls. Pro: €49/month for 250,000 calls. One key per account. No usage overages.</p>
+        <div class="actions"><button id="hobby" type="button">Choose Hobby</button><button id="pro" type="button">Choose Pro</button><button id="portal" class="secondary" type="button">Manage subscription</button></div>
+        <p>Manage plan changes and cancellation with Stripe. An unfinished checkout resumes the same selection. After payment, refresh to see your updated plan.</p>
       </div>
       <h2>Your API key</h2>
       <p id="key-state"></p>

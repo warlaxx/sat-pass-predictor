@@ -12,7 +12,12 @@ import org.springframework.web.bind.annotation.*;
 @ConditionalOnProperty(name = "account.enabled", havingValue = "true")
 public class AccountController {
     private final AccountService accounts;
-    public AccountController(AccountService accounts) { this.accounts = accounts; }
+    private final org.springframework.beans.factory.ObjectProvider<dev.abdallah.satpass.billing.BillingService> billing;
+    public AccountController(AccountService accounts, org.springframework.beans.factory.ObjectProvider<dev.abdallah.satpass.billing.BillingService> billing) {
+        this.accounts = accounts; this.billing = billing;
+    }
+    @GetMapping("/billing")
+    public ResponseEntity<?> billing() { return privateResponse(java.util.Map.of("enabled", billing.getIfAvailable() != null)); }
 
     @GetMapping("/csrf")
     public ResponseEntity<CsrfToken> csrf(CsrfToken token) { return privateResponse(token); }
