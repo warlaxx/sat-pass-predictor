@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TrackPointDto } from '../api/passes.model';
 import {
-  destinationPoint, isDaylit, sampleSubPointAt, subsolarPoint, toUnitVector, visibilityRadiusDeg,
+  destinationPoint, initialBearingDeg, isDaylit, sampleSubPointAt, subsolarPoint, swathRows, toUnitVector, visibilityRadiusDeg,
 } from './globe-geometry';
 
 const point = (seconds: number, latitudeDeg: number, longitudeDeg: number, altitudeKm = 420): TrackPointDto => ({
@@ -84,5 +84,44 @@ describe('sampleSubPointAt', () => {
     expect(sampleSubPointAt(track, 0)).toEqual(track[0].subPoint);
     expect(sampleSubPointAt(track, Infinity)).toEqual(track[1].subPoint);
     expect(sampleSubPointAt([], 0)).toBeUndefined();
+  });
+});
+
+describe('initialBearingDeg', () => {
+  it('reads north, east, south and west along the cardinal directions', () => {
+    const origin = { latitudeDeg: 0, longitudeDeg: 0 };
+    expect(initialBearingDeg(origin, { latitudeDeg: 1, longitudeDeg: 0 })).toBeCloseTo(0);
+    expect(initialBearingDeg(origin, { latitudeDeg: 0, longitudeDeg: 1 })).toBeCloseTo(90);
+    expect(initialBearingDeg(origin, { latitudeDeg: -1, longitudeDeg: 0 })).toBeCloseTo(180);
+    expect(initialBearingDeg(origin, { latitudeDeg: 0, longitudeDeg: -1 })).toBeCloseTo(270);
+  });
+});
+
+describe('swathRows', () => {
+  it('spans the full width across a northbound equatorial track, left edge to the west', () => {
+    const rows = swathRows([point(0, -1, 30), point(10, 0, 30), point(20, 1, 30)], 2800, 4);
+    expect(rows).toHaveLength(3);
+    const middle = rows[1];
+    expect(middle).toHaveLength(9);
+    // 1400 km each side of the sub-point on a 6371 km sphere: about 12.6 degrees.
+    expect(middle[0].longitudeDeg).toBeCloseTo(30 - 12.59, 1);
+    expect(middle[8].longitudeDeg).toBeCloseTo(30 + 12.59, 1);
+    expect(middle[4]).toEqual({ latitudeDeg: 0, longitudeDeg: 30, altitudeKm: 420 });
+    for (const edge of [middle[0], middle[8]]) expect(edge.latitudeDeg).toBeCloseTo(0, 6);
+  });
+  it('flips sides for a southbound track, as a descending pass does', () => {
+    const rows = swathRows([point(0, 1, 30), point(10, 0, 30), point(20, -1, 30)], 2800, 4);
+    expect(rows[1][0].longitudeDeg).toBeGreaterThan(30);
+    expect(rows[1][8].longitudeDeg).toBeLessThan(30);
+  });
+  it('keeps its width across the antimeridian', () => {
+    const rows = swathRows([point(0, 0, 179.5), point(10, 0, -179.5)], 2800, 4);
+    // Eastbound: the left edge is north of the equator, the right one south.
+    expect(rows[0][0].latitudeDeg).toBeCloseTo(12.59, 1);
+    expect(rows[1][8].latitudeDeg).toBeCloseTo(-12.59, 1);
+  });
+  it('draws nothing without a track or a width', () => {
+    expect(swathRows([point(0, 0, 0)], 2800)).toEqual([]);
+    expect(swathRows([point(0, 0, 0), point(10, 1, 0)], 0)).toEqual([]);
   });
 });

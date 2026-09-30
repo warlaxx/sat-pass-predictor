@@ -42,4 +42,26 @@ describe('Globe', () => {
     expect(fixture.nativeElement.textContent).toContain('could not load three.js');
     expect(fixture.nativeElement.querySelector('canvas')).not.toBeNull();
   });
+
+  it('names the imaging swath in the legend only for a known imager', async () => {
+    await TestBed.configureTestingModule({
+      imports: [Globe],
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: THREE_LOADER, useValue: () => Promise.reject(new Error('offline')) },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(Globe);
+    fixture.componentRef.setInput('pass', pass);
+    fixture.componentRef.setInput('observer', observer);
+    fixture.componentRef.setInput('threshold', 10);
+    fixture.componentRef.setInput('noradId', 25544);
+    await fixture.autoDetectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('image swath');
+
+    fixture.componentRef.setInput('noradId', 57166);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.legend').textContent).toContain('image swath ~2,800 km (MSU-MR, LRPT)');
+  });
 });

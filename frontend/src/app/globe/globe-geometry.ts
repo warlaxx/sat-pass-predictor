@@ -107,3 +107,38 @@ export function sampleSubPointAt(track: readonly TrackPointDto[], instantMs: num
     altitudeKm: a.altitudeKm + (b.altitudeKm - a.altitudeKm) * fraction,
   };
 }
+
+/** Initial great-circle bearing from `from` to `to`, in degrees clockwise from north. */
+export function initialBearingDeg(from: LatLon, to: LatLon): number {
+  const lat1 = from.latitudeDeg * D2R, lat2 = to.latitudeDeg * D2R;
+  const deltaLon = (to.longitudeDeg - from.longitudeDeg) * D2R;
+  const y = Math.sin(deltaLon) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
+  return (Math.atan2(y, x) * R2D + 360) % 360;
+}
+
+/**
+ * The ground an imager sweeps along a track: one row per sample, running from the left
+ * edge (facing the direction of travel) through the sub-point to the right edge.
+ *
+ * `widthKm` is the whole cross-track swath measured on the ground, centred on the
+ * sub-point — the figure instrument sheets quote. Each row is split into
+ * `2 * halfSteps` segments so a mesh built on it hugs the sphere instead of cutting
+ * through it: a flat triangle 25 degrees wide would sink below the surface at its middle.
+ */
+export function swathRows(track: readonly TrackPointDto[], widthKm: number, halfSteps = 8): LatLon[][] {
+  if (track.length < 2 || !(widthKm > 0)) return [];
+  const halfWidthDeg = widthKm / 2 / EARTH_RADIUS_KM * R2D;
+  return track.map((sample, i) => {
+    // Central difference, one-sided at the ends: the heading at the sample itself.
+    const before = track[Math.max(0, i - 1)].subPoint;
+    const after = track[Math.min(track.length - 1, i + 1)].subPoint;
+    const heading = initialBearingDeg(before, after);
+    const row: LatLon[] = [];
+    for (let step = -halfSteps; step <= halfSteps; step++) {
+      const distance = Math.abs(step) / halfSteps * halfWidthDeg;
+      row.push(step === 0 ? sample.subPoint : destinationPoint(sample.subPoint, heading + (step < 0 ? -90 : 90), distance));
+    }
+    return row;
+  });
+}

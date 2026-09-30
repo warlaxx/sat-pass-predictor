@@ -427,6 +427,23 @@ fallback — via the injectable loader. The WebGL rendering itself has no jsdom 
 assert against; it was checked by hand against the real local API, at desktop and mobile
 widths, including drag-to-rotate and play/pause staying in sync with the sky chart.
 
+**Addition (September 2026): the imaging swath, suggested by a SatDump user.** For a
+weather satellite, the question before a pass is not only where it is but what the image
+will show. The globe now draws the instrument's swath as a translucent band along the
+track. Three decisions keep it honest:
+
+- **The width is a property of the instrument, not of the orbit**, so it lives in a small
+  table keyed by NORAD number (`imaging-swath.ts`): MSU-MR 2,800 km for Meteor-M N2-3 and
+  N2-4, AVHRR 2,900 km for Metop-B, nominal figures from WMO OSCAR. NOAA-15/18/19 (APT,
+  decommissioned in 2025) and Metop-C (AHRPT switched off) are left out on purpose: a
+  swath nobody can receive would only mislead. Other satellites draw no band.
+- **The band covers AOS to LOS at the chosen threshold**, because that is the stretch the
+  station hears. Raising the threshold to the elevation at which the user's setup actually
+  decodes shortens the band accordingly; the legend says it is an estimate.
+- **It is still no propagation in the browser.** `swathRows` only offsets each API
+  `subPoint` perpendicular to the track heading, and subdivides each row so the mesh
+  follows the sphere rather than cutting through it.
+
 ---
 
 ## Milestone 9 — Showcase pass (done, apart from the demo GIF)

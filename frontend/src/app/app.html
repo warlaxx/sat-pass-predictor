@@ -163,7 +163,7 @@
 
     <div class="wrap section" appReveal>
       <app-pass-viewer [pass]="pass" [threshold]="loaded.minElevationDeg" [elementsAge]="ageAtRise(pass)">
-        <app-globe [pass]="pass" [observer]="loaded.observer" [threshold]="loaded.minElevationDeg" />
+        <app-globe [pass]="pass" [observer]="loaded.observer" [threshold]="loaded.minElevationDeg" [noradId]="loaded.satellite.noradId" />
       </app-pass-viewer>
     </div>
   }

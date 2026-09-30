@@ -27,6 +27,11 @@ canvas.dragging { cursor: grabbing; }
 .dot.observer { background: var(--observer); }
 .dot.satellite { background: #fff; }
 .stroke { border-top: 2.5px solid var(--accent); display: inline-block; width: 22px; }
+.band { display: inline-block; height: 10px; width: 22px; }
+.band.swath {
+  background: color-mix(in srgb, var(--swath) 30%, transparent);
+  border-block: 1.5px solid color-mix(in srgb, var(--swath) 80%, transparent);
+}
 @media (width < 640px) {
   header { padding: 18px 16px 6px; }
   h3 { font-size: 22px; }

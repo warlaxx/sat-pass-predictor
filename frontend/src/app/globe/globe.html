@@ -7,7 +7,7 @@
     Ground track coloured by sunlight on the satellite. Drag to rotate; the pass list is the text equivalent.
   </p>
   <div class="stage">
-    <canvas #canvas aria-label="Globe: ground track, visibility circle and observer position for the selected pass"></canvas>
+    <canvas #canvas aria-label="Globe: ground track, imaging swath when known, visibility circle and observer position for the selected pass"></canvas>
     @if (!ready()) {
       <p class="fallback" role="status">
         @if (failed()) {
@@ -23,6 +23,11 @@
     <span><i class="dot day"></i>satellite fully sunlit</span>
     <span><i class="dot night"></i>eclipse / partial eclipse</span>
     <span><i class="stroke footprint"></i>visibility circle at {{ threshold() }}&deg;</span>
+    @if (swath(); as swath) {
+      <span title="Nominal swath of the imager, drawn from AOS to LOS: roughly what a decoded image covers. The real image is shorter where the signal is too weak to decode.">
+        <i class="band swath"></i>image swath ~{{ swath.widthKm | number }} km ({{ swath.instrument }}, {{ swath.downlink }})
+      </span>
+    }
     <span><i class="dot observer"></i>observer</span>
     <span><i class="dot satellite"></i>satellite</span>
   </p>
