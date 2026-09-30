@@ -70,6 +70,9 @@ export class SatellitePicker implements OnInit {
       )),
       takeUntilDestroyed(inject(DestroyRef)),
     ).subscribe(lookup => {
+      // A response for text the field no longer holds, or that lands after the list was
+      // closed, must never become choosable: it would pick a satellite for another query.
+      if (!this.open() || lookup.query !== this.text().trim()) return;
       this.searching.set(false);
       this.lookup.set(lookup);
       this.active.set(lookup.matches.length ? 0 : -1);
@@ -82,6 +85,9 @@ export class SatellitePicker implements OnInit {
 
   protected onInput(value: string): void {
     this.text.set(value);
+    // The suggestions on screen belong to the previous text; Enter must not choose one.
+    this.lookup.set(undefined);
+    this.active.set(-1);
     const id = asNoradId(value);
     const searchable = id !== undefined || value.trim().replace(/[^a-z0-9]/gi, '').length >= 2;
 
@@ -112,7 +118,8 @@ export class SatellitePicker implements OnInit {
         this.active.update(index => (index + (event.key === 'ArrowDown' ? 1 : count - 1)) % count);
         return;
       case 'Enter':
-        if (this.open() && this.active() >= 0 && this.active() < count) {
+        if (this.open() && this.lookup()?.query === this.text().trim()
+            && this.active() >= 0 && this.active() < count) {
           // Choosing, not submitting the surrounding form.
           event.preventDefault();
           this.choose(this.matches()[this.active()]);

@@ -126,6 +126,37 @@ describe('SatellitePicker', () => {
     expect(input.value).toBe('');
   });
 
+  it('never chooses a suggestion that belongs to earlier text', async () => {
+    const { fixture, type, key, changed, picked } = await create();
+    type('iss');
+    answer('iss', [ISS]);
+    fixture.detectChanges();
+
+    type('hst');
+    // Enter within the debounce: the ISS suggestion is gone, nothing is chosen.
+    expect(key('Enter').defaultPrevented).toBe(false);
+    expect(picked).toEqual([]);
+    expect(changed.at(-1)).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('[role="option"]')).toHaveLength(0);
+    answer('hst', [{ noradId: 20580, name: 'HST' }]);
+  });
+
+  it('ignores a response that lands after the text became a NORAD number', async () => {
+    const { fixture, type, key, changed, picked } = await create();
+    type('iss');
+    vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+    const late = http.expectOne(r => r.url === '/api/satellites');
+    type('48274');
+    late.flush({ results: [ISS], catalogFetchedAt: '2026-09-30T12:00:00Z' });
+    fixture.detectChanges();
+
+    key('ArrowDown');
+    key('Enter');
+    expect(picked).toEqual([]);
+    expect(changed.at(-1)).toBe(48274);
+    expect(fixture.nativeElement.querySelectorAll('[role="option"]')).toHaveLength(0);
+  });
+
   it('lets Enter submit the form when no suggestion is highlighted', async () => {
     const { key } = await create();
     expect(key('Enter').defaultPrevented).toBe(false);
