@@ -8,6 +8,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withResourceNotFound;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import dev.abdallah.satpass.OrekitTest;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.orekit.data.DataContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.ResourceAccessException;
@@ -95,9 +97,9 @@ class CelestrakTleClientTest {
     }
 
     /**
-     * The main trap of the GP API: an unknown number does not give a 404 but a 200 whose
-     * body is an English sentence. A client that only looks at the HTTP status would try
-     * to parse "No GP data found" as a TLE.
+     * The main trap of the GP API, in its milestone 4 form: an unknown number gives a 200
+     * whose body is an English sentence. A client that only looks at the HTTP status would
+     * try to parse "No GP data found" as a TLE.
      */
     @Test
     void treatsTheNoGpDataBodyAsAnUnknownSatellite() {
@@ -197,12 +199,34 @@ class CelestrakTleClientTest {
                 .withMessageContaining("500");
     }
 
+    private void respondWithStatus(HttpStatus status, String body, MediaType type) {
+        server.expect(requestTo(BASE_URL + "/NORAD/elements/gp.php?CATNR=25544&FORMAT=TLE"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(status).contentType(type).body(body));
+    }
+
     /**
-     * A 404 is an outage, not an unknown satellite. The GP API never answers 404 for an
-     * object it does not hold — it answers 200 with {@code No GP data found}. So a 404
-     * comes from something else on the path: a relay whose route was removed, a proxy
-     * that renamed the endpoint. Reading it as "not found" would make the store drop the
-     * satellite and the cached TLE with it, on the strength of a misrouted request.
+     * The same sentence, in its current form: observed on 30 September 2026, the GP API
+     * answers an unknown number with a 404 carrying the marker. Both forms may be served,
+     * and both mean the same thing: the catalogue does not hold this object — typically
+     * because it has re-entered, which the store must be told so that it forgets it.
+     */
+    @Test
+    void treatsA404CarryingTheNoGpDataMarkerAsAnUnknownSatellite() {
+        respondWithStatus(HttpStatus.NOT_FOUND, "No GP data found\r\n", MediaType.TEXT_PLAIN);
+
+        assertThatExceptionOfType(TleNotFoundException.class)
+                .isThrownBy(() -> client.fetch(25544))
+                .satisfies(e -> assertThat(e.noradId()).isEqualTo(25544));
+        server.verify();
+    }
+
+    /**
+     * A bare 404 is an outage, not an unknown satellite. Only CelesTrak's own sentence
+     * says the catalogue does not hold an object; a 404 without it comes from something
+     * else on the path — a relay whose route was removed, a proxy that renamed the
+     * endpoint. Reading it as "not found" would make the store drop the satellite and the
+     * cached TLE with it, on the strength of a misrouted request.
      */
     @Test
     void treatsA404AsAnOutageAndNotAsAnUnknownSatellite() {
@@ -212,6 +236,39 @@ class CelestrakTleClientTest {
         assertThatExceptionOfType(TleUnavailableException.class)
                 .isThrownBy(() -> client.fetch(25544))
                 .withMessageContaining("404");
+    }
+
+    /** What a removed relay route or a platform's error page looks like: not the marker. */
+    @Test
+    void treatsA404WithAnHtmlBodyAsAnOutage() {
+        respondWithStatus(HttpStatus.NOT_FOUND,
+                "<!DOCTYPE html><html><body><h1>404: NOT_FOUND</h1></body></html>",
+                MediaType.TEXT_HTML);
+
+        assertThatExceptionOfType(TleUnavailableException.class)
+                .isThrownBy(() -> client.fetch(25544))
+                .withMessageContaining("404");
+        server.verify();
+    }
+
+    @Test
+    void treatsA404WithAnEmptyBodyAsAnOutage() {
+        respondWithStatus(HttpStatus.NOT_FOUND, "", MediaType.TEXT_PLAIN);
+
+        assertThatExceptionOfType(TleUnavailableException.class)
+                .isThrownBy(() -> client.fetch(25544))
+                .withMessageContaining("404");
+        server.verify();
+    }
+
+    /** The marker is a not-found only under 404: under a 5xx the service is failing. */
+    @Test
+    void treatsAServerErrorCarryingTheMarkerAsAnOutage() {
+        respondWithStatus(HttpStatus.SERVICE_UNAVAILABLE, "No GP data found", MediaType.TEXT_PLAIN);
+
+        assertThatExceptionOfType(TleUnavailableException.class)
+                .isThrownBy(() -> client.fetch(25544))
+                .withMessageContaining("503");
     }
 
     /** Which endpoint failed is part of the diagnosis when several are configured. */
