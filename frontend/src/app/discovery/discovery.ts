@@ -6,6 +6,7 @@ import { catchError, forkJoin, map, of } from 'rxjs';
 import { PassDto, PassesResponse } from '../api/passes.model';
 import { PassQuery, toParams } from '../api/passes.query';
 import { SatellitePicker } from '../satellite-picker/satellite-picker';
+import { visibleWindow } from '../calendar/ics';
 
 export interface Opportunity {
   response: PassesResponse;
@@ -29,11 +30,8 @@ export function parseSatellites(text: string): number[] {
 /** First consecutive run of favourable samples, ranked by visibility onset, not AOS. */
 export function nextOpportunity(response: PassesResponse): Opportunity | undefined {
   const candidates = response.passes.flatMap(pass => {
-    const first = pass.track.findIndex(point => point.visible);
-    if (first < 0) return [];
-    let last = first;
-    while (last + 1 < pass.track.length && pass.track[last + 1].visible) last++;
-    return [{ response, pass, start: pass.track[first].instant, end: pass.track[last].instant }];
+    const window = visibleWindow(pass);
+    return window ? [{ response, pass, ...window }] : [];
   });
   return candidates.sort((a, b) => Date.parse(a.start) - Date.parse(b.start))[0];
 }

@@ -16,6 +16,7 @@ import { SkyPanorama } from './sky-panorama/sky-panorama';
 import { facingAzimuth } from './sky-panorama/panorama-geometry';
 import { groupIntoNights } from './pass-ribbon/nights';
 import { compassPoint, utcOffsetLabel } from './format';
+import { buildCalendar, calendarFileName } from './calendar/ics';
 
 const GEOLOCATION_ERRORS: Record<number, string> = {
   1: 'Permission refused. Type the position in instead.',
@@ -138,6 +139,26 @@ export class App {
     if (!response) return undefined;
     const wait = (Date.parse(pass.aos.instant) - Date.parse(response.computedAt)) / 1000;
     return response.tle.ageSeconds + Math.max(0, wait);
+  }
+
+  // --- Calendar export ----------------------------------------------------
+
+  /** The .ics of the potentially visible passes on screen; undefined when there is none. */
+  protected readonly calendar = computed(() => {
+    const response = this.response();
+    return response ? buildCalendar(response) : undefined;
+  });
+
+  protected downloadCalendar(): void {
+    const response = this.response();
+    const calendar = this.calendar();
+    if (!response || !calendar) return;
+    const url = URL.createObjectURL(new Blob([calendar], { type: 'text/calendar;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = calendarFileName(response);
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   protected readonly isEmptyResult = computed(() => {
