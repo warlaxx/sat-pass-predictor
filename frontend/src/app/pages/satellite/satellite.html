@@ -1,0 +1,91 @@
+@let loaded = response();
+
+<section class="page-hero wrap" appReveal aria-labelledby="sat-title">
+  <span class="kicker">
+    <a routerLink="/satellites">Satellites</a> ·
+    <span class="num">NORAD {{ id() ?? noradId() }}</span>
+  </span>
+  <h2 id="sat-title">{{ loaded?.satellite?.name ?? (id() ? 'Satellite ' + id() : 'Unknown satellite') }}</h2>
+  @if (orbit(); as o) {
+    <p class="lede">
+      {{ regime() }} at about <span class="num">{{ (o.perigeeKm + o.apogeeKm) / 2 | number: '1.0-0' }}</span> km,
+      inclined <span class="num">{{ o.inclinationDeg | number: '1.1-1' }}°</span>, one revolution every
+      <span class="num">{{ o.periodMinutes | number: '1.0-0' }}</span> minutes.
+      {{ o.inclinationDeg < 90
+        ? 'It can pass over latitudes up to about ' + (o.inclinationDeg | number: '1.0-0') + '° north and south, and is seen from somewhat further.'
+        : 'Its orbit is retrograde and passes over the poles: every place on Earth sees it.' }}
+    </p>
+  }
+  <div class="actions">
+    @if (id()) {
+      <a class="btn primary" routerLink="/" [queryParams]="predictorParams()">Open in the predictor</a>
+      <a class="btn ghost" routerLink="/alerts" [queryParams]="{ norad: id() }">Set up reminders</a>
+    }
+  </div>
+</section>
+
+@if (id() === undefined) {
+  <div class="wrap">
+    <p class="state error" role="alert">“{{ noradId() }}” is not a NORAD number. They run from 1 to 99999.</p>
+  </div>
+} @else if (resource.isLoading() && !loaded) {
+  <div class="wrap">
+    <p class="state" role="status"><span class="dot wait" aria-hidden="true"></span>Retrieving orbital elements and computing passes…</p>
+  </div>
+} @else if (problem(); as failure) {
+  <div class="wrap page-section">
+    <div class="note" role="alert">
+      <b>{{ failure.title }}.</b> {{ failure.detail }}
+      <div class="actions"><button type="button" class="btn ghost small" (click)="reload()">Try again</button></div>
+    </div>
+  </div>
+} @else if (loaded) {
+  <app-tle-banner [tle]="loaded.tle" />
+
+  @if (orbit(); as o) {
+    <section class="page-section wrap" appReveal aria-labelledby="orbit-title">
+      <div class="section-head">
+        <h2 id="orbit-title">Orbit</h2>
+        <span>From the mean motion of the elements; right to a few kilometres</span>
+      </div>
+      <div class="facts">
+        <div class="fact"><span class="label">Inclination</span><span class="num value">{{ o.inclinationDeg | number: '1.2-2' }}°</span></div>
+        <div class="fact"><span class="label">Period</span><span class="num value">{{ o.periodMinutes | number: '1.1-1' }} min</span></div>
+        <div class="fact"><span class="label">Revolutions per day</span><span class="num value">{{ o.revolutionsPerDay | number: '1.2-2' }}</span></div>
+        <div class="fact"><span class="label">Perigee</span><span class="num value">{{ o.perigeeKm | number: '1.0-0' }} km</span></div>
+        <div class="fact"><span class="label">Apogee</span><span class="num value">{{ o.apogeeKm | number: '1.0-0' }} km</span></div>
+        <div class="fact"><span class="label">Eccentricity</span><span class="num value">{{ o.eccentricity | number: '1.4-7' }}</span></div>
+        <div class="fact"><span class="label">Revolution number at epoch</span><span class="num value">{{ o.revolutionNumber | number }}</span></div>
+      </div>
+      <app-code-block label="Elements used (TLE)" [code]="tleText()" />
+    </section>
+  }
+
+  <section class="page-section wrap" appReveal aria-labelledby="next-title">
+    <div class="section-head">
+      <h2 id="next-title">Next passes</h2>
+      <span>
+        Above {{ loaded.minElevationDeg }}° over the next {{ windowHours }} h ·
+        {{ loaded.passes.length }} passes, {{ visibleCount() }} potentially visible
+      </span>
+    </div>
+    <div class="observer">
+      <span class="muted">
+        Seen from
+        <span class="num">{{ observer().lat | number: '1.2-4' }}°, {{ observer().lon | number: '1.2-4' }}°</span>
+        {{ isDefaultObserver() ? '(Lyon, the default)' : '(your position)' }}
+      </span>
+      <button type="button" class="btn ghost small" [disabled]="locating()" (click)="useMyPosition()">
+        {{ locating() ? 'Locating…' : 'Use my position' }}
+      </button>
+      @if (resource.isLoading()) { <span class="muted" role="status">Updating…</span> }
+      @if (locationError(); as failure) { <span class="error" role="status">{{ failure }}</span> }
+    </div>
+    @if (loaded.passes.length === 0) {
+      <p class="state" role="status">No pass above {{ loaded.minElevationDeg }}° from here in the next {{ windowHours }} hours.</p>
+    } @else {
+      <app-pass-table [passes]="loaded.passes" (select)="inspect($event)" />
+      <p class="muted">Choose a pass to open it in the predictor, with the globe and the sky chart.</p>
+    }
+  </section>
+}

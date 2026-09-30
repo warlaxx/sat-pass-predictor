@@ -56,6 +56,22 @@ export function calendarFileName(response: PassesResponse): string {
   return `${slug || response.satellite.noradId}-visible-passes.ics`;
 }
 
+/**
+ * Hands the calendar of a response to the browser as a download; false when it has no
+ * potentially visible pass, so there is nothing to save.
+ */
+export function saveCalendar(response: PassesResponse): boolean {
+  const calendar = buildCalendar(response);
+  if (!calendar) return false;
+  const url = URL.createObjectURL(new Blob([calendar], { type: 'text/calendar;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = calendarFileName(response);
+  link.click();
+  URL.revokeObjectURL(url);
+  return true;
+}
+
 function event(response: PassesResponse, pass: PassDto, window: VisibleWindow): string[] {
   const { satellite, observer, tle } = response;
   const peak = pass.culmination;
