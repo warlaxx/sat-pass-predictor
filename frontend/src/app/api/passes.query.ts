@@ -8,6 +8,11 @@ export interface PassQuery {
   readonly alt: number;
   readonly hours: number;
   readonly minElevation: number;
+  /**
+   * Downlink carrier, in MHz. Optional: without it the API still publishes the range
+   * rate, and only the Doppler shift in hertz is missing.
+   */
+  readonly frequencyMhz?: number;
 }
 
 /** Lyon, and the defaults the API itself applies. Same numbers, one source. */
@@ -28,8 +33,17 @@ export const DEFAULT_QUERY: PassQuery = {
  */
 export const MAX_WINDOW_HOURS = 240;
 
+/** The bounds of `frequencyMhz` in `PassController`, repeated for the same reason. */
+export const MIN_FREQUENCY_MHZ = 1;
+export const MAX_FREQUENCY_MHZ = 300_000;
+
+/** The query as request parameters. An absent frequency is left out, never sent empty. */
 export function toParams(query: PassQuery): Record<string, number> {
-  return { ...query };
+  const params: Record<string, number> = {};
+  for (const [name, value] of Object.entries(query)) {
+    if (value !== undefined && value !== null) params[name] = value;
+  }
+  return params;
 }
 
 /** True when the response is well formed but holds nothing to draw. */

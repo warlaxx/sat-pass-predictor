@@ -4,6 +4,8 @@ import {
   compassPoint,
   elevationBand,
   formatAge,
+  formatCountdown,
+  formatDoppler,
   formatDuration,
   hasIllumination,
   shadowEntry,
@@ -93,5 +95,27 @@ describe('shadowEntry', () => {
   it('says nothing while the API reports no illumination', () => {
     expect(shadowEntry([at(0, false), at(10, false)])).toBeUndefined();
     expect(hasIllumination([at(0, false), at(10, false)])).toBe(false);
+  });
+});
+
+describe('formatDoppler', () => {
+  it('signs every shift, and switches to kilohertz at one kilohertz', () => {
+    expect(formatDoppler(3421.7)).toBe('+3.42 kHz');
+    expect(formatDoppler(-3421.7)).toBe('−3.42 kHz');
+    expect(formatDoppler(-850.4)).toBe('−850 Hz');
+    expect(formatDoppler(0)).toBe('±0 Hz');
+  });
+});
+
+describe('formatCountdown', () => {
+  it('keeps two units at most, and seconds only under an hour', () => {
+    expect(formatCountdown(45_900)).toBe('45 s');
+    expect(formatCountdown((14 * 60 + 5) * 1000)).toBe('14 min 05 s');
+    expect(formatCountdown((2 * 3600 + 14 * 60 + 59) * 1000)).toBe('2 h 14 min');
+    expect(formatCountdown((51 * 3600) * 1000)).toBe('2 d 3 h');
+  });
+
+  it('never counts down below zero', () => {
+    expect(formatCountdown(-5000)).toBe('0 s');
   });
 });

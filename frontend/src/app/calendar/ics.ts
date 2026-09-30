@@ -1,5 +1,6 @@
 import { PassDto, PassesResponse } from '../api/passes.model';
 import { compassPoint } from '../format';
+import { saveText, slug } from '../shared/download';
 
 /**
  * The potentially visible passes of a response, as an iCalendar (RFC 5545) file.
@@ -52,8 +53,7 @@ export function buildCalendar(response: PassesResponse): string | undefined {
 
 /** "iss-zarya-visible-passes.ics" - something a downloads folder can hold several of. */
 export function calendarFileName(response: PassesResponse): string {
-  const slug = response.satellite.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  return `${slug || response.satellite.noradId}-visible-passes.ics`;
+  return `${slug(response.satellite.name) || response.satellite.noradId}-visible-passes.ics`;
 }
 
 /**
@@ -63,12 +63,7 @@ export function calendarFileName(response: PassesResponse): string {
 export function saveCalendar(response: PassesResponse): boolean {
   const calendar = buildCalendar(response);
   if (!calendar) return false;
-  const url = URL.createObjectURL(new Blob([calendar], { type: 'text/calendar;charset=utf-8' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = calendarFileName(response);
-  link.click();
-  URL.revokeObjectURL(url);
+  saveText(calendar, 'text/calendar;charset=utf-8', calendarFileName(response));
   return true;
 }
 
