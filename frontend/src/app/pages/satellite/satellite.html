@@ -41,6 +41,9 @@
   </div>
 } @else if (loaded) {
   <app-tle-banner [tle]="loaded.tle" />
+  @if (loaded.passes.length) {
+    <app-next-pass class="wrap" [passes]="loaded.passes" (select)="inspect($event)" />
+  }
 
   @if (orbit(); as o) {
     <section class="page-section wrap" appReveal aria-labelledby="orbit-title">

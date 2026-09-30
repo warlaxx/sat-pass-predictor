@@ -146,6 +146,28 @@ describe('HomePage geolocation', () => {
     // The previous number (25544) must not be computed under a name the user typed.
     TestBed.inject(HttpTestingController).expectNone('/api/passes');
   });
+
+  it('asks for the Doppler shift only when a downlink frequency is given', async () => {
+    const fixture = TestBed.createComponent(HomePage);
+    await fixture.whenStable();
+    const frequency = fixture.nativeElement.querySelector('input.w-freq') as HTMLInputElement;
+    const submit = () => {
+      fixture.nativeElement.querySelector('form.query').dispatchEvent(new Event('submit', { cancelable: true }));
+      TestBed.tick();
+      return TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/passes');
+    };
+
+    frequency.value = '145.8';
+    frequency.dispatchEvent(new Event('input'));
+    const withFrequency = submit();
+    expect(withFrequency.request.params.get('frequencyMhz')).toBe('145.8');
+
+    // Emptied, the field means "no frequency": the parameter is left out, never sent as 0.
+    frequency.value = '';
+    frequency.dispatchEvent(new Event('input'));
+    const without = submit();
+    expect(without.request.params.has('frequencyMhz')).toBe(false);
+  });
 });
 
 describe('a shared link', () => {
@@ -159,6 +181,10 @@ describe('a shared link', () => {
     expect(queryFromUrl(params({ norad: '20580', lat: '-33.92', lon: 'abc', minEl: '25' }))).toEqual({
       noradId: 20580, lat: -33.92, lon: 4.832, alt: 170, hours: 48, minElevation: 25,
     });
+  });
+
+  it('carries the downlink frequency when the link names one', () => {
+    expect(queryFromUrl(params({ norad: '25544', freq: '145.8' }))?.frequencyMhz).toBe(145.8);
   });
 
   it('opens on its result: the form is filled and the prediction requested once', async () => {

@@ -824,7 +824,10 @@ Do not build this list in advance. It is the menu, and customers choose from it.
   first order (`(v/c)²` is ~0.1 Hz at 145 MHz). The scaling lives in the DTO, so the
   cached prediction serves every frequency. `TrackSamplingTest` checks the rate against
   the sampled ranges (trapezoid, 50 m/s bound; 10 m/s measured) and its sign at AOS/LOS.
-  The viewer shows the live range rate; the web form does not yet ask for a frequency.
+  The viewer shows the live range rate, and the live Doppler shift when the form's
+  optional downlink frequency is filled. A pass profile draws elevation and Doppler (or
+  range rate) against time on the shared clock, marks the closest approach where the
+  shift crosses zero, and downloads the pass's samples as CSV, built in the browser.
 - **Webhooks and scheduled alerts** — "call my endpoint 20 minutes before the next pass".
   Sells on the customer's ops burden, not on orbital mechanics.
 - **Batch endpoints** — many satellites or many sites in one call. Cheap to serve once

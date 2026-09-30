@@ -56,6 +56,17 @@
     </label>
   </div>
 
+  <div class="group">
+    <span class="caption" id="q-frequency">Downlink <span class="optional">(optional)</span></span>
+    <label class="field">
+      <span class="visually-hidden">Downlink frequency in megahertz, for the Doppler shift</span>
+      <input class="num w-freq" type="number" step="any" [min]="frequencyBounds.min" [max]="frequencyBounds.max"
+             placeholder="145.800" aria-describedby="q-frequency"
+             [value]="form().frequencyMhz ?? ''" (input)="setFrequency($any($event.target).value)">
+      <span class="unit" aria-hidden="true">MHz</span>
+    </label>
+  </div>
+
   <button type="submit" class="primary" [class.computing]="loading()" [disabled]="loading()">
     <svg class="compute-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="32 18" />
@@ -114,6 +125,7 @@
     }
   </nav>
   <app-tle-banner [tle]="loaded.tle" />
+  <app-next-pass class="wrap" [passes]="loaded.passes" (select)="selected.set($event)" />
 
   @if (selectedPass(); as pass) {
     <section id="passes" class="hero" aria-labelledby="pass-title">
@@ -153,6 +165,7 @@
       <app-pass-viewer [pass]="pass" [threshold]="loaded.minElevationDeg" [elementsAge]="ageAtRise(pass)">
         <app-globe [pass]="pass" [observer]="loaded.observer" [threshold]="loaded.minElevationDeg" [noradId]="loaded.satellite.noradId" />
       </app-pass-viewer>
+      <app-pass-profile [response]="loaded" [pass]="pass" />
     </div>
   }
 

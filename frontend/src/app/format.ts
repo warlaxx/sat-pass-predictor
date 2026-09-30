@@ -142,3 +142,35 @@ export function shadowEntry(track: readonly { instant: string; illuminated: bool
 export function hasIllumination(track: readonly { illuminated: boolean }[]): boolean {
   return track.some(point => point.illuminated);
 }
+
+/**
+ * "+3.42 kHz", "−850 Hz": a Doppler shift as a receiver would dial it in.
+ *
+ * Signed always - the sign is the whole point, it says which way to turn the knob - and
+ * with the true minus sign the rest of the interface uses. Hertz below one kilohertz,
+ * where two decimals of kilohertz would be tens of hertz of false precision.
+ */
+export function formatDoppler(hz: number): string {
+  const sign = hz > 0 ? '+' : hz < 0 ? '−' : '±';
+  const magnitude = Math.abs(hz);
+  return magnitude < 1000
+    ? `${sign}${Math.round(magnitude)} Hz`
+    : `${sign}${(magnitude / 1000).toFixed(2)} kHz`;
+}
+
+/**
+ * "2 d 3 h", "2 h 14 min", "14 min 05 s", "45 s": the wait until an instant.
+ *
+ * Two units at most. Seconds only appear under an hour, when they start to matter for
+ * getting outside in time; a countdown to the day after tomorrow that ticks every second
+ * is noise.
+ */
+export function formatCountdown(milliseconds: number): string {
+  const seconds = Math.max(0, Math.floor(milliseconds / 1000));
+  if (seconds < 60) return `${seconds} s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ${String(seconds % 60).padStart(2, '0')} s`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ${String(minutes % 60).padStart(2, '0')} min`;
+  return `${Math.floor(hours / 24)} d ${hours % 24} h`;
+}

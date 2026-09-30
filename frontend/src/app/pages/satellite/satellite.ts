@@ -8,6 +8,7 @@ import { DEFAULT_QUERY } from '../../api/passes.query';
 import { asNoradId } from '../../api/satellites.service';
 import { visibleWindow } from '../../calendar/ics';
 import { Reveal } from '../../motion/reveal';
+import { NextPass } from '../../next-pass/next-pass';
 import { PassTable } from '../../pass-table/pass-table';
 import { TleBanner } from '../../tle-banner/tle-banner';
 import { CodeBlock } from '../../shared/code-block';
@@ -26,7 +27,7 @@ export const SATELLITE_WINDOW_HOURS = 72;
  */
 @Component({
   selector: 'app-satellite',
-  imports: [DecimalPipe, RouterLink, Reveal, PassTable, TleBanner, CodeBlock],
+  imports: [DecimalPipe, RouterLink, Reveal, NextPass, PassTable, TleBanner, CodeBlock],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'page' },
   templateUrl: './satellite.html',

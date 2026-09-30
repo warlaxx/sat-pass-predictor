@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input } f
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { PassDto } from '../api/passes.model';
 import {
-  aosUncertaintySeconds, compassPoint, describeElevation, elevationColour, formatAge,
+  aosUncertaintySeconds, compassPoint, describeElevation, elevationColour, formatAge, formatDoppler,
   isRemarkable, utcOffsetLabel,
 } from '../format';
 import { PassClock } from './pass-clock';
@@ -36,6 +36,7 @@ export class PassViewer {
   protected readonly clock = inject(PassClock);
   protected readonly project = project;
   protected readonly compass = compassPoint;
+  protected readonly doppler = formatDoppler;
   protected readonly rim = Array.from({ length: 12 }, (_, i) => i * 30);
   protected readonly start = computed(() => Date.parse(this.pass().aos.instant));
   protected readonly end = computed(() => Date.parse(this.pass().los.instant));

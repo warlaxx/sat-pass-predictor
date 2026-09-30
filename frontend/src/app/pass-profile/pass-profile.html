@@ -1,0 +1,72 @@
+@let f = frame;
+<article class="card profile" aria-labelledby="profile-title">
+  <header>
+    <div>
+      <h3 id="profile-title">Pass profile</h3>
+      <p class="hint">
+        Elevation and {{ doppler() ? 'Doppler shift at ' + (frequencyMhz()! | number: '1.3-3') + ' MHz' : 'range rate' }}
+        against time. Click to move the playhead.
+      </p>
+    </div>
+    <button type="button" class="export" [disabled]="!hasTrack()" (click)="download()"
+            title="Every 10 s sample of this pass: UTC time, azimuth, elevation, range, range rate, Doppler, sub-satellite point, sunlight">
+      Download track (.csv)
+    </button>
+  </header>
+
+  <svg [attr.viewBox]="'0 0 ' + f.width + ' ' + f.height" role="img" (click)="seek($event)"
+       [attr.aria-label]="'Elevation and ' + (doppler() ? 'Doppler shift' : 'range rate') + ' of the selected pass over time. ' + shiftSummary() + '.'">
+    <!-- Elevation panel, scaled against 90 degrees like the ribbon: a low pass looks low. -->
+    @for (elevation of elevationGrid; track elevation) {
+      <line class="grid" [attr.x1]="f.left" [attr.x2]="f.right" [attr.y1]="elevationY(elevation)" [attr.y2]="elevationY(elevation)" />
+      <text class="axis" [attr.x]="f.left - 8" [attr.y]="elevationY(elevation) + 3.5" text-anchor="end">{{ elevation }}°</text>
+    }
+    <line class="threshold" [attr.x1]="f.left" [attr.x2]="f.right" [attr.y1]="thresholdY()" [attr.y2]="thresholdY()" />
+    <polygon class="area" [attr.points]="elevationArea()" />
+    <polyline class="curve elevation" [attr.points]="elevationPath()" />
+
+    <!-- When it is worth looking: sunlit satellite, dark sky. -->
+    @for (run of strip(); track $index) {
+      <rect [class]="'light ' + run.kind" [attr.x]="run.x" [attr.y]="f.strip.top" [attr.width]="run.width" [attr.height]="f.strip.height" rx="1" />
+    }
+
+    <!-- Doppler or range rate: symmetric about zero, the crossing is the closest approach. -->
+    <line class="grid" [attr.x1]="f.left" [attr.x2]="f.right" [attr.y1]="f.shift.top" [attr.y2]="f.shift.top" />
+    <line class="zero" [attr.x1]="f.left" [attr.x2]="f.right" [attr.y1]="f.shift.top + f.shift.height / 2" [attr.y2]="f.shift.top + f.shift.height / 2" />
+    <line class="grid" [attr.x1]="f.left" [attr.x2]="f.right" [attr.y1]="f.shift.top + f.shift.height" [attr.y2]="f.shift.top + f.shift.height" />
+    <text class="axis" [attr.x]="f.left - 8" [attr.y]="f.shift.top + 3.5" text-anchor="end">{{ shiftAxis().top }}</text>
+    <text class="axis" [attr.x]="f.left - 8" [attr.y]="f.shift.top + f.shift.height / 2 + 3.5" text-anchor="end">0</text>
+    <text class="axis" [attr.x]="f.left - 8" [attr.y]="f.shift.top + f.shift.height + 3.5" text-anchor="end">{{ shiftAxis().bottom }}</text>
+    <polyline class="curve shift" [attr.points]="shiftPath()" />
+    @if (approach(); as closest) {
+      <line class="approach" [attr.x1]="closest.x" [attr.x2]="closest.x" [attr.y1]="f.elevation.top" [attr.y2]="f.shift.top + f.shift.height" />
+    }
+
+    @for (tick of ticks(); track tick.instant) {
+      <line class="tick" [attr.x1]="tick.x" [attr.x2]="tick.x" [attr.y1]="f.shift.top + f.shift.height" [attr.y2]="f.shift.top + f.shift.height + 5" />
+      <text class="axis" [attr.x]="tick.x" [attr.y]="f.height - 12" text-anchor="middle">{{ tick.instant | date: 'HH:mm' }}</text>
+    }
+
+    <line class="playhead" [attr.x1]="playhead().x" [attr.x2]="playhead().x" [attr.y1]="f.elevation.top - 6" [attr.y2]="f.shift.top + f.shift.height + 4" />
+    <circle class="head" [attr.cx]="playhead().x" [attr.cy]="playhead().elevationY" r="4.2" />
+    <circle class="head shift" [attr.cx]="playhead().x" [attr.cy]="playhead().shiftY" r="4.2" />
+  </svg>
+
+  <p class="legend">
+    @if (hasTrack()) {
+      <span><i class="swatch visible"></i>potentially visible</span>
+      <span><i class="swatch lit"></i>sunlit, sky too bright</span>
+      <span><i class="swatch shade"></i>eclipse</span>
+    }
+    <span><i class="rule threshold-key"></i>{{ threshold() }}° threshold</span>
+    @if (approach(); as closest) {
+      <span class="num"><i class="rule approach-key"></i>closest approach {{ closest.instant | date: 'HH:mm:ss' }}, {{ closest.rangeKm | number: '1.0-0' }} km</span>
+    }
+  </p>
+  <p class="summary num">
+    {{ shiftSummary() }}.
+    @if (!doppler()) {
+      <span class="note">Give a downlink frequency in the query to read the shift in hertz.</span>
+    }
+  </p>
+</article>

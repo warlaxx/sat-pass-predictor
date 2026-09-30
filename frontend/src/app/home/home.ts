@@ -6,7 +6,7 @@ import { Reveal } from '../motion/reveal';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PassesApi } from '../api/passes.service';
-import { PassQuery, DEFAULT_QUERY, MAX_WINDOW_HOURS } from '../api/passes.query';
+import { PassQuery, DEFAULT_QUERY, MAX_FREQUENCY_MHZ, MAX_WINDOW_HOURS, MIN_FREQUENCY_MHZ } from '../api/passes.query';
 import { PassDto, PassesResponse, ProblemDetail } from '../api/passes.model';
 import { TleBanner } from '../tle-banner/tle-banner';
 import { PassRibbon } from '../pass-ribbon/pass-ribbon';
@@ -14,6 +14,8 @@ import { PassViewer } from '../pass-viewer/pass-viewer';
 import { PassTable } from '../pass-table/pass-table';
 import { Globe } from '../globe/globe';
 import { SkyPanorama } from '../sky-panorama/sky-panorama';
+import { NextPass } from '../next-pass/next-pass';
+import { PassProfile } from '../pass-profile/pass-profile';
 import { facingAzimuth } from '../sky-panorama/panorama-geometry';
 import { groupIntoNights } from '../pass-ribbon/nights';
 import { compassPoint, utcOffsetLabel } from '../format';
@@ -23,7 +25,7 @@ import { requestPosition } from '../shared/geolocation';
 
 /** The query-string names of a search, short enough to read in a shared link. */
 const URL_FIELDS: Record<keyof PassQuery, string> = {
-  noradId: 'norad', lat: 'lat', lon: 'lon', alt: 'alt', hours: 'hours', minElevation: 'minEl',
+  noradId: 'norad', lat: 'lat', lon: 'lon', alt: 'alt', hours: 'hours', minElevation: 'minEl', frequencyMhz: 'freq',
 };
 
 /**
@@ -52,7 +54,7 @@ export function queryFromUrl(params: { get(name: string): string | null }): Pass
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama],
+  imports: [RouterLink, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './home.scss',
   templateUrl: './home.html',
@@ -62,6 +64,7 @@ export class HomePage {
   private readonly router = inject(Router);
 
   protected readonly maxHours = MAX_WINDOW_HOURS;
+  protected readonly frequencyBounds = { min: MIN_FREQUENCY_MHZ, max: MAX_FREQUENCY_MHZ };
   protected readonly form = signal<PassQuery>(DEFAULT_QUERY);
   protected readonly selected = signal<string | undefined>(undefined);
 
@@ -215,6 +218,17 @@ export class HomePage {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return;
     this.form.update((query) => ({ ...query, [field]: parsed }));
+  }
+
+  /** An emptied field means "no frequency", not zero: the API refuses zero, and so should the form. */
+  protected setFrequency(value: string): void {
+    const trimmed = value.trim();
+    if (trimmed === '') {
+      this.form.update(({ frequencyMhz: _, ...query }) => query);
+      return;
+    }
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed)) this.form.update((query) => ({ ...query, frequencyMhz: parsed }));
   }
 
   // --- Satellite, by name or number --------------------------------------
