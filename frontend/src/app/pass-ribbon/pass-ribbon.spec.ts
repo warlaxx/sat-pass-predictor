@@ -6,10 +6,10 @@ import { PassDto } from '../api/passes.model';
 
 function pass(localIso: string, peakDeg: number): PassDto {
   const instant = new Date(localIso).toISOString();
-  const phase = { instant, azimuthDeg: 292.5, elevationDeg: 10, rangeKm: 1553 };
+  const phase = { instant, azimuthDeg: 292.5, elevationDeg: 10, rangeKm: 1553, rangeRateKmS: 0, dopplerHz: null };
   return {
     aos: phase,
-    culmination: { ...phase, azimuthDeg: 22.5, elevationDeg: peakDeg, rangeKm: 463 },
+    culmination: { ...phase, azimuthDeg: 22.5, elevationDeg: peakDeg, rangeKm: 463, rangeRateKmS: 0, dopplerHz: null },
     los: { ...phase, azimuthDeg: 112.4 },
     durationSeconds: 404,
     track: [],

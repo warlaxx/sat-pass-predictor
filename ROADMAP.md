@@ -480,6 +480,13 @@ globe renders — checked by hand in a browser, with no failed request left in t
   satellite, ordered by visibility onset. Partial failures stay explicit; selecting a
   result reuses its prediction in the existing views. Browser requests are cancelled on
   restart. Searched observer/threshold and element age at the opportunity remain visible.
+- [x] **Calendar export**: the pass list downloads an iCalendar (`.ics`) file of the
+  potentially visible passes on screen — one event per pass with a favourable sample,
+  spanning its first favourable interval, rise/peak/set in the description, a reminder
+  10 minutes before. Built in the browser from the response already loaded: no request,
+  no quota. UIDs derive from NORAD id, AOS and observer, so re-importing the same
+  prediction updates events instead of duplicating them. Times are UTC; the calendar
+  application localises them.
 
 **Discovery scope:** this is an on-demand comparison through the existing API, not a
 catalogue scan or a new batch endpoint. Each request has its own computation time. The
@@ -789,8 +796,14 @@ Do not build this list in advance. It is the menu, and customers choose from it.
 
 - **Visible passes** — milestone 10's illumination, which is the one prediction the free
   tools get wrong or omit. The strongest single candidate for the paid tier.
-- **Doppler shift and range rate per track point** — amateur radio's actual requirement, and
+- [x] **Doppler shift and range rate per track point** — amateur radio's actual requirement, and
   the track already carries range at 10 s. A small change, a whole audience.
+  *Done:* `rangeRateKmS` on every point and phase, from Orekit's velocity rather than
+  differenced ranges (exact at AOS/LOS). An optional `frequencyMhz` adds `dopplerHz`,
+  first order (`(v/c)²` is ~0.1 Hz at 145 MHz). The scaling lives in the DTO, so the
+  cached prediction serves every frequency. `TrackSamplingTest` checks the rate against
+  the sampled ranges (trapezoid, 50 m/s bound; 10 m/s measured) and its sign at AOS/LOS.
+  The viewer shows the live range rate; the web form does not yet ask for a frequency.
 - **Webhooks and scheduled alerts** — "call my endpoint 20 minutes before the next pass".
   Sells on the customer's ops burden, not on orbital mechanics.
 - **Batch endpoints** — many satellites or many sites in one call. Cheap to serve once

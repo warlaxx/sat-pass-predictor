@@ -1,6 +1,8 @@
 package dev.abdallah.satpass.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.closeTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -112,6 +114,56 @@ class PassControllerTest {
                 .andExpect(jsonPath("$.passes[0].culmination.instant")
                         .value("2026-09-22T19:22:16Z"))
                 .andExpect(jsonPath("$.passes[0].los.rangeKm").value(1551.8));
+    }
+
+    /**
+     * The range rate is geometry and is always published; the Doppler shift needs a
+     * carrier, so without one the key is present and null rather than absent — the shape
+     * of the response does not depend on an optional parameter.
+     */
+    @Test
+    void publishesTheRangeRateAndNoDopplerWithoutAFrequency() throws Exception {
+        when(passQueryService.findPasses(anyInt(), any(), any(), anyDouble()))
+                .thenReturn(PassFixtures.prediction());
+
+        mockMvc.perform(get(QUERY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.frequencyMhz").value(nullValue()))
+                .andExpect(jsonPath("$.passes[0].aos.rangeRateKmS").value(-6.21))
+                .andExpect(jsonPath("$.passes[0].los.rangeRateKmS").value(6.20))
+                .andExpect(jsonPath("$.passes[0].track[0].rangeRateKmS").value(-6.21))
+                .andExpect(jsonPath("$.passes[0].aos.dopplerHz").value(nullValue()))
+                .andExpect(jsonPath("$.passes[0].track[0].dopplerHz").value(nullValue()));
+    }
+
+    /**
+     * -f·ṙ/c at 145.8 MHz: an ISS approaching at 6.21 km/s is heard about 3 kHz high, a
+     * receding one about 3 kHz low, and the culmination carries no shift at all.
+     */
+    @Test
+    void computesTheDopplerShiftForTheRequestedFrequency() throws Exception {
+        when(passQueryService.findPasses(anyInt(), any(), any(), anyDouble()))
+                .thenReturn(PassFixtures.prediction());
+
+        double expectedAos = -145.8e6 * -6.21 / 299_792.458;
+        double expectedLos = -145.8e6 * 6.20 / 299_792.458;
+        assertThat(expectedAos).isBetween(3_000.0, 3_100.0);
+
+        mockMvc.perform(get(QUERY + "&frequencyMhz=145.8"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.frequencyMhz").value(145.8))
+                .andExpect(jsonPath("$.passes[0].aos.dopplerHz").value(closeTo(expectedAos, 1e-6), Double.class))
+                .andExpect(jsonPath("$.passes[0].track[0].dopplerHz").value(closeTo(expectedAos, 1e-6), Double.class))
+                .andExpect(jsonPath("$.passes[0].culmination.dopplerHz").value(closeTo(0.0, 1e-9), Double.class))
+                .andExpect(jsonPath("$.passes[0].los.dopplerHz").value(closeTo(expectedLos, 1e-6), Double.class));
+    }
+
+    @Test
+    void anImpossibleFrequencyIsRejected() throws Exception {
+        mockMvc.perform(get(QUERY + "&frequencyMhz=0"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get(QUERY + "&frequencyMhz=300001"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

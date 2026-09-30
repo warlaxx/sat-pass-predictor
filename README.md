@@ -466,6 +466,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [ ] Real Stripe sandbox lifecycle and production billing activation
 - [ ] Commercial readiness and first customers (milestones 15–17)
 - [x] Batch endpoint: several satellites over several sites in one call (milestone 18, ahead of demand)
+- [x] Range rate on every track point, optional Doppler shift for a given carrier (milestone 18)
 
 Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
 (open it in a browser).

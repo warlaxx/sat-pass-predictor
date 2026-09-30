@@ -21,5 +21,9 @@ export function sampleAt(track: readonly PhaseDto[], instant: number): PhaseDto 
     azimuthDeg: (a.azimuthDeg + delta * fraction + 360) % 360,
     elevationDeg: a.elevationDeg + (b.elevationDeg - a.elevationDeg) * fraction,
     rangeKm: a.rangeKm + (b.rangeKm - a.rangeKm) * fraction,
+    rangeRateKmS: a.rangeRateKmS + (b.rangeRateKmS - a.rangeRateKmS) * fraction,
+    dopplerHz: a.dopplerHz === null || b.dopplerHz === null
+      ? null
+      : a.dopplerHz + (b.dopplerHz - a.dopplerHz) * fraction,
   };
 }
