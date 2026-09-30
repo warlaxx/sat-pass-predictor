@@ -2,7 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { App } from '../app';
+import { provideRouter } from '@angular/router';
+import { HomePage } from '../home/home';
 import { THREE_LOADER } from '../globe/three-loader';
 import { buildCalendar, calendarFileName, visibleWindow } from './ics';
 import { PassesResponse, TrackPointDto } from '../api/passes.model';
@@ -92,10 +93,10 @@ describe('calendar export in the application', () => {
   afterEach(() => vi.restoreAllMocks());
 
   async function show(response: PassesResponse) {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
       { provide: THREE_LOADER, useValue: () => Promise.reject(new Error('WebGL unavailable in test')) },
     ] });
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(HomePage);
     await fixture.whenStable();
     fixture.nativeElement.querySelector('form.query').dispatchEvent(new Event('submit', { cancelable: true }));
     TestBed.tick();

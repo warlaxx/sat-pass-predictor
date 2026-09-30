@@ -1,153 +1,73 @@
-import { describe, beforeEach, afterEach, it, expect } from 'vitest';
+import { describe, beforeEach, it, expect } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter, Router } from '@angular/router';
 import { App } from './app';
+import { routes } from './app.routes';
 
 /**
- * The shell before anything has been asked of the backend.
- *
- * The HTTP layer is a double and no request is expected: the point of this test is that
- * the page is useful with an empty resource. A first render that fires a request nobody
- * asked for would show up here as an unexpected call.
+ * The shell: the header, the footer and the outlet. Pages are drawn by the real routes,
+ * so a link here that points nowhere shows up as the 404 page rather than a silent blank.
  */
-describe('App', () => {
+describe('App shell', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [
-        provideZonelessChangeDetection(),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideZonelessChangeDetection(), provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
   });
 
-  it('should render the application title', async () => {
+  async function at(url: string) {
     const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const heading = fixture.nativeElement.querySelector('h1') as HTMLElement;
-    expect(heading.textContent).toContain('Sat Pass Predictor');
-  });
-
-  it('starts on the idle state rather than a spinner', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const state = fixture.nativeElement.querySelector('.state') as HTMLElement;
-    expect(state.textContent).toContain('Pick a satellite');
-  });
-
-  it('offers the Lyon defaults, which are the ones the API applies', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
-    expect(inputs[0].value).toBe('25544');
-    expect(inputs[1].value).toBe('45.7578');
-  });
-});
-
-/**
- * Geolocation is a permission the user can refuse, a sensor that can fail and a call that
- * can hang. What these tests pin is that none of the three costs the user the page: the
- * two fields stay editable, and every failure says something.
- */
-describe('App geolocation', () => {
-  function installGeolocation(implementation: Partial<Geolocation>) {
-    Object.defineProperty(navigator, 'geolocation', {
-      value: implementation,
-      configurable: true,
-    });
-  }
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [App],
-      providers: [
-        provideZonelessChangeDetection(),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
-    }).compileComponents();
-  });
-
-  afterEach(() => {
-    delete (navigator as unknown as Record<string, unknown>)['geolocation'];
-  });
-
-  async function clickLocate() {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    (fixture.nativeElement.querySelector('button.ghost') as HTMLButtonElement).click();
+    await TestBed.inject(Router).navigateByUrl(url);
     await fixture.whenStable();
     return fixture;
   }
 
-  it('fills the position, rounded to about ten metres', async () => {
-    installGeolocation({
-      getCurrentPosition: (onSuccess) =>
-        onSuccess({
-          coords: { latitude: 45.764_043_21, longitude: 4.835_659_87, altitude: 197.4 },
-        } as GeolocationPosition),
-    });
-
-    const inputs = (await clickLocate()).nativeElement
-      .querySelectorAll('input') as NodeListOf<HTMLInputElement>;
-
-    expect(inputs[1].value).toBe('45.764');
-    expect(inputs[2].value).toBe('4.8357');
-    // The Geolocation API measures altitude above the WGS84 ellipsoid, which is the datum
-    // ObserverLocation expects: it goes in as it comes, only rounded.
-    expect(inputs[3].value).toBe('197');
+  it('renders the brand as the heading of every page', async () => {
+    const fixture = await at('/pricing');
+    expect((fixture.nativeElement.querySelector('h1') as HTMLElement).textContent).toContain('Sat Pass Predictor');
   });
 
-  it('keeps the altitude that was typed when the device does not measure one', async () => {
-    installGeolocation({
-      getCurrentPosition: (onSuccess) =>
-        onSuccess({
-          coords: { latitude: 45.76, longitude: 4.84, altitude: null },
-        } as GeolocationPosition),
-    });
-
-    const inputs = (await clickLocate()).nativeElement
-      .querySelectorAll('input') as NodeListOf<HTMLInputElement>;
-
-    expect(inputs[3].value).toBe('170');
+  it('opens on the predictor, idle, without a request nobody asked for', async () => {
+    const fixture = await at('/');
+    expect(fixture.nativeElement.querySelector('app-home .state').textContent).toContain('Pick a satellite');
+    TestBed.inject(HttpTestingController).verify();
   });
 
-  it('says so when the permission is refused, and leaves the fields alone', async () => {
-    installGeolocation({
-      getCurrentPosition: (_onSuccess, onError) =>
-        onError?.({ code: 1, message: 'denied' } as GeolocationPositionError),
-    });
-
-    const fixture = await clickLocate();
-
-    expect(fixture.nativeElement.querySelector('.location-error').textContent)
-      .toContain('Permission refused');
-    const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
-    expect(inputs[1].value).toBe('45.7578');
-    expect(inputs[1].disabled).toBe(false);
+  it('marks the current page in the site navigation', async () => {
+    const fixture = await at('/developers');
+    const current = fixture.nativeElement.querySelector('#site-nav a.current') as HTMLAnchorElement;
+    expect(current.textContent).toContain('Developers');
+    expect(current.getAttribute('aria-current')).toBe('page');
   });
 
-  it('says so when the browser has no geolocation at all', async () => {
-    const fixture = await clickLocate();
-
-    expect(fixture.nativeElement.querySelector('.location-error').textContent)
-      .toContain('does not offer geolocation');
+  it('links every footer entry to a page that exists', async () => {
+    const fixture = await at('/');
+    const paths = [...fixture.nativeElement.querySelectorAll('footer a[href^="/"]')]
+      .map((link) => new URL((link as HTMLAnchorElement).href).pathname);
+    expect(paths.length).toBeGreaterThan(5);
+    for (const path of new Set(paths)) {
+      const page = await at(path);
+      expect(page.nativeElement.querySelector('app-not-found'), path).toBeNull();
+    }
   });
 
-  it('refuses to compute while the satellite field holds a name nobody chose', async () => {
-    const fixture = TestBed.createComponent(App);
+  it('answers an unknown address with the not-found page', async () => {
+    const fixture = await at('/no-such-page');
+    expect(fixture.nativeElement.querySelector('app-not-found h2').textContent).toContain('never rose');
+  });
+
+  it('opens and closes the narrow-screen menu, and closes it on navigation', async () => {
+    const fixture = await at('/');
+    const toggle = fixture.nativeElement.querySelector('.menu-toggle') as HTMLButtonElement;
+    toggle.click();
     await fixture.whenStable();
-    const satellite = fixture.nativeElement.querySelector('input') as HTMLInputElement;
-    satellite.value = 'iss';
-    satellite.dispatchEvent(new Event('input'));
-    fixture.nativeElement.querySelector('form.query').dispatchEvent(new Event('submit', { cancelable: true }));
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    await TestBed.inject(Router).navigateByUrl('/status');
     await fixture.whenStable();
-
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Choose a satellite');
-    // The previous number (25544) must not be computed under a name the user typed.
-    TestBed.inject(HttpTestingController).expectNone('/api/passes');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
   });
 });

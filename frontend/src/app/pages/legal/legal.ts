@@ -1,0 +1,53 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { Reveal } from '../../motion/reveal';
+import { ACCOUNT_URL, DEMO_LIMITS, OPERATOR, REPOSITORY_URL } from '../../shared/site';
+
+/** A published fact about the operator, or the marker that it is still missing. */
+interface IdentityLine {
+  readonly label: string;
+  readonly value: string;
+}
+
+/**
+ * Legal notice, terms of use and privacy policy, on one page with three anchors.
+ *
+ * The data inventory is taken from the code, not from a template: what the migrations
+ * store (a GitHub numeric id, a key hash, daily counters, a Stripe customer id), what the
+ * predictor sends (the coordinates of a query) and what it does not (no cookie, no
+ * third-party font). What the code cannot know - who the operator is, how long logs are
+ * kept - is left visibly blank. Milestone 15 is the review that fills it.
+ */
+@Component({
+  selector: 'app-legal',
+  imports: [RouterLink, Reveal],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'page' },
+  templateUrl: './legal.html',
+  styles: `
+    .toc { display: flex; flex-wrap: wrap; gap: 12px; }
+    dl { display: grid; gap: 10px 32px; grid-template-columns: max-content 1fr; margin: 0; }
+    dt { color: var(--ink-3); }
+    dd { color: var(--ink); margin: 0; }
+    @media (width < 640px) { dl { grid-template-columns: 1fr; } dd { margin-bottom: 8px; } }
+  `,
+})
+export class LegalPage {
+  protected readonly accountUrl = ACCOUNT_URL;
+  protected readonly repositoryUrl = REPOSITORY_URL;
+  protected readonly demo = DEMO_LIMITS;
+  protected readonly operatorEmail = OPERATOR.email;
+
+  protected readonly identity: readonly IdentityLine[] = [
+    { label: 'Publisher', value: OPERATOR.name },
+    { label: 'Legal form', value: OPERATOR.legalForm },
+    { label: 'SIREN', value: OPERATOR.siren },
+    { label: 'VAT number', value: OPERATOR.vatNumber },
+    { label: 'Address', value: OPERATOR.address },
+    { label: 'Contact', value: OPERATOR.email },
+    { label: 'Publication director', value: OPERATOR.publicationDirector },
+  ];
+
+  /** True while any mandatory fact is blank: the page then says it is a draft. */
+  protected readonly incomplete = Object.values(OPERATOR).some((value) => value === '');
+}

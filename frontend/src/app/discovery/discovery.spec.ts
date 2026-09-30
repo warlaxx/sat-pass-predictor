@@ -1,5 +1,6 @@
 import { By } from '@angular/platform-browser';
-import { App } from '../app';
+import { provideRouter } from '@angular/router';
+import { HomePage } from '../home/home';
 import { THREE_LOADER } from '../globe/three-loader';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -125,10 +126,10 @@ describe('Discovery HTTP flow', () => {
 
 describe('discovery selection in the application', () => {
   it('opens the selected satellite in the existing views without another HTTP request', async () => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
+    TestBed.configureTestingModule({ providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
       { provide: THREE_LOADER, useValue: () => Promise.reject(new Error('WebGL unavailable in test')) },
     ] });
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(HomePage);
     await fixture.whenStable();
     const discovery = fixture.debugElement.query(By.directive(Discovery)).componentInstance as Discovery;
     discovery.open.emit(nextOpportunity(prediction(48274, 1))!);

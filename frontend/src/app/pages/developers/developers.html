@@ -1,0 +1,186 @@
+<section class="page-hero wrap" appReveal aria-labelledby="dev-title">
+  <span class="kicker">API · <span class="num">/v1</span></span>
+  <h2 id="dev-title">Satellite passes, as an API</h2>
+  <p class="lede">
+    One HTTP call returns every pass of a satellite over a point on Earth: rise, peak and
+    set, the sampled track at 10&nbsp;s, range rate and Doppler shift, sunlight and
+    visibility - and the age of the orbital elements behind it, so your users know what the
+    times are worth.
+  </p>
+  <div class="actions">
+    <a class="btn primary" [href]="accountUrl">Get an API key</a>
+    <a class="btn ghost" [href]="swaggerUrl" rel="noopener">OpenAPI reference ↗</a>
+    <a class="btn ghost" routerLink="/pricing">Plans and quotas</a>
+  </div>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="first-call">
+  <div class="section-head">
+    <h2 id="first-call">First call</h2>
+    <span>The ISS over Lyon, the next 48 hours, passes above 10&deg;</span>
+  </div>
+  <app-code-block label="Shell" [code]="firstCall" />
+  <app-code-block label="Response, abridged" [code]="response" />
+  <div class="prose">
+    <p>
+      Every instant is ISO-8601 UTC: time zones are a display concern and the API refuses to
+      have an opinion. <code>aos</code>, <code>culmination</code> and <code>los</code> are
+      points of <code>track</code> itself, so a labelled instant always sits on the curve
+      drawn from it. An empty <code>passes</code> list is a result, not an error.
+    </p>
+    <p>
+      <code>tle.ageSeconds</code> is computed by the server, once, from the epoch of the
+      elements. Show it: SGP4's error grows with it, on the order of kilometres per day in
+      low orbit.
+    </p>
+  </div>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="endpoints">
+  <div class="section-head">
+    <h2 id="endpoints">Endpoints</h2>
+    <span class="num">{{ apiOrigin }}</span>
+  </div>
+  <div class="table">
+    <table>
+      <thead>
+        <tr><th scope="col">Route</th><th scope="col">Returns</th><th scope="col">Access</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">GET /v1/passes</td>
+          <td>The passes of one satellite over one site.</td>
+          <td>X-API-Key, one request</td>
+        </tr>
+        <tr>
+          <td class="num">GET /v1/passes/batch</td>
+          <td>Every satellite over every site: up to {{ batch.satellites }} satellites, {{ batch.sites }} sites, {{ batch.predictions }} predictions.</td>
+          <td>X-API-Key, one request per prediction</td>
+        </tr>
+        <tr>
+          <td class="num">GET /api/satellites?q=</td>
+          <td>Active satellites whose CelesTrak name or number matches, for a search box.</td>
+          <td>Public</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="parameters">
+  <div class="section-head">
+    <h2 id="parameters">Parameters</h2>
+    <span class="num">/v1/passes</span>
+  </div>
+  <div class="table">
+    <table>
+      <thead>
+        <tr><th scope="col">Name</th><th scope="col">Format</th><th scope="col">Default</th><th scope="col">Meaning</th></tr>
+      </thead>
+      <tbody>
+        @for (parameter of parameters; track parameter.name) {
+          <tr>
+            <td class="num">{{ parameter.name }}</td>
+            <td class="num">{{ parameter.format }}</td>
+            <td class="num">{{ parameter.fallback }}</td>
+            <td>{{ parameter.meaning }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="doppler">
+  <div class="section-head">
+    <h2 id="doppler">Doppler for radio amateurs</h2>
+    <span>Range rate on every point; the shift when you name a frequency</span>
+  </div>
+  <app-code-block label="ISS voice downlink, 145.8 MHz" [code]="doppler" />
+  <div class="prose">
+    <p>
+      Every point and phase carries <code>rangeRateKmS</code>, from Orekit's velocity rather
+      than differenced ranges - negative while the satellite approaches. With
+      <code>frequencyMhz</code>, each one also carries <code>dopplerHz</code>, the first-order
+      shift to apply to the receiver, <code>−f · rangeRate / c</code>. For an uplink, apply
+      the opposite sign. Asking for several frequencies costs one propagation: the shift is
+      scaled from the cached prediction.
+    </p>
+  </div>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="batch">
+  <div class="section-head">
+    <h2 id="batch">Batch predictions</h2>
+    <span>A fleet of satellites over a network of ground stations, in one call</span>
+  </div>
+  <app-code-block label="Shell" [code]="batchCall" />
+  <div class="prose">
+    <ul>
+      <li><code>site</code> is <code>lat,lon</code> or <code>lat,lon,alt</code>; repeat it for each site. Duplicates are dropped before counting.</li>
+      <li><code>results</code> is satellite-major. Each entry holds either <code>prediction</code>, exactly the <code>/v1/passes</code> body, or <code>error</code>, exactly its Problem Details. One failed satellite does not fail the batch.</li>
+      <li>A batch is admitted whole or refused whole, and counts one request per prediction. Ask for <code>track=false</code> unless you need the polylines: 25 cached predictions return in milliseconds and half a megabyte instead of 13.</li>
+      <li>There is no <code>frequencyMhz</code> in a batch; compute <code>−rangeRateKmS / 299792.458 × f</code> yourself.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="clients">
+  <div class="section-head">
+    <h2 id="clients">From your code</h2>
+    <span>No SDK to install: one GET and one header</span>
+  </div>
+  <app-code-block label="JavaScript (Node 18+ or a server runtime)" [code]="javascript" />
+  <app-code-block label="Python" [code]="python" />
+  <p class="note">
+    <b>Keep the key on a server.</b> A key shipped in a web page is a key anyone can read and
+    spend. Cross-origin browser calls are refused unless the operator lists your origin, and
+    even then CORS is not authentication.
+  </p>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="errors">
+  <div class="section-head">
+    <h2 id="errors">Errors</h2>
+    <span>RFC 9457 Problem Details, one format everywhere</span>
+  </div>
+  <div class="prose">
+    <p>
+      Branch on <code>type</code>, never on the sentence: two different failures share status
+      503. Every type is <code>https://github.com/warlaxx/sat-pass-predictor/errors/</code>
+      followed by the slug below.
+    </p>
+  </div>
+  <div class="table">
+    <table>
+      <thead>
+        <tr><th scope="col">Status</th><th scope="col">Type</th><th scope="col">What to do</th></tr>
+      </thead>
+      <tbody>
+        @for (error of errors; track error.type) {
+          <tr>
+            <td class="num">{{ error.status }}</td>
+            <td class="num">{{ error.type }}</td>
+            <td>{{ error.meaning }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="limits">
+  <div class="section-head">
+    <h2 id="limits">Limits worth knowing</h2>
+    <a routerLink="/pricing">All plans →</a>
+  </div>
+  <div class="prose">
+    <ul>
+      <li>The free preview allows <b class="num">{{ free.requests | number }}</b> requests per UTC day and <b class="num">{{ free.perMinute }}</b> per minute, with one key.</li>
+      <li>Minute limits are fixed UTC minute windows, not a sliding window. A cached answer counts like a computed one: you pay for the call, not the CPU.</li>
+      <li>Every admitted request counts, including one that later fails validation. Invalid keys, quota refusals and CORS preflights do not.</li>
+      <li>Responses carry <code>Cache-Control: no-store</code>. Do not put them behind a shared cache.</li>
+      <li>The service currently runs on a free instance that sleeps: the first call after a quiet period can take up to half a minute. Use a 60&nbsp;s timeout. <a routerLink="/status">Check the status page.</a></li>
+    </ul>
+  </div>
+</section>

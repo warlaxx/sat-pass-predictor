@@ -297,6 +297,30 @@ nominal ~2,800–2,900 km band along the track, from AOS to LOS, to show roughly
 decoded image will cover before the pass.
 Details and the decisions behind them: [ROADMAP.md](ROADMAP.md#milestone-8--3d-globe-done).
 
+## Site pages
+
+The predictor is the home page (`/`); a search writes its parameters into the address
+(`/?norad=25544&lat=…&minEl=10`, plus `pass=` for a selected pass), so a result can be
+shared and reopened. The other pages are lazy-loaded routes sharing one stylesheet,
+`frontend/src/pages.scss`, built from the predictor's tokens:
+
+| Route | Content |
+|---|---|
+| `/satellites`, `/satellites/:noradId` | Featured satellites and catalogue search; per satellite, orbit read off the TLE, element freshness and the next 72 h of passes (one `/api/passes` call) |
+| `/alerts` | Calendar reminders (.ics) for the potentially visible passes of up to ten days |
+| `/developers` | API guide: first call, parameters, Doppler, batch, errors, limits |
+| `/pricing` | Quotas from [billing](docs/billing.md); no price is shown while billing is disabled |
+| `/methodology` | Pipeline, Skyfield validation, error budget, what "visible" means |
+| `/status` | Live probes of the backend health and the catalogue, never of `/api/passes` |
+| `/legal` | Legal notice, terms, privacy — a **draft**: operator identity, retention and hosting addresses are marked *to be completed* in `frontend/src/app/shared/site.ts` and the page |
+
+Figures quoted by several pages (quotas, batch bounds, URLs) live in
+`frontend/src/app/shared/site.ts`, each mirroring its source of truth. Deep links need a
+single-page fallback: `vercel.json` rewrites unknown paths to `index.html` and nginx
+already did. The status page reads the backend's `/actuator/health` through a
+`/status-probe/health` rewrite (Vercel, nginx and the dev proxy); no other actuator path
+is exposed through the frontend origin.
+
 ## Physical model
 
 What the numbers mean, and what they do not. The code says the same thing where it

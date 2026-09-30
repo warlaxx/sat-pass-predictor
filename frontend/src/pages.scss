@@ -1,0 +1,406 @@
+/*
+ * The content pages: developers, pricing, methodology, status, legal, satellites, alerts.
+ *
+ * Global rather than per component, because eight pages share one vocabulary - a hero
+ * band, section heads, prose, code, data tables, cards - and eight copies of it would
+ * drift, and would each spend the 6 kB component budget on the same rules. Everything is
+ * scoped under `.page`, the host class of those pages, so nothing here can reach the
+ * predictor, whose own styles stay where they are.
+ *
+ * The vocabulary is the predictor's, not a new one: the same bands on the same 1280 px
+ * column, the same narrow display type, DM Mono for every figure, and --signal for the
+ * one thing on a screen that means "act".
+ */
+
+.page {
+  display: block;
+  padding-bottom: 112px;
+
+  .wrap {
+    padding-inline: max(var(--gutter), (100% - 1280px) / 2);
+  }
+
+  /* --- Hero band --------------------------------------------------------------------- */
+
+  .page-hero {
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-block: 72px 56px;
+  }
+
+  .kicker {
+    color: var(--ink-2);
+    font-size: 16px;
+  }
+
+  .page-hero h2 {
+    font-size: clamp(44px, 5.3vw, 76px);
+    font-stretch: 75%;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    max-width: 18ch;
+  }
+
+  .lede {
+    color: var(--ink-2);
+    font-size: 18px;
+    line-height: 1.55;
+    margin: 0;
+    max-width: 64ch;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  /* --- Sections ---------------------------------------------------------------------- */
+
+  .page-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-top: 96px;
+  }
+
+  .section-head {
+    align-items: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    justify-content: space-between;
+  }
+
+  .section-head h2 {
+    font-size: clamp(36px, 3.6vw, 52px);
+  }
+
+  .section-head > span {
+    color: var(--ink-3);
+    font-size: 14px;
+  }
+
+  /* --- Prose ------------------------------------------------------------------------- */
+
+  .prose {
+    color: var(--ink-2);
+    max-width: 72ch;
+
+    p, ul, ol { margin: 0 0 14px; }
+    li { margin-bottom: 6px; }
+    strong, b { color: var(--ink); font-weight: 600; }
+    h3 { color: var(--ink); font-size: 22px; margin: 32px 0 12px; }
+    h3:first-child { margin-top: 0; }
+  }
+
+  code {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    padding: 1px 5px;
+  }
+
+  /* --- Code blocks ------------------------------------------------------------------- */
+
+  .code {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    overflow: hidden;
+  }
+
+  .code-bar {
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-3);
+    display: flex;
+    font-size: 13px;
+    justify-content: space-between;
+    padding: 6px 8px 6px 16px;
+  }
+
+  .code pre {
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 0;
+    overflow-x: auto;
+    padding: 16px;
+  }
+
+  .code pre code {
+    background: none;
+    border: 0;
+    font-size: inherit;
+    padding: 0;
+  }
+
+  .code .dim { color: var(--ink-3); }
+  .code .key { color: var(--accent); }
+  .code .str { color: var(--observer); }
+  .code .val { color: var(--lit); }
+
+  /* --- Data tables, as the pass list draws them --------------------------------------- */
+
+  .table {
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .table table {
+    border-collapse: collapse;
+    font-size: 14px;
+    width: 100%;
+  }
+
+  .table th {
+    background: var(--panel);
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-3);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 14px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .table td {
+    border-bottom: 1px solid var(--line-soft);
+    color: var(--ink-2);
+    padding: 13px 14px;
+    vertical-align: top;
+  }
+
+  .table td:first-child { color: var(--ink); }
+  .table tbody tr:last-child td { border-bottom: 0; }
+  .table tbody th { background: none; border-bottom: 1px solid var(--line-soft); color: var(--ink); font-weight: 600; }
+
+  /* --- Cards and facts --------------------------------------------------------------- */
+
+  .cards {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .cards > .card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 24px;
+  }
+
+  .card h3 { font-size: 22px; }
+  .card p { color: var(--ink-2); margin: 0; }
+
+  a.card {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  a.card:hover {
+    border-color: var(--line-strong);
+    box-shadow: 0 8px 28px rgb(0 0 0 / 50%);
+  }
+
+  a.card:hover h3 { color: var(--signal); }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px 48px;
+  }
+
+  .fact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .fact .value {
+    font-size: 22px;
+    letter-spacing: -0.01em;
+  }
+
+  /* --- Callouts ---------------------------------------------------------------------- */
+
+  .note {
+    background: rgb(232 163 61 / 7%);
+    border: 1px solid rgb(232 163 61 / 35%);
+    border-radius: var(--r);
+    color: var(--ink-2);
+    margin: 0;
+    max-width: 90ch;
+    padding: 16px 20px;
+  }
+
+  .note b { color: var(--warn); }
+
+  .todo {
+    color: var(--warn);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  .muted { color: var(--ink-3); }
+  .error { color: var(--hot); }
+
+  /* --- Status dots ------------------------------------------------------------------- */
+
+  .dot {
+    border-radius: 99px;
+    display: inline-block;
+    flex-shrink: 0;
+    height: 10px;
+    width: 10px;
+  }
+
+  .dot.ok { background: var(--observer); box-shadow: 0 0 0 4px rgb(87 211 168 / 15%); }
+  .dot.warn { background: var(--warn); box-shadow: 0 0 0 4px rgb(232 163 61 / 15%); }
+  .dot.down { background: var(--signal); box-shadow: 0 0 0 4px rgb(252 61 33 / 15%); }
+  .dot.wait { animation: dot-pulse 1.2s ease-in-out infinite; background: var(--ink-4); }
+
+  @keyframes dot-pulse { 50% { opacity: 0.3; } }
+
+  /* --- Buttons and fields, as the query bar draws them --------------------------------- */
+
+  .btn {
+    align-items: center;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    gap: 10px;
+    justify-content: center;
+    padding: 9px 18px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .btn.primary {
+    background: var(--signal);
+    border: 1px solid var(--signal);
+    color: #fff;
+  }
+
+  .btn.ghost {
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+
+  .btn.small { font-size: 13px; padding: 5px 12px; }
+  .btn.ghost:hover:not(:disabled) { border-color: var(--ink-3); color: var(--ink); }
+  .btn:disabled { cursor: not-allowed; opacity: 0.55; }
+
+  @media (hover: hover) {
+    .btn.primary:hover:not(:disabled) {
+      box-shadow: 0 4px 20px rgb(252 61 33 / 20%);
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+    }
+  }
+
+  .form {
+    align-items: flex-end;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 28px;
+  }
+
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .caption {
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .field {
+    align-items: baseline;
+    background: var(--bg);
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    cursor: text;
+    display: inline-flex;
+    gap: 6px;
+    padding: 0 14px;
+    transition: border-color var(--motion-fast), box-shadow var(--motion-fast), background-color var(--motion-fast);
+  }
+
+  .field:hover { border-color: var(--ink-4); }
+
+  .field:focus-within {
+    background: var(--panel);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgb(150 164 255 / 12%);
+  }
+
+  .field input {
+    -moz-appearance: textfield;
+    appearance: textfield;
+    background: transparent;
+    border: 0;
+    color: var(--ink);
+    font-size: 15px;
+    outline: none;
+    padding: 9px 0;
+  }
+
+  .field input::-webkit-inner-spin-button,
+  .field input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .unit {
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .w-coord { width: 8ch; }
+  .w-alt { width: 5ch; }
+  .w-small { width: 4ch; }
+
+  .state {
+    align-items: center;
+    color: var(--ink-2);
+    display: flex;
+    gap: 10px;
+    margin: 0;
+    padding-block: 48px;
+  }
+
+  @media (width < 880px) {
+    .page-hero { padding-block: 48px 40px; }
+    .page-section { padding-top: 64px; }
+  }
+
+  @media (width < 640px) {
+    padding-bottom: 80px;
+    .lede { font-size: 16px; }
+    .field input { font-size: 16px; }
+    .actions .btn { flex: 1 1 100%; }
+  }
+}

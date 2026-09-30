@@ -12,6 +12,14 @@
     {
       "source": "/tle-upstream/NORAD/elements/gp.php",
       "destination": "https://celestrak.org/NORAD/elements/gp.php"
+    },
+    {
+      "source": "/status-probe/health",
+      "destination": "https://sat-pass-predictor-api.onrender.com/actuator/health"
+    },
+    {
+      "source": "/((?!api/|tle-upstream/|status-probe/).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
