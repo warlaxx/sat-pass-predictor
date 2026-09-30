@@ -87,13 +87,54 @@ curl -H "X-API-Key: $SATPASS_API_KEY" \
 - Counters persist by key, UTC day and endpoint. Transactions lock the key row before
   checking and incrementing, including across backend processes and restarts.
 - 401 means invalid/missing/revoked credentials. 429 Problem Details includes
-  `limit` (`daily` or `minute`), `resetsAt` and `Retry-After` in seconds.
+  `limit` (`daily`, `monthly` or `minute`), `resetsAt` and `Retry-After` in seconds.
   503 means accounting disabled/unavailable or an upstream prediction failure;
   distinguish them using the Problem Details `type`.
 
 Limits are stored per key. An operator can update `daily_limit` and `minute_limit`
 with SQL (positive integers); the next admission observes the change. No billing
 plans, signup or monthly quotas are implemented in this milestone.
+
+## Batch requests
+
+`GET /v1/passes/batch` predicts several satellites over several sites in one call. Every
+satellite is predicted for every site, with one window and one threshold:
+
+```sh
+curl -H "X-API-Key: $SATPASS_API_KEY" \
+  'https://sat-pass-predictor-api.onrender.com/v1/passes/batch?noradId=25544,20580&site=45.7578,4.8320,170&site=-33.92,18.42&track=false'
+```
+
+| Parameter | Format | Default |
+| --- | --- | --- |
+| `noradId` | NORAD numbers, repeated or comma-separated (`noradId=25544,20580`) | required |
+| `site` | `lat,lon` or `lat,lon,alt` (degrees, degrees, metres above the ellipsoid); repeat for several sites | required |
+| `hours` | 1–240 | 48 |
+| `minElevation` | 0–89 degrees | 10 |
+| `track` | `false` drops every pass's sampled track and keeps AOS/culmination/LOS | `true` |
+
+- At most **10 distinct satellites, 10 distinct sites and 25 predictions** (satellites ×
+  sites) per call. Duplicates are dropped before counting, in order of first appearance.
+- `results` holds one entry per satellite and site, satellite-major: every site of the
+  first satellite, then every site of the second. `siteIndex` points into the distinct
+  sites in request order; `observer` repeats the site.
+- Each entry has either `prediction`, exactly the `/v1/passes` body, or `error`, exactly
+  the Problem Details `/v1/passes` would have returned (`unknown-satellite`,
+  `tle-unavailable`, `tle-stale`); the other is `null`. One failed satellite does not
+  fail the batch. A malformed or oversized batch is a whole-request 400 `invalid-request`.
+- All sites of one satellite share the same elements and `computedAt`.
+- **A batch counts one request per prediction** against the daily, monthly and minute
+  limits, failed entries included, and is admitted whole or refused whole: a batch that
+  does not fit the remaining quota is a 429 and consumes nothing. A batch larger than the
+  key's per-minute limit could never fit, so it is a 400 `batch-exceeds-rate-limit` with
+  no `Retry-After`: the Free preview (10/minute) takes batches of at most 10 predictions.
+  An invalid batch is admitted as one request, like any other invalid call.
+- There is no anonymous `/api/passes/batch`: the shared demo budget is not spent in bulk.
+
+Measured on an Apple M-series laptop, the worst case (25 uncached predictions over
+240 h) took 7.5 s and returned 13.8 MB with tracks. Served from the prediction cache
+with `track=false`, the same batch took 8 ms and returned 0.5 MB. Predictions are
+computed one after the other; ask for `track=false` unless the polylines are needed.
 
 ## Verification
 

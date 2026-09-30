@@ -19,12 +19,17 @@ public class AccessExceptionHandler {
         problem.setType(URI.create("https://github.com/warlaxx/sat-pass-predictor/errors/" + failure.code()));
         problem.setTitle(switch (failure.status()) {
             case 401 -> "Invalid API key";
+            case 400 -> "Batch too large for this key";
             case 429 -> "API request limit reached";
             default -> "API access unavailable";
         });
         var response = ResponseEntity.status(failure.status()).header("Cache-Control", "no-store");
         if (failure.resetsAt() != null) {
-            problem.setProperty("limit", failure.code().equals("daily-quota-exceeded") ? "daily" : "minute");
+            problem.setProperty("limit", switch (failure.code()) {
+                case "daily-quota-exceeded" -> "daily";
+                case "monthly-quota-exceeded" -> "monthly";
+                default -> "minute";
+            });
             problem.setProperty("resetsAt", failure.resetsAt());
             response.header("Retry-After", Long.toString(Math.max(1,
                     (Duration.between(clock.instant(), failure.resetsAt()).toMillis() + 999) / 1000)));

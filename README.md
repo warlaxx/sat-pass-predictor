@@ -273,6 +273,16 @@ The element age at the opportunity is shown, including the wait until the pass: 
 forecast can rely on substantially older elements than the current TLE age suggests.
 This remains a sampled geometric opportunity, not a brightness or weather forecast.
 
+## Batch predictions
+
+`GET /v1/passes/batch` (API key required) answers up to 10 satellites over up to 10
+sites, 25 predictions at most, in one call: `noradId=25544,20580&site=45.76,4.83,170&site=-33.92,18.42`.
+Each satellite and site gets its own entry, holding either the usual `/v1/passes` body or
+the Problem Details that call would have returned, so one unknown satellite does not fail
+the rest. A batch counts one request per prediction against every quota and is admitted
+whole or refused whole. `track=false` drops the sampled polylines. Details, limits and
+measurements: [batch requests](docs/api-access.md#batch-requests).
+
 ## Globe
 
 A terrestrial-frame companion to the sky chart, sharing its clock: three.js (r128, UMD,
@@ -455,6 +465,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] Stripe Checkout/Portal, signed webhooks and monthly quotas (milestone 14; sandbox activation pending)
 - [ ] Real Stripe sandbox lifecycle and production billing activation
 - [ ] Commercial readiness and first customers (milestones 15–17)
+- [x] Batch endpoint: several satellites over several sites in one call (milestone 18, ahead of demand)
 
 Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
 (open it in a browser).

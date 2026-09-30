@@ -2,6 +2,8 @@ package dev.abdallah.satpass.passes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import dev.abdallah.satpass.OrekitTest;
@@ -14,6 +16,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -104,5 +107,34 @@ class PassQueryServiceTest {
         assertThat(prediction.computedAt()).isEqualTo(now);
         assertThat(prediction.passes()).allSatisfy(pass ->
                 assertThat(pass.aos().instant()).isAfterOrEqualTo(now));
+    }
+
+    /**
+     * A batch asks one satellite for several sites. Each answer must be the one a single
+     * call would have given, and all of them must come from the same elements and the
+     * same instant — read once, not once per site.
+     */
+    @Test
+    void severalSitesShareOneTleReadAndEachMatchesItsSingleCall() {
+        ObserverLocation capeTown = new ObserverLocation(-33.9249, 18.4241, 20.0);
+        TleStore store = mock(TleStore.class);
+        when(store.get(25544)).thenReturn(referenceSnapshot(TLE_EPOCH));
+        PassQueryService service = new PassQueryService(store, predictionService, uncachedPredictions(),
+                Clock.fixed(TLE_EPOCH, ZoneOffset.UTC));
+
+        List<PassPrediction> predictions =
+                service.findPassesForSites(25544, List.of(LYON, capeTown), Duration.ofHours(24), 10.0);
+
+        verify(store, times(1)).get(25544);
+        assertThat(predictions).extracting(PassPrediction::observer).containsExactly(LYON, capeTown);
+        assertThat(predictions).extracting(PassPrediction::computedAt).containsOnly(TLE_EPOCH);
+        PassPrediction lyonAlone = serviceAt(TLE_EPOCH, referenceSnapshot(TLE_EPOCH))
+                .findPasses(25544, LYON, Duration.ofHours(24), 10.0);
+        assertThat(predictions.getFirst().passes()).hasSameSizeAs(lyonAlone.passes());
+        assertThat(predictions.getFirst().passes().getFirst().aos().instant())
+                .isEqualTo(lyonAlone.passes().getFirst().aos().instant());
+        // Another hemisphere, another sky: the second answer is not the first one repeated.
+        assertThat(predictions.get(1).passes().getFirst().aos().instant())
+                .isNotEqualTo(lyonAlone.passes().getFirst().aos().instant());
     }
 }

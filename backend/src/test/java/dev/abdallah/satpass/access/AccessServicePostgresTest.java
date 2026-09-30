@@ -129,6 +129,46 @@ class AccessServicePostgresTest {
         assertThat(service.usage(key.id()).getFirst().get("requests")).isEqualTo(7L);
     }
 
+    @Test void batchCountsEveryPredictionAgainstEveryLimitAndIsAdmittedWholeOrNotAtAll() {
+        var key = service.issue("batch", 10, 6);
+        service.admit(key.secret(), false, 4);
+        assertThat(service.usage(key.id()).getFirst().get("requests")).isEqualTo(4L);
+        // 4 + 3 > 6 per minute: refused whole, and nothing of it is consumed.
+        assertThatThrownBy(() -> service.admit(key.secret(), false, 3)).isInstanceOfSatisfying(AccessFailure.class, e -> {
+            assertThat(e.code()).isEqualTo("rate-limit-exceeded");
+            assertThat(e.resetsAt()).isEqualTo(Instant.parse("2026-09-19T12:01:00Z"));
+        });
+        service.admit(key.secret(), false, 2);
+        now.set(Instant.parse("2026-09-19T12:01:00Z"));
+        // 6 used today; 6 + 5 > 10 per day, although the new minute has room for it.
+        assertThatThrownBy(() -> service.admit(key.secret(), false, 5)).isInstanceOfSatisfying(AccessFailure.class,
+                e -> assertThat(e.code()).isEqualTo("daily-quota-exceeded"));
+        service.admit(key.secret(), false, 4);
+        assertThat(service.usage(key.id()).getFirst().get("requests")).isEqualTo(10L);
+    }
+
+    @Test void batchLargerThanTheMinuteLimitIsRefusedAsPermanentWithoutConsumingAnything() {
+        var key = service.issue("small", 100, 5);
+        assertThatThrownBy(() -> service.admit(key.secret(), false, 6)).isInstanceOfSatisfying(AccessFailure.class, e -> {
+            assertThat(e.code()).isEqualTo("batch-exceeds-rate-limit");
+            assertThat(e.status()).isEqualTo(400);
+            assertThat(e.resetsAt()).isNull();
+        });
+        assertThat(service.usage(key.id())).isEmpty();
+        service.admit(key.secret(), false, 5);
+    }
+
+    @Test void monthlyQuotaCountsBatchPredictions() {
+        var key = billingAccount();
+        entitlement("hobby", 5, "2026-11-01T00:00:00Z");
+        billing().reconcile("evt_1", "cus_test");
+        service.admit(key.secret(), false, 4);
+        assertThatThrownBy(() -> service.admit(key.secret(), false, 2)).isInstanceOfSatisfying(AccessFailure.class,
+                e -> assertThat(e.code()).isEqualTo("monthly-quota-exceeded"));
+        service.admit(key.secret(), false, 1);
+        assertThat(accounts().dashboard("123").usedMonth()).isEqualTo(5);
+    }
+
     @Test void publicDemoHasItsOwnPersistentBudget() {
         jdbc.update("UPDATE api_keys SET daily_limit = 1 WHERE id = ?", AccessService.PUBLIC_KEY);
         service.admit(null, true);

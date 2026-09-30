@@ -33,6 +33,21 @@ public class AccessService {
     }
 
     public void admit(String rawKey, boolean publicDemo) {
+        admit(rawKey, publicDemo, 1);
+    }
+
+    /**
+     * Admits a request that will compute {@code predictions} predictions, all or nothing.
+     *
+     * <p>A batch is priced like the separate calls it replaces: every limit counts
+     * predictions, not HTTP requests. Admitting part of a batch would leave the caller
+     * with a result it did not ask for, so a batch that does not fit is refused whole
+     * and consumes nothing. A batch larger than the key's per-minute limit could never
+     * fit, whatever the wait; it gets its own code rather than a 429 whose reset time
+     * would be a lie.
+     */
+    public void admit(String rawKey, boolean publicDemo, int predictions) {
+        if (predictions < 1) throw new IllegalArgumentException("A request computes at least one prediction");
         if (rawKey == null && !publicDemo) throw AccessFailure.unauthorized();
         if (rawKey != null && !rawKey.matches("spp_[A-Za-z0-9_-]{43}")) throw AccessFailure.unauthorized();
         transaction.executeWithoutResult(status -> {
@@ -48,6 +63,11 @@ public class AccessService {
             Instant now = clock.instant();
             LocalDate day = LocalDate.ofInstant(now, ZoneOffset.UTC);
             Instant minute = now.truncatedTo(ChronoUnit.MINUTES);
+            int minuteLimit = PaidQuota.minuteLimit(key, now);
+            if (predictions > minuteLimit) {
+                throw new AccessFailure("batch-exceeds-rate-limit", 400, "This request computes " + predictions
+                        + " predictions; this key allows " + minuteLimit + " per minute. Split it into smaller batches.", null);
+            }
             long daily = jdbc.queryForObject("SELECT COALESCE(SUM(requests), 0) FROM api_usage WHERE key_id = ? AND usage_day = ?",
                     Long.class, id, day);
             Instant oldMinute = key.get("minute_start") == null ? null : ((Timestamp) key.get("minute_start")).toInstant();
@@ -57,26 +77,27 @@ public class AccessService {
                 LocalDate month = day.withDayOfMonth(1);
                 long used = jdbc.queryForObject("SELECT COALESCE(SUM(requests), 0) FROM api_usage WHERE key_id = ? AND usage_day >= ? AND usage_day < ?",
                         Long.class, id, month, month.plusMonths(1));
-                if (used >= ((Number) key.get("monthly_limit")).longValue()) {
+                if (used + predictions > ((Number) key.get("monthly_limit")).longValue()) {
                     throw new AccessFailure("monthly-quota-exceeded", 429, "The monthly request quota has been reached.",
                             month.plusMonths(1).atStartOfDay().toInstant(ZoneOffset.UTC));
                 }
             }
-            if (!paid && daily >= ((Number) key.get("daily_limit")).longValue()) {
+            if (!paid && daily + predictions > ((Number) key.get("daily_limit")).longValue()) {
                 throw new AccessFailure("daily-quota-exceeded", 429, "The daily request quota has been reached.",
                         day.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
             }
-            if (minuteUsed >= PaidQuota.minuteLimit(key, now)) {
+            if (minuteUsed + predictions > minuteLimit) {
                 throw new AccessFailure("rate-limit-exceeded", 429, "The per-minute request limit has been reached.",
                         minute.plusSeconds(60));
             }
             jdbc.update("UPDATE api_keys SET minute_start = ?, minute_used = ? WHERE id = ?",
-                    Timestamp.from(minute), minuteUsed + 1, id);
-            // Both URL aliases count as the same endpoint. Rejected admissions do not count.
+                    Timestamp.from(minute), minuteUsed + predictions, id);
+            // Both URL aliases, and batches, count as the same endpoint: the column counts
+            // predictions, which is what every quota compares it with. Rejected admissions do not count.
             jdbc.update("""
-                    INSERT INTO api_usage (key_id, usage_day, endpoint, requests) VALUES (?, ?, 'passes', 1)
-                    ON CONFLICT (key_id, usage_day, endpoint) DO UPDATE SET requests = api_usage.requests + 1
-                    """, id, day);
+                    INSERT INTO api_usage (key_id, usage_day, endpoint, requests) VALUES (?, ?, 'passes', ?)
+                    ON CONFLICT (key_id, usage_day, endpoint) DO UPDATE SET requests = api_usage.requests + EXCLUDED.requests
+                    """, id, day, predictions);
         });
     }
 

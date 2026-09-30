@@ -795,8 +795,55 @@ Do not build this list in advance. It is the menu, and customers choose from it.
   Sells on the customer's ops burden, not on orbital mechanics.
 - **Batch endpoints** — many satellites or many sites in one call. Cheap to serve once
   milestone 12 exists, and the reason a business tier is worth €199.
+  **Implemented on 30 September 2026, ahead of the demand this list waits for** — see
+  below.
 - **Longer windows and a full catalogue** beyond the ISS, with the honest SGP4 caveat.
 - **Ground-station pointing exports** — Gpredict, SatNOGS and TLE-format outputs.
+
+### Batch endpoint (implemented)
+
+`GET /v1/passes/batch?noradId=25544,20580&site=45.76,4.83,170&site=-33.92,18.42` predicts
+every satellite for every site: at most 10 satellites, 10 sites and 25 predictions.
+Each entry holds either the `/v1/passes` body or the Problem Details that call would have
+returned. Runbook: [batch requests](docs/api-access.md#batch-requests).
+
+**Decision: a batch is billed per prediction, all or nothing.** A batch of twenty costs
+the CPU of twenty calls, so it counts twenty against the daily, monthly *and* minute
+limits. Admitting part of it would hand the caller a result they did not ask for; a
+batch that does not fit is refused whole and consumes nothing. One larger than the key's
+per-minute limit can never fit, so it gets a 400 `batch-exceeds-rate-limit` rather than a
+429 whose `Retry-After` would be a lie. What the batch sells is one round trip and one
+consistent answer, not a discount — pricing a discount is a milestone 17 question.
+
+**Decision: `GET` with query parameters, not a JSON `POST`.** Admission is a `preHandle`
+interceptor, which runs before any body is read, and it must know the price before the
+controller runs. The query string is available there, and one parser (`BatchQuery`)
+serves both the interceptor and the controller, so what is billed and what is computed
+cannot drift apart. It is also the existing `/v1` style, and the CORS allowlist already
+permits only `GET`. Spring's binding splits a single comma-separated value into a list,
+which would break `site=lat,lon,alt`, hence the parser reads the raw parameters.
+
+**Decision: one failed satellite is an entry, not a failed batch.** Nine satellites
+computed and one unknown one is a result; turning it into a 404 would throw away work
+already paid for. Validation of the batch itself stays a whole-request 400.
+
+**Decision: one TLE read and one clock read per satellite.** All sites of one satellite
+share the elements and `computedAt`, so they are comparable, and an unknown satellite
+costs one catalogue lookup rather than one per site — the store forgets objects the
+catalogue does not have, and would ask CelesTrak again for each site otherwise.
+
+**Decision: sequential, bounded, keyed only.** Predictions run one after the other;
+the 25-prediction cap, not parallelism, bounds the response time, and one caller cannot
+take every core. Measured worst case (25 cache misses over 240 h, M-series laptop):
+7.5 s and 13.8 MB with tracks; 8 ms and 0.5 MB from the cache with `track=false`. There
+is no `/api` alias: the anonymous demo's shared budget is not to be spent in bulk.
+
+**Verification:** `BatchQueryTest` pins parsing, deduplication, bounds and the caps;
+`BatchPassControllerTest` the JSON, partial failures and the admission price;
+`AccessServicePostgresTest` per-prediction counting, all-or-nothing admission and the
+oversized-batch refusal on real PostgreSQL; `PassQueryServiceTest` that several sites
+share one TLE read and match their single calls. Checked by hand against a running
+instance with live CelesTrak elements.
 
 ---
 

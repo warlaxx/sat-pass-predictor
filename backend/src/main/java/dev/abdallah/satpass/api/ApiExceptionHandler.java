@@ -49,12 +49,26 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(TleException.class)
     public ResponseEntity<ProblemDetail> handleTleFailure(TleException e) {
+        ProblemDetail problem = tleProblem(e);
+        var response = ResponseEntity.status(problem.getStatus());
+        if (e instanceof TleUnavailableException) {
+            response.header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS);
+        }
+        return response.body(problem);
+    }
+
+    /**
+     * The body alone, without the response around it: a batch reports a failed satellite
+     * inside a 200, and its entry must say exactly what the single endpoint would have
+     * said — same type, same status, same properties.
+     */
+    static ProblemDetail tleProblem(TleException e) {
         return switch (e) {
             case TleNotFoundException notFound -> {
                 ProblemDetail problem = problem(HttpStatus.NOT_FOUND, notFound.getMessage(),
                         "unknown-satellite", "Unknown satellite");
                 problem.setProperty("noradId", notFound.noradId());
-                yield ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+                yield problem;
             }
             // 503 and not 502: the service cannot answer *for now*, and retrying makes
             // sense. It is also the only case where the store had nothing to degrade
@@ -70,21 +84,17 @@ public class ApiExceptionHandler {
                 // relay answering 502 are two repairs in two different places.
                 log.warn("no TLE source answered and nothing in memory: {}",
                         unavailable.getMessage(), unavailable);
-                ProblemDetail problem = problem(HttpStatus.SERVICE_UNAVAILABLE,
+                yield problem(HttpStatus.SERVICE_UNAVAILABLE,
                         "No TLE available for this satellite: no source of orbital elements"
                                 + " could be reached, and nothing has been fetched yet. Please retry in 15 seconds.",
                         "tle-unavailable", "Orbital elements unavailable");
-                yield ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_SECONDS)
-                        .body(problem);
             }
             // A TLE exists, but its epoch is too old for the prediction to mean anything.
             // Answering 200 with a curve to the degree would be false precision; that is
             // why this case has its own type despite sharing a status code with the
             // previous one.
-            case TleTooOldException tooOld -> ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(problem(HttpStatus.SERVICE_UNAVAILABLE, tooOld.getMessage(),
-                            "tle-stale", "Orbital elements too old"));
+            case TleTooOldException tooOld -> problem(HttpStatus.SERVICE_UNAVAILABLE, tooOld.getMessage(),
+                    "tle-stale", "Orbital elements too old");
         };
     }
 
