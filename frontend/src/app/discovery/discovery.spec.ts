@@ -7,6 +7,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Discovery, nextOpportunity, parseSatellites } from './discovery';
 import { DEFAULT_QUERY } from '../api/passes.query';
+import { SatellitePicker } from '../satellite-picker/satellite-picker';
 import { PassesResponse, TrackPointDto } from '../api/passes.model';
 
 export function prediction(noradId: number, minute: number, favourable = true): PassesResponse {
@@ -52,7 +53,7 @@ describe('Discovery HTTP flow', () => {
     const fixture = TestBed.createComponent(Discovery);
     fixture.componentRef.setInput('query', DEFAULT_QUERY);
     await fixture.whenStable();
-    const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+    const input = fixture.nativeElement.querySelector('#discovery-ids') as HTMLInputElement;
     input.value = ids; input.dispatchEvent(new Event('input'));
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }));
     TestBed.tick();
@@ -94,6 +95,18 @@ describe('Discovery HTTP flow', () => {
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain('no favourable sample');
     expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('adds a satellite chosen by name to the list, once', async () => {
+    const fixture = TestBed.createComponent(Discovery);
+    fixture.componentRef.setInput('query', DEFAULT_QUERY);
+    await fixture.whenStable();
+    const picker = fixture.debugElement.query(By.directive(SatellitePicker)).componentInstance as SatellitePicker;
+    picker.picked.emit({ noradId: 20580, name: 'HST' });
+    picker.picked.emit({ noradId: 20580, name: 'HST' });
+    picker.picked.emit({ noradId: 25544, name: 'ISS (ZARYA)' });
+    await fixture.whenStable();
+    expect((fixture.nativeElement.querySelector('#discovery-ids') as HTMLInputElement).value).toBe('25544, 48274, 20580');
   });
 
   it('cancels obsolete requests when restarting', async () => {

@@ -5,6 +5,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { PassDto, PassesResponse } from '../api/passes.model';
 import { PassQuery, toParams } from '../api/passes.query';
+import { SatellitePicker } from '../satellite-picker/satellite-picker';
 
 export interface Opportunity {
   response: PassesResponse;
@@ -39,7 +40,7 @@ export function nextOpportunity(response: PassesResponse): Opportunity | undefin
 
 @Component({
   selector: 'app-discovery',
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, SatellitePicker],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './discovery.html',
   styleUrl: './discovery.scss',
@@ -72,6 +73,12 @@ export class Discovery {
     .sort((a, b) => Date.parse(a.start) - Date.parse(b.start)));
   protected readonly unavailable = computed(() => this.values().filter(result => result.error));
   protected readonly empty = computed(() => this.values().filter(result => result.response && !nextOpportunity(result.response)));
+
+  /** Appends a chosen satellite to the list, once; the five-satellite cap is checked on search. */
+  protected add(noradId: number): void {
+    const current = this.ids().split(/[\s,]+/).filter(token => token !== '');
+    if (!current.includes(String(noradId))) this.ids.set([...current, noradId].join(', '));
+  }
 
   protected find(): void {
     this.validation.set('');

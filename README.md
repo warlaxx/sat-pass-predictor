@@ -236,6 +236,25 @@ modelled. Flags are sampled every 10 s, so short opportunities can be missed and
 shadow-entry times are approximate. The API exposes these conditions separately as
 `track[].illuminated` and `track[].visible`.
 
+## Searching by name
+
+The satellite field accepts a name as well as a NORAD number. Digits are used as-is, with
+no lookup. Anything else queries `GET /api/satellites?q=…&limit=…`, which returns
+`{ results: [{ noradId, name }], catalogFetchedAt }`, and a suggestion must be chosen before
+passes are computed: a half-typed name never silently keeps the previous satellite.
+
+The index is CelesTrak's `active` group (`gp.php?GROUP=active&FORMAT=TLE`), fetched through
+the same `tle.base-urls` chain — the Vercel relay already forwards that path. It is
+downloaded on the first search, not at startup, held in memory, refreshed after
+`catalog.refresh-after` (24 h) and never retried more often than `catalog.retry-after`
+(5 min). A failed refresh keeps the previous index; with nothing ever downloaded, the
+endpoint answers 503 `catalog-unavailable` and NORAD numbers keep working.
+
+Limits, stated rather than hidden: names are CelesTrak's (`HST`, not "Hubble"); debris and
+rocket bodies are not in the `active` group; the index is not persisted, so each restart
+downloads it again on its first search. The endpoint is not metered — a lookup is an
+in-memory scan, and the prediction it leads to is metered as before.
+
 ## Multi-satellite discovery
 
 The “Next favourable window · 7 days” panel compares up to five distinct NORAD IDs,

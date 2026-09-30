@@ -115,8 +115,8 @@ public class TleClientConfig {
                 budget, spaceTrack.identity(), spaceTrack.password());
     }
 
-    private JdkClientHttpRequestFactory requestFactory(TleProperties properties,
-                                                       CookieManager cookies) {
+    static JdkClientHttpRequestFactory requestFactory(TleProperties properties,
+                                                     CookieManager cookies) {
         HttpClient.Builder builder = HttpClient.newBuilder()
                 .connectTimeout(properties.connectTimeout())
                 .followRedirects(HttpClient.Redirect.NORMAL);

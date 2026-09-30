@@ -20,12 +20,12 @@
 <form class="query wrap" appReveal (submit)="$event.preventDefault(); search()">
   <div class="group">
     <span class="caption" id="q-satellite">Satellite</span>
-    <label class="field">
-      <span class="visually-hidden">NORAD catalogue number</span>
-      <span class="prefix" aria-hidden="true">NORAD</span>
-      <input class="num w-norad" type="number" min="1" max="99999" required aria-describedby="q-satellite"
-             [value]="form().noradId" (input)="patch('noradId', $any($event.target).value)">
-    </label>
+    <div class="field satellite">
+      <app-satellite-picker label="Satellite name or NORAD catalogue number"
+                            describedBy="q-satellite" [initial]="'' + form().noradId"
+                            (changed)="setSatellite($event)" />
+      <span class="prefix" aria-hidden="true">{{ satelliteResolved() ? 'NORAD ' + form().noradId : 'choose' }}</span>
+    </div>
   </div>
 
   <div class="group">
@@ -84,6 +84,9 @@
     {{ loading() ? 'Computing...' : 'Compute passes' }}
   </button>
 
+  @if (satelliteError(); as failure) {
+    <p class="location-error" role="alert">{{ failure }}</p>
+  }
   @if (locationError(); as failure) {
     <p class="location-error" role="status">{{ failure }}</p>
   }

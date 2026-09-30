@@ -1,7 +1,11 @@
 <section aria-labelledby="discovery-title">
   <h2 id="discovery-title">Next favourable window · 7 days</h2>
-  <p>Compare up to five satellites using the observer and elevation threshold above. Enter NORAD numbers separated by commas.</p>
+  <p>Compare up to five satellites using the observer and elevation threshold above. Enter NORAD numbers separated by commas, or add satellites by name.</p>
   <form (submit)="$event.preventDefault(); find()">
+    <div class="add">
+      <app-satellite-picker mode="add" label="Add a satellite by name" placeholder="Add by name…"
+                            (picked)="add($event.noradId)" />
+    </div>
     <label for="discovery-ids">NORAD numbers</label>
     <input id="discovery-ids" required [value]="ids()" (input)="ids.set($any($event.target).value)" aria-describedby="discovery-help">
     <button type="submit">{{ results.isLoading() ? 'Restart search' : 'Find next windows' }}</button>

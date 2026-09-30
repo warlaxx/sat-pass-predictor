@@ -67,6 +67,16 @@ tle:
     requests-per-minute: 20
     requests-per-hour: 200
 
+# Name search. Built from tle.base-urls (CelesTrak's "active" group), downloaded on the
+# first search rather than at startup, and kept in memory: a restart that nobody searches
+# after costs CelesTrak nothing.
+catalog:
+  # Names change rarely. CelesTrak asks that a group be downloaded at most once per
+  # republication (2h); a day is well inside that and still picks up new launches.
+  refresh-after: 24h
+  # Minimum delay between two download attempts during an outage.
+  retry-after: 5m
+
 springdoc:
   # Swagger UI under a short address: it is the first page anyone opens on this
   # repository, it has no business being called /swagger-ui/index.html.

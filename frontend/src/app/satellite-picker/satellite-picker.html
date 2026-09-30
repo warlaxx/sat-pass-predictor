@@ -1,0 +1,23 @@
+<input [id]="id + '-input'" type="text" role="combobox" autocomplete="off" spellcheck="false"
+       aria-autocomplete="list" [attr.aria-label]="label()" [attr.aria-describedby]="describedBy()"
+       [attr.aria-expanded]="open() && matches().length > 0" [attr.aria-controls]="id + '-listbox'"
+       [attr.aria-activedescendant]="activeId()" [placeholder]="placeholder()"
+       [value]="text()" (input)="onInput($any($event.target).value)" (keydown)="onKeydown($event)"
+       (blur)="close()">
+<ul [id]="id + '-listbox'" role="listbox" [attr.aria-label]="label() + ' suggestions'"
+    [hidden]="!open() || matches().length === 0">
+  @for (match of matches(); track match.noradId; let index = $index) {
+    <li [id]="id + '-option-' + index" role="option" [attr.aria-selected]="index === active()"
+        [class.active]="index === active()"
+        (mousedown)="$event.preventDefault(); choose(match)" (mouseenter)="active.set(index)">
+      <span class="name">{{ match.name }}</span><span class="num">{{ match.noradId }}</span>
+    </li>
+  }
+</ul>
+@if (open() && !searching() && lookup(); as result) {
+  @if (result.error) {
+    <p class="note" role="status">{{ result.error }}</p>
+  } @else if (result.matches.length === 0) {
+    <p class="note" role="status">No active satellite named “{{ result.query }}”. Names follow CelesTrak (HST for Hubble); debris and rocket bodies need their NORAD number.</p>
+  }
+}

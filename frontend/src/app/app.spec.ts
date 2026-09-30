@@ -2,7 +2,7 @@ import { describe, beforeEach, afterEach, it, expect } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { App } from './app';
 
 /**
@@ -135,5 +135,19 @@ describe('App geolocation', () => {
 
     expect(fixture.nativeElement.querySelector('.location-error').textContent)
       .toContain('does not offer geolocation');
+  });
+
+  it('refuses to compute while the satellite field holds a name nobody chose', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const satellite = fixture.nativeElement.querySelector('input') as HTMLInputElement;
+    satellite.value = 'iss';
+    satellite.dispatchEvent(new Event('input'));
+    fixture.nativeElement.querySelector('form.query').dispatchEvent(new Event('submit', { cancelable: true }));
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Choose a satellite');
+    // The previous number (25544) must not be computed under a name the user typed.
+    TestBed.inject(HttpTestingController).expectNone('/api/passes');
   });
 });

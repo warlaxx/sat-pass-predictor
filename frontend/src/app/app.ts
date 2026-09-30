@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { Discovery, Opportunity } from './discovery/discovery';
+import { SatellitePicker } from './satellite-picker/satellite-picker';
 import { Reveal } from './motion/reveal';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -37,7 +38,7 @@ function round(value: number, decimals: number): number {
  */
 @Component({
   selector: 'app-root',
-  imports: [Discovery, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama],
+  imports: [Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './app.scss',
   templateUrl: './app.html',
@@ -204,12 +205,30 @@ export class App {
     this.form.update((query) => ({ ...query, [field]: parsed }));
   }
 
+  // --- Satellite, by name or number --------------------------------------
+
+  /** False while the field holds a name that has not been matched to a number yet. */
+  protected readonly satelliteResolved = signal(true);
+  protected readonly satelliteError = signal<string | undefined>(undefined);
+
+  protected setSatellite(noradId: number | null): void {
+    this.satelliteError.set(undefined);
+    this.satelliteResolved.set(noradId !== null);
+    if (noradId !== null) this.form.update((query) => ({ ...query, noradId }));
+  }
+
   protected inspect(opportunity: Opportunity): void {
     this.discovered.set(opportunity.response);
     this.selected.set(opportunity.pass.aos.instant);
   }
 
   protected search(): void {
+    // Computing with the previous number while the field shows another name would draw
+    // the passes of a satellite the user did not ask for, under the one they did.
+    if (!this.satelliteResolved()) {
+      this.satelliteError.set('Choose a satellite from the suggestions, or type its NORAD number.');
+      return;
+    }
     this.discovered.set(undefined);
     this.selected.set(undefined);
     this.api.search(this.form());
