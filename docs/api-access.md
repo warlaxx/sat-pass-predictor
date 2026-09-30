@@ -92,8 +92,9 @@ curl -H "X-API-Key: $SATPASS_API_KEY" \
   distinguish them using the Problem Details `type`.
 
 Limits are stored per key. An operator can update `daily_limit` and `minute_limit`
-with SQL (positive integers); the next admission observes the change. No billing
-plans, signup or monthly quotas are implemented in this milestone.
+with SQL (positive integers); the next admission observes the change. Self-serve
+signup arrived in milestone 13 ([accounts](self-serve-accounts.md)); paid plans with
+monthly quotas arrived in milestone 14 ([billing](billing.md)).
 
 ## Batch requests
 
