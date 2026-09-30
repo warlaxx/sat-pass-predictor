@@ -281,6 +281,10 @@ fallback message if it cannot load) renders the ground track, the visibility cir
 day/night terminator from the same `track` and `subPoint` data, drag to rotate. The ground
 track's two colours now show the satellite's illumination computed by Orekit. Earth's
 approximate terminator is only a visual reference and does not determine visibility.
+For the weather satellites an amateur station can decode (Meteor-M N2-3 and N2-4 over
+LRPT, Metop-B over AHRPT), the globe also draws the **imaging swath**: the instrument's
+nominal ~2,800–2,900 km band along the track, from AOS to LOS, to show roughly what the
+decoded image will cover before the pass.
 Details and the decisions behind them: [ROADMAP.md](ROADMAP.md#milestone-8--3d-globe-done).
 
 ## Physical model
@@ -444,6 +448,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] Frontend: shell, pass list, ribbon of nights, TLE age banner
 - [x] Polar sky chart (SVG), shared selection and playback controls
 - [x] 3D globe: ground track, visibility circle, terminator
+- [x] Imaging swath on the globe for receivable weather imagers (Meteor-M LRPT, Metop-B AHRPT)
 - [x] Docker Compose, architecture diagram, physical model
 - [ ] Demo GIF
 - [x] Potential naked-eye visibility (sunlight + observer darkness)

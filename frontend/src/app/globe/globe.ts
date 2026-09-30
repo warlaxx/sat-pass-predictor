@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, effect, inject, input, signal, viewChild } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ObserverDto, PassDto } from '../api/passes.model';
 import { PassClock } from '../pass-viewer/pass-clock';
 import {
-  D2R, EARTH_RADIUS_KM, LatLon, destinationPoint, sampleSubPointAt, subsolarPoint, toUnitVector, visibilityRadiusDeg,
+  D2R, EARTH_RADIUS_KM, LatLon, destinationPoint, sampleSubPointAt, subsolarPoint, swathRows, toUnitVector, visibilityRadiusDeg,
 } from './globe-geometry';
+import { ImagingSwath, imagingSwathFor } from './imaging-swath';
 import { THREE_LOADER } from './three-loader';
 
 /**
@@ -27,6 +28,7 @@ type CoastlineRings = readonly (readonly [number, number])[][];
 
 const COASTLINE_URL = 'coastline-110m.json';
 const SURFACE_RADIUS = 1;
+const SWATH_RADIUS = 1.004;
 const GROUND_TRACK_RADIUS = 1.006;
 const FOOTPRINT_RADIUS = 1.008;
 const MARKER_RADIUS = 1.01;
@@ -47,6 +49,39 @@ function emptyLineSegments(three: ThreeNS, color: number, opacity: number): Line
 function setPoints(three: ThreeNS, line: Line | LineSegments, points: Vector3[]): void {
   line.geometry.dispose();
   line.geometry = new three.BufferGeometry().setFromPoints(points);
+}
+
+/**
+ * Rebuilds the swath band as a grid mesh (rows along the track, columns across it) and
+ * outlines its two long edges, so the band stays legible where it is nearly transparent.
+ */
+function setSwath(three: ThreeNS, band: Mesh, edges: LineSegments, rows: LatLon[][]): void {
+  band.geometry.dispose();
+  const positions: number[] = [];
+  const indices: number[] = [];
+  const edgePoints: Vector3[] = [];
+  const columns = rows[0]?.length ?? 0;
+  rows.forEach((row, r) => {
+    for (const point of row) {
+      const v = toUnitVector(point, SWATH_RADIUS);
+      positions.push(v.x, v.y, v.z);
+    }
+    if (r === 0) return;
+    for (let c = 0; c < columns - 1; c++) {
+      const a = (r - 1) * columns + c, b = a + 1, d = r * columns + c, e = d + 1;
+      indices.push(a, d, b, b, d, e);
+    }
+    const previous = rows[r - 1];
+    edgePoints.push(
+      toVector3(three, previous[0], SWATH_RADIUS), toVector3(three, row[0], SWATH_RADIUS),
+      toVector3(three, previous[columns - 1], SWATH_RADIUS), toVector3(three, row[columns - 1], SWATH_RADIUS),
+    );
+  });
+  const geometry = new three.BufferGeometry();
+  geometry.setAttribute('position', new three.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  band.geometry = geometry;
+  setPoints(three, edges, edgePoints);
 }
 
 function buildCoastline(three: ThreeNS, rings: CoastlineRings): LineSegments {
@@ -89,7 +124,7 @@ function buildGraticule(three: ThreeNS): LineSegments {
  */
 @Component({
   selector: 'app-globe',
-  imports: [DatePipe],
+  imports: [DatePipe, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './globe.html',
   styleUrl: './globe.scss',
@@ -98,6 +133,10 @@ export class Globe {
   readonly pass = input.required<PassDto>();
   readonly observer = input.required<ObserverDto>();
   readonly threshold = input.required<number>();
+  /** Selects the imaging swath, when this satellite is a receivable imager. */
+  readonly noradId = input<number>();
+
+  protected readonly swath = computed<ImagingSwath | undefined>(() => imagingSwathFor(this.noradId()));
 
   protected readonly ready = signal(false);
   protected readonly failed = signal(false);
@@ -116,6 +155,8 @@ export class Globe {
   private groundTrackDay?: LineSegments;
   private groundTrackNight?: LineSegments;
   private footprint?: Line;
+  private swathBand?: Mesh;
+  private swathEdges?: LineSegments;
   private sightLine?: Line;
   private resizeObserver?: ResizeObserver;
 
@@ -132,7 +173,7 @@ export class Globe {
 
     effect(() => {
       if (!this.ready()) return;
-      this.buildTrack(this.pass(), this.observer());
+      this.buildTrack(this.pass(), this.observer(), this.swath());
     });
 
     effect(() => {
@@ -193,6 +234,14 @@ export class Globe {
     const groundTrackDay = emptyLineSegments(three, 0xeceff8, 0.9);
     const groundTrackNight = emptyLineSegments(three, 0x7d88a8, 0.9);
     const footprint = emptyLine(three, 0x96a4ff, 0.65);
+    // Colour matches the --swath design token. Drawn before the track and the circle,
+    // without writing depth, so the translucent band never hides them.
+    const swathBand = new three.Mesh(
+      new three.BufferGeometry(),
+      new three.MeshBasicMaterial({ color: 0x5fc4e8, transparent: true, opacity: 0.16, side: three.DoubleSide, depthWrite: false }),
+    );
+    const swathEdges = emptyLineSegments(three, 0x5fc4e8, 0.55);
+    scene.add(swathBand); scene.add(swathEdges);
     const sightLine = emptyLine(three, 0xf4ad3c, 0.5);
     scene.add(groundTrackDay); scene.add(groundTrackNight); scene.add(footprint); scene.add(sightLine);
 
@@ -205,6 +254,8 @@ export class Globe {
     this.groundTrackDay = groundTrackDay;
     this.groundTrackNight = groundTrackNight;
     this.footprint = footprint;
+    this.swathBand = swathBand;
+    this.swathEdges = swathEdges;
     this.sightLine = sightLine;
 
     this.attachPointerControls(canvas);
@@ -215,12 +266,12 @@ export class Globe {
 
   /**
    * Rebuilds the geometry that only changes when a different pass is selected: the two
-   * ground-track segments and the Sun direction lighting the terminator.
+   * ground-track segments, the imaging swath and the Sun direction lighting the terminator.
    *
    * Track colours use satellite illumination from Orekit. The approximate Sun direction
    * below only lights Earth's terminator, fixed at culmination for the short pass.
    */
-  private buildTrack(pass: PassDto, observer: ObserverDto): void {
+  private buildTrack(pass: PassDto, observer: ObserverDto, swath: ImagingSwath | undefined): void {
     const three = this.three!;
     const track = pass.track;
     const sun = subsolarPoint(Date.parse(pass.culmination.instant));
@@ -234,6 +285,9 @@ export class Globe {
     }
     setPoints(three, this.groundTrackDay!, dayPoints);
     setPoints(three, this.groundTrackNight!, nightPoints);
+    // The track runs from AOS to LOS, so the band covers exactly the stretch the station
+    // hears above the chosen elevation — the part of the swath a decoder could receive.
+    setSwath(three, this.swathBand!, this.swathEdges!, swath ? swathRows(track, swath.widthKm) : []);
 
     const middle = track[Math.floor(track.length / 2)]?.subPoint ?? observer;
     this.yaw = middle.longitudeDeg * D2R;
