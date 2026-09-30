@@ -33,18 +33,18 @@ class AccessWebTest {
     @Test void bothAliasesAreAccountedBeforeControllerValidation() throws Exception {
         mvc.perform(get("/v1/passes" + QUERY).header("X-API-Key", "key"))
                 .andExpect(status().isBadRequest()).andExpect(header().string("Cache-Control", "no-store"));
-        verify(access).admit("key", false);
+        verify(access).admit("key", false, 1);
         mvc.perform(get("/api/passes" + QUERY)).andExpect(status().isBadRequest());
-        verify(access).admit(null, true);
+        verify(access).admit(null, true, 1);
         verifyNoInteractions(passes);
     }
     @Test void matrixParametersCannotBypassAdmission() throws Exception {
-        doThrow(AccessFailure.unauthorized()).when(access).admit(null, false);
+        doThrow(AccessFailure.unauthorized()).when(access).admit(null, false, 1);
         mvc.perform(get("/v1/passes;ignored=x" + QUERY)).andExpect(status().isUnauthorized());
         verifyNoInteractions(passes);
     }
     @Test void unauthorizedAndRevokedKeysReturnProblemDetails() throws Exception {
-        doThrow(AccessFailure.unauthorized()).when(access).admit("revoked", false);
+        doThrow(AccessFailure.unauthorized()).when(access).admit("revoked", false, 1);
         mvc.perform(get("/v1/passes" + QUERY).header("X-API-Key", "revoked"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith("application/problem+json"))
@@ -54,7 +54,7 @@ class AccessWebTest {
     }
     @Test void quotaResponseNamesLimitAndResetAndRetryDelay() throws Exception {
         doThrow(new AccessFailure("daily-quota-exceeded", 429, "Daily quota reached",
-                Instant.parse("2026-09-20T00:00:00Z"))).when(access).admit(null, true);
+                Instant.parse("2026-09-20T00:00:00Z"))).when(access).admit(null, true, 1);
         mvc.perform(get("/api/passes" + QUERY)).andExpect(status().isTooManyRequests())
                 .andExpect(header().string("Retry-After", "43170"))
                 .andExpect(jsonPath("$.limit").value("daily"))
@@ -62,7 +62,7 @@ class AccessWebTest {
         verifyNoInteractions(passes);
     }
     @Test void databaseFailureFailsClosedWithoutLeakingDetails() throws Exception {
-        doThrow(new DataAccessResourceFailureException("secret connection details")).when(access).admit(null, true);
+        doThrow(new DataAccessResourceFailureException("secret connection details")).when(access).admit(null, true, 1);
         mvc.perform(get("/api/passes" + QUERY)).andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.detail").value("API access accounting is unavailable. Please retry later."));
         verifyNoInteractions(passes);

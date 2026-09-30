@@ -1,5 +1,6 @@
 package dev.abdallah.satpass.api;
 
+import dev.abdallah.satpass.domain.ObserverLocation;
 import dev.abdallah.satpass.domain.SatellitePass;
 import dev.abdallah.satpass.domain.SubSatellitePoint;
 import dev.abdallah.satpass.domain.TrackPoint;
@@ -58,8 +59,7 @@ public record PassesResponse(SatelliteDto satellite,
                         snapshot.fetchedAt(),
                         snapshot.line1(),
                         snapshot.line2()),
-                new ObserverDto(observer.latitudeDeg(), observer.longitudeDeg(),
-                        observer.altitudeMeters()),
+                ObserverDto.from(observer),
                 prediction.minElevationDeg(),
                 frequencyMhz,
                 prediction.computedAt(),
@@ -83,6 +83,19 @@ public record PassesResponse(SatelliteDto satellite,
         return -frequencyMhz * 1.0e6 * rangeRateKmS / SPEED_OF_LIGHT_KM_S;
     }
 
+    /**
+     * The same answer with every pass reduced to its three phases. A batch of twenty-five
+     * predictions over ten days carries tens of thousands of track points; a caller
+     * ranking passes or scheduling a station needs none of them.
+     */
+    public PassesResponse withoutTracks() {
+        return new PassesResponse(satellite, tle, observer, minElevationDeg, frequencyMhz, computedAt,
+                passes.stream()
+                        .map(pass -> new PassDto(pass.aos(), pass.culmination(), pass.los(),
+                                pass.durationSeconds(), List.of()))
+                        .toList());
+    }
+
     public record SatelliteDto(int noradId, String name) {
     }
 
@@ -103,6 +116,10 @@ public record PassesResponse(SatelliteDto satellite,
     }
 
     public record ObserverDto(double latitudeDeg, double longitudeDeg, double altitudeM) {
+
+        static ObserverDto from(ObserverLocation observer) {
+            return new ObserverDto(observer.latitudeDeg(), observer.longitudeDeg(), observer.altitudeMeters());
+        }
     }
 
     public record PassDto(PhaseDto aos,

@@ -1,5 +1,7 @@
 package dev.abdallah.satpass.access;
 
+import dev.abdallah.satpass.api.BatchPassController;
+import dev.abdallah.satpass.api.BatchQuery;
 import dev.abdallah.satpass.api.PassController;
 import dev.abdallah.satpass.api.VersionedPassController;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,9 +35,12 @@ public class AccessWebConfiguration implements WebMvcConfigurer {
             @Override public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
                 // Protect the resolved controller, not a hand-maintained path matcher.
                 // This includes all aliases and cannot be bypassed with matrix parameters.
-                if (!(handler instanceof HandlerMethod method)
-                        || !PassController.class.isAssignableFrom(method.getBeanType())) return true;
-                boolean demo = !VersionedPassController.class.isAssignableFrom(method.getBeanType());
+                if (!(handler instanceof HandlerMethod method)) return true;
+                boolean batch = BatchPassController.class.isAssignableFrom(method.getBeanType());
+                if (!batch && !PassController.class.isAssignableFrom(method.getBeanType())) return true;
+                boolean demo = !batch && !VersionedPassController.class.isAssignableFrom(method.getBeanType());
+                // Priced from the same parser the controller will use, before it runs.
+                int predictions = batch ? BatchQuery.predictionCount(request.getParameterMap()) : 1;
                 String key = request.getHeader("X-API-Key");
                 // Keyed/quota-limited responses must never be served from a shared HTTP cache.
                 response.setHeader("Cache-Control", "no-store");
@@ -45,7 +50,7 @@ public class AccessWebConfiguration implements WebMvcConfigurer {
                     return true; // Explicit legacy mode while PostgreSQL is not provisioned.
                 }
                 try {
-                    service.admit(key, demo);
+                    service.admit(key, demo, predictions);
                 } catch (DataAccessException | TransactionException failure) {
                     throw AccessFailure.unavailable(); // Fail closed; no secrets/SQL in the response.
                 }

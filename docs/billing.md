@@ -17,6 +17,8 @@ subscription anniversary. The first partial calendar month has the full quota;
 upgrades/downgrades, revocation and key rotation never reset usage. Free calls
 already made in that month count after upgrading. A downgrade below current usage
 returns 429 until the relevant reset. Both API URL aliases and cached answers count.
+A batch call counts one request per prediction (satellites × sites) against every
+limit and is admitted whole or not at all; see [batch requests](api-access.md#batch-requests).
 The public demo and operator-issued keys keep their existing daily limits.
 
 The €9/€49 prices in the roadmap remain hypotheses. Prices and taxes are shown by

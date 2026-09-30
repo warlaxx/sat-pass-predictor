@@ -51,11 +51,31 @@ public class PassQueryService {
                                      ObserverLocation observer,
                                      Duration window,
                                      double minElevationDeg) {
+        return findPassesForSites(noradId, List.of(observer), window, minElevationDeg).getFirst();
+    }
+
+    /**
+     * The same query for several sites at once, which is what a batch asks of one
+     * satellite.
+     *
+     * <p>The elements and the clock are read once for all the sites, not once per site:
+     * every prediction in the list is computed from the same TLE over the same window, so
+     * two sites of one batch can be compared without asking whether the elements changed
+     * between them. A missing satellite also costs one catalogue lookup, not one per site
+     * — the store forgets an object the catalogue does not have, and asking again for the
+     * next site would ask CelesTrak again.
+     */
+    public List<PassPrediction> findPassesForSites(int noradId,
+                                                   List<ObserverLocation> observers,
+                                                   Duration window,
+                                                   double minElevationDeg) {
         TleSnapshot snapshot = tleStore.get(noradId);
         Instant computedAt = clock.instant();
 
-        return cache.get(noradId, observer, window, minElevationDeg, snapshot, computedAt,
-                () -> compute(snapshot, observer, window, minElevationDeg, computedAt));
+        return observers.stream()
+                .map(observer -> cache.get(noradId, observer, window, minElevationDeg, snapshot, computedAt,
+                        () -> compute(snapshot, observer, window, minElevationDeg, computedAt)))
+                .toList();
     }
 
     private PassPrediction compute(TleSnapshot snapshot,
