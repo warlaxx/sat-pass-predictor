@@ -172,6 +172,11 @@
     <div class="section-head">
       <h2 id="table-title">Pass list</h2>
       <span>Text equivalent of the globe and the sky chart</span>
+      <!-- Inline so app.scss stays inside its 6 kB budget. -->
+      <button type="button" class="ghost calendar" style="margin-left: auto" [disabled]="!calendar()" (click)="downloadCalendar()"
+              [title]="calendar() ? 'One event per potentially visible pass, with a reminder 10 minutes before' : 'No pass in this window has a favourable sample'">
+        Add visible passes to calendar (.ics)
+      </button>
     </div>
     <app-pass-table
       [passes]="loaded.passes"

@@ -480,6 +480,13 @@ globe renders — checked by hand in a browser, with no failed request left in t
   satellite, ordered by visibility onset. Partial failures stay explicit; selecting a
   result reuses its prediction in the existing views. Browser requests are cancelled on
   restart. Searched observer/threshold and element age at the opportunity remain visible.
+- [x] **Calendar export**: the pass list downloads an iCalendar (`.ics`) file of the
+  potentially visible passes on screen — one event per pass with a favourable sample,
+  spanning its first favourable interval, rise/peak/set in the description, a reminder
+  10 minutes before. Built in the browser from the response already loaded: no request,
+  no quota. UIDs derive from NORAD id, AOS and observer, so re-importing the same
+  prediction updates events instead of duplicating them. Times are UTC; the calendar
+  application localises them.
 
 **Discovery scope:** this is an on-demand comparison through the existing API, not a
 catalogue scan or a new batch endpoint. Each request has its own computation time. The
