@@ -455,6 +455,7 @@ Details, milestones and time budget: [ROADMAP.md](ROADMAP.md).
 - [x] Stripe Checkout/Portal, signed webhooks and monthly quotas (milestone 14; sandbox activation pending)
 - [ ] Real Stripe sandbox lifecycle and production billing activation
 - [ ] Commercial readiness and first customers (milestones 15–17)
+- [x] Range rate on every track point, optional Doppler shift for a given carrier (milestone 18)
 
 Validated interface mockup: [docs/interface-mockup.html](docs/interface-mockup.html)
 (open it in a browser).

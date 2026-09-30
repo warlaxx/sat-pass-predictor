@@ -17,6 +17,9 @@ import java.time.Instant;
  * @param azimuthDeg   azimuth in [0, 360), measured from North towards East
  * @param elevationDeg geometric elevation above the horizon, in degrees
  * @param rangeKm      observer-to-satellite distance, in kilometres
+ * @param rangeRateKmS time derivative of that distance, in km/s: negative while the
+ *                     satellite approaches, positive while it recedes. It is the only
+ *                     input a Doppler correction needs besides the carrier frequency.
  * @param subPoint     the point on the ground directly below the satellite
  * @param illuminated true when the entire solar disc is clear of Earth's limb
  * @param visible     potentially visible: illuminated and observer's Sun at or below
@@ -27,6 +30,7 @@ public record TrackPoint(
         double azimuthDeg,
         double elevationDeg,
         double rangeKm,
+        double rangeRateKmS,
         SubSatellitePoint subPoint,
         boolean illuminated,
         boolean visible) {
@@ -49,6 +53,9 @@ public record TrackPoint(
         }
         if (!(rangeKm > 0.0)) {
             throw new IllegalArgumentException("range is not strictly positive: " + rangeKm);
+        }
+        if (!Double.isFinite(rangeRateKmS)) {
+            throw new IllegalArgumentException("range rate is not finite: " + rangeRateKmS);
         }
     }
 }

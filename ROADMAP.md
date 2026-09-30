@@ -796,8 +796,14 @@ Do not build this list in advance. It is the menu, and customers choose from it.
 
 - **Visible passes** — milestone 10's illumination, which is the one prediction the free
   tools get wrong or omit. The strongest single candidate for the paid tier.
-- **Doppler shift and range rate per track point** — amateur radio's actual requirement, and
+- [x] **Doppler shift and range rate per track point** — amateur radio's actual requirement, and
   the track already carries range at 10 s. A small change, a whole audience.
+  *Done:* `rangeRateKmS` on every point and phase, from Orekit's velocity rather than
+  differenced ranges (exact at AOS/LOS). An optional `frequencyMhz` adds `dopplerHz`,
+  first order (`(v/c)²` is ~0.1 Hz at 145 MHz). The scaling lives in the DTO, so the
+  cached prediction serves every frequency. `TrackSamplingTest` checks the rate against
+  the sampled ranges (trapezoid, 50 m/s bound; 10 m/s measured) and its sign at AOS/LOS.
+  The viewer shows the live range rate; the web form does not yet ask for a frequency.
 - **Webhooks and scheduled alerts** — "call my endpoint 20 minutes before the next pass".
   Sells on the customer's ops burden, not on orbital mechanics.
 - **Batch endpoints** — many satellites or many sites in one call. Cheap to serve once

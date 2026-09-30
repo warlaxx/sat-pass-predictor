@@ -72,6 +72,14 @@ curl -H "X-API-Key: $SATPASS_API_KEY" \
   'https://sat-pass-predictor-api.onrender.com/v1/passes?noradId=25544&lat=45.75&lon=4.85'
 ```
 
+Every track point and phase carries `rangeRateKmS` (negative while the satellite
+approaches). Add `frequencyMhz` — for example `&frequencyMhz=145.8` for the ISS voice
+downlink — and each one also carries `dopplerHz`, the first-order shift to apply to the
+receiver: `-f · rangeRate / c`. For an uplink, apply the opposite sign. Without the
+parameter `dopplerHz` and the top-level `frequencyMhz` are `null`, not absent. The shift
+is scaled at the edge from a cached prediction, so asking for several frequencies costs
+one propagation.
+
 ## Limits and accounting
 
 - Daily quota resets at midnight UTC; rate limiting uses fixed UTC minute windows.

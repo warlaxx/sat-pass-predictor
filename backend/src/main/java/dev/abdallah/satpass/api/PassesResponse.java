@@ -22,15 +22,32 @@ import java.util.List;
  * <p>Every date is a UTC {@link Instant}, serialised as ISO-8601. The user's time zone is
  * a display problem: solving it here would force the server to know the browser, and
  * would make two identical responses incomparable.
+ *
+ * <h2>Doppler</h2>
+ * Every point carries its range rate, which is a property of the geometry alone. The
+ * Doppler shift is that rate scaled by a carrier frequency, so it is only published when
+ * the caller names one ({@code frequencyMhz}); otherwise the field is {@code null}, and
+ * the key stays in the JSON so the shape of the response never depends on a parameter.
+ * The scaling happens here, at the edge, rather than in the computation: the cached
+ * prediction stays one answer for every frequency, and a radio amateur tuning three
+ * transponders on the same pass costs one propagation, not three.
  */
 public record PassesResponse(SatelliteDto satellite,
                              TleDto tle,
                              ObserverDto observer,
                              double minElevationDeg,
+                             Double frequencyMhz,
                              Instant computedAt,
                              List<PassDto> passes) {
 
-    public static PassesResponse from(PassPrediction prediction) {
+    /** Speed of light in vacuum, in km/s — exact by definition of the metre. */
+    private static final double SPEED_OF_LIGHT_KM_S = 299_792.458;
+
+    /**
+     * @param frequencyMhz the carrier frequency the Doppler shift is computed for, or
+     *                     {@code null} to publish the range rate alone
+     */
+    public static PassesResponse from(PassPrediction prediction, Double frequencyMhz) {
         var snapshot = prediction.tle();
         var observer = prediction.observer();
         return new PassesResponse(
@@ -44,8 +61,26 @@ public record PassesResponse(SatelliteDto satellite,
                 new ObserverDto(observer.latitudeDeg(), observer.longitudeDeg(),
                         observer.altitudeMeters()),
                 prediction.minElevationDeg(),
+                frequencyMhz,
                 prediction.computedAt(),
-                prediction.passes().stream().map(PassDto::from).toList());
+                prediction.passes().stream().map(pass -> PassDto.from(pass, frequencyMhz)).toList());
+    }
+
+    /**
+     * First-order Doppler shift, in hertz, of a carrier emitted by the satellite and
+     * received by the observer: {@code -f · ṙ / c}. Approaching (negative range rate)
+     * raises the received frequency.
+     *
+     * <p>First order is not a shortcut: the next term, {@code (v/c)²}, is about 7e-10 in
+     * low Earth orbit — a tenth of a hertz at 145 MHz, below what any receiver resolves
+     * and far below the error the age of the TLE puts on the range rate itself. For an
+     * uplink, the correction to apply to the transmitter is the opposite sign.
+     */
+    static Double shiftHz(double rangeRateKmS, Double frequencyMhz) {
+        if (frequencyMhz == null) {
+            return null;
+        }
+        return -frequencyMhz * 1.0e6 * rangeRateKmS / SPEED_OF_LIGHT_KM_S;
     }
 
     public record SatelliteDto(int noradId, String name) {
@@ -86,24 +121,27 @@ public record PassesResponse(SatelliteDto satellite,
          * up in the track by date and throw when it did not find it; that failure mode no
          * longer exists.
          */
-        static PassDto from(SatellitePass pass) {
+        static PassDto from(SatellitePass pass, Double frequencyMhz) {
             return new PassDto(
-                    PhaseDto.from(pass.aos()),
-                    PhaseDto.from(pass.culmination()),
-                    PhaseDto.from(pass.los()),
+                    PhaseDto.from(pass.aos(), frequencyMhz),
+                    PhaseDto.from(pass.culmination(), frequencyMhz),
+                    PhaseDto.from(pass.los(), frequencyMhz),
                     pass.duration().toSeconds(),
-                    pass.track().stream().map(TrackPointDto::from).toList());
+                    pass.track().stream().map(point -> TrackPointDto.from(point, frequencyMhz)).toList());
         }
     }
 
     public record PhaseDto(Instant instant,
                            double azimuthDeg,
                            double elevationDeg,
-                           double rangeKm) {
+                           double rangeKm,
+                           double rangeRateKmS,
+                           Double dopplerHz) {
 
-        static PhaseDto from(TrackPoint point) {
+        static PhaseDto from(TrackPoint point, Double frequencyMhz) {
             return new PhaseDto(point.instant(), point.azimuthDeg(),
-                    point.elevationDeg(), point.rangeKm());
+                    point.elevationDeg(), point.rangeKm(), point.rangeRateKmS(),
+                    shiftHz(point.rangeRateKmS(), frequencyMhz));
         }
     }
 
@@ -111,13 +149,16 @@ public record PassesResponse(SatelliteDto satellite,
                                 double azimuthDeg,
                                 double elevationDeg,
                                 double rangeKm,
+                                double rangeRateKmS,
+                                Double dopplerHz,
                                 SubPointDto subPoint,
                                 boolean illuminated,
                                 boolean visible) {
 
-        static TrackPointDto from(TrackPoint point) {
+        static TrackPointDto from(TrackPoint point, Double frequencyMhz) {
             return new TrackPointDto(point.instant(), point.azimuthDeg(), point.elevationDeg(),
-                    point.rangeKm(), SubPointDto.from(point.subPoint()), point.illuminated(), point.visible());
+                    point.rangeKm(), point.rangeRateKmS(), shiftHz(point.rangeRateKmS(), frequencyMhz),
+                    SubPointDto.from(point.subPoint()), point.illuminated(), point.visible());
         }
     }
 

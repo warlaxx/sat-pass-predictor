@@ -84,10 +84,16 @@ public class PassController {
             @Parameter(description = "Minimum elevation for a pass to count, in degrees",
                     example = "10")
             @RequestParam(defaultValue = "10.0") @DecimalMin("0.0") @DecimalMax("89.0")
-            double minElevation) {
+            double minElevation,
+            @Parameter(description = "Carrier frequency of the satellite's downlink, in MHz. When"
+                    + " given, every point also carries its Doppler shift in Hz; the range rate is"
+                    + " published either way.", example = "145.8")
+            @RequestParam(required = false) @DecimalMin("1.0") @DecimalMax("300000.0")
+            Double frequencyMhz) {
 
         ObserverLocation observer = new ObserverLocation(lat, lon, alt);
         return PassesResponse.from(
-                passQueryService.findPasses(noradId, observer, Duration.ofHours(hours), minElevation));
+                passQueryService.findPasses(noradId, observer, Duration.ofHours(hours), minElevation),
+                frequencyMhz);
     }
 }

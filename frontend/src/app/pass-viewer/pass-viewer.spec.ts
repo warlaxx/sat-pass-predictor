@@ -5,7 +5,7 @@ import { PassClock } from './pass-clock';
 import { PassDto, TrackPointDto } from '../api/passes.model';
 
 const point = (seconds: number, azimuthDeg: number, elevationDeg: number): TrackPointDto => ({
-  instant: new Date(Date.UTC(2026, 8, 19, 20, 0, seconds)).toISOString(), azimuthDeg, elevationDeg, rangeKm: 1000,
+  instant: new Date(Date.UTC(2026, 8, 19, 20, 0, seconds)).toISOString(), azimuthDeg, elevationDeg, rangeKm: 1000, rangeRateKmS: 0, dopplerHz: null,
   illuminated: false, visible: false, subPoint: { latitudeDeg: 45, longitudeDeg: 4, altitudeKm: 420 },
 });
 const track = [point(0, 270, 20), point(60, 0, 70), point(120, 90, 20)];
