@@ -158,10 +158,13 @@ is not cosmetic: a not-found is permanent and makes the store drop the satellite
 mislabelling one hiccup would throw away a perfectly valid cached TLE and tell the user
 the satellite does not exist.
 
-**Two traps of the GP API**, both encoded in the tests: an unknown NORAD number answers
-**200 with the body `No GP data found`**, not 404; and under load CelesTrak serves an HTML
-page, still in 200. Any body that does not look like a TLE is therefore treated as an
-outage. The returned number is also checked against the requested one: without that check,
+**Two traps of the GP API**, both encoded in the tests: an unknown NORAD number is
+announced by **the body `No GP data found`**, which CelesTrak has served in two forms — in
+**200** when this milestone was written, and in **404** as observed on 30 September 2026.
+Either may come back, so both mean "absent"; but only with the marker — a 404 with an HTML
+or empty body (a removed relay route, a proxy's error page) is still an outage. And under
+load CelesTrak serves an HTML page, still in 200. Any body that does not look like a TLE is
+therefore treated as an outage. The returned number is also checked against the requested one: without that check,
 a response cached by an intermediary for another satellite would produce perfectly
 plausible passes — and wrong ones.
 
@@ -196,7 +199,8 @@ over the same EOP files. `OrekitConfig` now calls `clearProviders()` first — r
 is idempotent.
 
 **Exit criterion met**: `CelestrakTleClientTest` covers the nominal response,
-`No GP data found`, an empty body, an HTML page, a wrong NORAD number, an altered
+`No GP data found` (in 200 and, since 30 September 2026, in 404 — a 404 without the
+marker stays an outage), an empty body, an HTML page, a wrong NORAD number, an altered
 checksum, a timeout and a 500. `TleStoreTest` covers the refresh window, the backoff after
 a failure, falling back to the last known TLE, the absence of a fallback on the first
 call, forgetting a satellite removed from the catalogue, the hard age limit and the

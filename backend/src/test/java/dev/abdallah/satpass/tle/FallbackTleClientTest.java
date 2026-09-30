@@ -112,6 +112,28 @@ class FallbackTleClientTest {
         verify(second, never()).fetch(anyInt());
     }
 
+    /**
+     * A not-found is an answer, so the source that gave it keeps its place. Since the GP
+     * API started answering an unknown number in 404, this is the case that used to be
+     * mistaken for an outage: every lookup of a re-entered satellite demoted both
+     * endpoints for the whole cooldown.
+     */
+    @Test
+    void doesNotDemoteASourceThatAnswersNotFound() {
+        when(first.fetch(ISS))
+                .thenThrow(new TleNotFoundException(ISS))
+                .thenReturn(snapshot());
+        assertThatExceptionOfType(TleNotFoundException.class)
+                .isThrownBy(() -> chain.fetch(ISS));
+
+        clock.advance(Duration.ofMinutes(1));
+        assertThat(chain.fetch(ISS).noradId()).isEqualTo(ISS);
+
+        // Still asked first, within what would have been the cooldown.
+        verify(first, times(2)).fetch(ISS);
+        verify(second, never()).fetch(anyInt());
+    }
+
     @Test
     void refusesAChainWithNoSource() {
         assertThatIllegalArgumentException()

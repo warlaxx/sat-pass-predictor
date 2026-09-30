@@ -12,10 +12,10 @@ import org.orekit.propagation.analytical.tle.TLE;
  * Turns three lines of text into a validated {@link TleSnapshot}, or refuses them.
  *
  * <h2>Why this is shared and the clients are not</h2>
- * Two services, two ways of saying "I do not have this object": CelesTrak answers 200 with
- * {@code No GP data found}, Space-Track answers with an empty result. That belongs to each
- * client, and only that. What a valid TLE looks like belongs to NORAD, is the same
- * everywhere, and is the part worth getting right once.
+ * Two services, two ways of saying "I do not have this object": CelesTrak answers 200 or
+ * 404 with {@code No GP data found}, Space-Track answers with an empty result. That
+ * belongs to each client, and only that. What a valid TLE looks like belongs to NORAD,
+ * is the same everywhere, and is the part worth getting right once.
  *
  * <h2>Validation, in this order</h2>
  * A corrupted response must fail at the edge of the system, where we still know why,
