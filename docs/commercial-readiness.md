@@ -24,8 +24,8 @@ investing in a public pricing page.
 
 ## Product completeness versus optional expansion
 
-Still missing from the original showcase: its demo GIF. Additional Doppler output,
-batch predictions, notifications and natural-language queries (18–19) are optional
+Still missing from the original showcase: its demo GIF. Range rate and Doppler output
+are now implemented (milestone 18); batch predictions, notifications and natural-language queries (18–19) are optional
 and should follow customer demand; they are not prerequisites for a first paid API.
 The roadmap's commercial success criterion remains explicit: reconsider paid operation
 if billing has been live three months with fewer than five paying customers.

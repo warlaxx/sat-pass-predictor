@@ -33,15 +33,16 @@ final class PassFixtures {
 
     static final ObserverLocation LYON = new ObserverLocation(45.7578, 4.8320, 170.0);
 
-    private static TrackPoint point(Instant instant, double azimuth, double elevation, double range) {
-        return new TrackPoint(instant, azimuth, elevation, range,
+    private static TrackPoint point(Instant instant, double azimuth, double elevation, double range,
+                                    double rangeRate) {
+        return new TrackPoint(instant, azimuth, elevation, range, rangeRate,
                 new SubSatellitePoint(38.71, -4.92, 419.6), instant.equals(CULMINATION), instant.equals(CULMINATION));
     }
 
     static SatellitePass pass() {
-        TrackPoint aos = point(AOS, 292.5, 10.0, 1553.2);
-        TrackPoint culmination = point(CULMINATION, 22.5, 63.1, 462.7);
-        TrackPoint los = point(LOS, 112.4, 10.0, 1551.8);
+        TrackPoint aos = point(AOS, 292.5, 10.0, 1553.2, -6.21);
+        TrackPoint culmination = point(CULMINATION, 22.5, 63.1, 462.7, 0.0);
+        TrackPoint los = point(LOS, 112.4, 10.0, 1551.8, 6.20);
 
         return new SatellitePass(aos, culmination, los, List.of(aos, culmination, los));
     }

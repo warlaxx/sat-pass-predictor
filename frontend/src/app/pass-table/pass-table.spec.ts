@@ -6,7 +6,7 @@ import { PassDto, TrackPointDto } from '../api/passes.model';
 describe('pass visibility labels', () => {
   it.each([false, true])('uses observer visibility, not sunlight alone (visible=%s)', async visible => {
     const point: TrackPointDto = {
-      instant: '2026-09-19T18:00:00Z', azimuthDeg: 0, elevationDeg: 30, rangeKm: 800,
+      instant: '2026-09-19T18:00:00Z', azimuthDeg: 0, elevationDeg: 30, rangeKm: 800, rangeRateKmS: 0, dopplerHz: null,
       subPoint: { latitudeDeg: 45, longitudeDeg: 5, altitudeKm: 420 },
       illuminated: true, visible,
     };

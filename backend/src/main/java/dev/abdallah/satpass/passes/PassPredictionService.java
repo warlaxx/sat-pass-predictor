@@ -426,6 +426,11 @@ public class PassPredictionService {
                 degreesInCircle(seen.getAzimuth()),
                 FastMath.toDegrees(seen.getElevation()),
                 seen.getRange() / 1000.0,
+                // Derived from the propagated velocity, not by differencing samples: exact
+                // at AOS and LOS, where a finite difference would be one-sided. The site
+                // is fixed in ITRF, so the rotation of the Earth under the observer is
+                // already part of it.
+                site.getRangeRate(state.getPVCoordinates(), state.getFrame(), state.getDate()) / 1000.0,
                 new SubSatellitePoint(
                         FastMath.toDegrees(sub.getLatitude()),
                         FastMath.toDegrees(sub.getLongitude()),

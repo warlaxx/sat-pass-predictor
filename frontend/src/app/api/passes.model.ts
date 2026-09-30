@@ -18,6 +18,10 @@ export interface TrackPointDto {
   readonly azimuthDeg: number;
   readonly elevationDeg: number;
   readonly rangeKm: number;
+  /** d(range)/dt: negative while the satellite approaches, positive while it recedes. */
+  readonly rangeRateKmS: number;
+  /** Doppler shift at the requested `frequencyMhz`, or null when none was requested. */
+  readonly dopplerHz: number | null;
   readonly subPoint: SubPointDto;
   /** Entire solar disc clear of Earth, excluding penumbra. */
   readonly illuminated: boolean;
@@ -37,6 +41,10 @@ export interface PhaseDto {
   readonly azimuthDeg: number;
   readonly elevationDeg: number;
   readonly rangeKm: number;
+  /** d(range)/dt: negative while the satellite approaches, positive while it recedes. */
+  readonly rangeRateKmS: number;
+  /** Doppler shift at the requested `frequencyMhz`, or null when none was requested. */
+  readonly dopplerHz: number | null;
 }
 
 export interface PassDto {
@@ -80,6 +88,8 @@ export interface PassesResponse {
   readonly tle: TleDto;
   readonly observer: ObserverDto;
   readonly minElevationDeg: number;
+  /** The carrier the Doppler shifts were computed for; null when none was requested. */
+  readonly frequencyMhz: number | null;
   readonly computedAt: string;
   readonly passes: readonly PassDto[];
 }

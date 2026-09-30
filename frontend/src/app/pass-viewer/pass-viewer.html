@@ -92,6 +92,7 @@
       <span><b>{{ current().azimuthDeg | number: '1.1-1' }}° {{ compass(current().azimuthDeg) }}</b> <small>azimuth</small></span>
       <span><b>{{ current().elevationDeg | number: '1.1-1' }}°</b> <small>elevation</small></span>
       <span><b>{{ current().rangeKm | number: '1.0-0' }} km</b> <small>distance</small></span>
+      <span><b>{{ current().rangeRateKmS | number: '1.2-2' }} km/s</b> <small>{{ current().rangeRateKmS < 0 ? 'approaching' : 'receding' }}</small></span>
     </div>
   </div>
 
