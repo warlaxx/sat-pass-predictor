@@ -13,7 +13,7 @@ import { PassesResponse, TrackPointDto } from '../api/passes.model';
 export function prediction(noradId: number, minute: number, favourable = true): PassesResponse {
   const track: TrackPointDto[] = [0, 10, 20, 30].map((second, index) => ({
     instant: new Date(Date.UTC(2026, 8, 19, 20, minute, second)).toISOString(),
-    azimuthDeg: 90, elevationDeg: index === 2 ? 45 : 10, rangeKm: 1000,
+    azimuthDeg: 90, elevationDeg: index === 2 ? 45 : 10, rangeKm: 1000, rangeRateKmS: 0, dopplerHz: null,
     subPoint: { latitudeDeg: 45, longitudeDeg: 5, altitudeKm: 420 },
     illuminated: true, visible: favourable && (index === 1 || index === 2),
   }));
@@ -21,7 +21,7 @@ export function prediction(noradId: number, minute: number, favourable = true): 
     satellite: { noradId, name: `Satellite ${noradId}` },
     observer: { latitudeDeg: 45, longitudeDeg: 5, altitudeM: 170 },
     tle: { epoch: '2026-09-19T00:00:00Z', fetchedAt: '2026-09-19T19:00:00Z', ageSeconds: 72000, source: 'test', line1: '', line2: '' },
-    computedAt: '2026-09-19T20:00:00Z', minElevationDeg: 10,
+    computedAt: '2026-09-19T20:00:00Z', minElevationDeg: 10, frequencyMhz: null,
     passes: [{ aos: track[0], culmination: track[2], los: track[3], durationSeconds: 30, track }],
   };
 }

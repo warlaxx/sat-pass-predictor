@@ -5,7 +5,7 @@ import { PassDto } from '../api/passes.model';
 /** Only the fields the grouping reads; the rest would be noise in this file. */
 function passAt(localIso: string): PassDto {
   const instant = new Date(localIso).toISOString();
-  const phase = { instant, azimuthDeg: 180, elevationDeg: 10, rangeKm: 1500 };
+  const phase = { instant, azimuthDeg: 180, elevationDeg: 10, rangeKm: 1500, rangeRateKmS: 0, dopplerHz: null };
   return {
     aos: phase,
     culmination: { ...phase, elevationDeg: 40 },

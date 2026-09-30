@@ -85,6 +85,10 @@ class BatchPassControllerTest {
                 .andExpect(jsonPath("$.results[0].prediction.tle.ageSeconds").value(121_200))
                 .andExpect(jsonPath("$.results[0].prediction.passes[0].culmination.elevationDeg").value(63.1))
                 .andExpect(jsonPath("$.results[0].prediction.passes[0].track.length()").value(3))
+                // A batch mixes satellites, so no carrier and no Doppler; the range rate stays.
+                .andExpect(jsonPath("$.results[0].prediction.frequencyMhz").value(nullValue()))
+                .andExpect(jsonPath("$.results[0].prediction.passes[0].track[0].rangeRateKmS").isNumber())
+                .andExpect(jsonPath("$.results[0].prediction.passes[0].track[0].dopplerHz").value(nullValue()))
                 .andExpect(jsonPath("$.results[0].error").value(nullValue()))
                 .andExpect(jsonPath("$.results[1].siteIndex").value(1))
                 .andExpect(jsonPath("$.results[1].observer.latitudeDeg").value(48.8566))

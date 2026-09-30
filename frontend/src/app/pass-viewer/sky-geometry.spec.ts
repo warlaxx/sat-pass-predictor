@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { project, sampleAt } from './sky-geometry';
 
-const point = (instant: string, azimuthDeg: number, elevationDeg = 10) => ({ instant, azimuthDeg, elevationDeg, rangeKm: 1000 });
+const point = (instant: string, azimuthDeg: number, elevationDeg = 10) => ({ instant, azimuthDeg, elevationDeg, rangeKm: 1000, rangeRateKmS: 0, dopplerHz: null });
 describe('sky geometry', () => {
   it('places zenith at centre and cardinal horizons on their axes', () => {
     expect(project({ azimuthDeg: 123, elevationDeg: 90 })).toEqual({ x: 180, y: 180 });
@@ -21,5 +21,14 @@ describe('sky geometry', () => {
     const track = [point('2026-09-19T00:00:00Z', 0), point('2026-09-19T00:00:03Z', 30, 80), point('2026-09-19T00:00:10Z', 60)];
     expect(sampleAt(track, Date.parse(track[1].instant))?.elevationDeg).toBe(80);
     expect(sampleAt([], 0)).toBeUndefined();
+  });
+  it('interpolates the range rate, and the Doppler shift only when the server sent one', () => {
+    const a = { ...point('2026-09-19T00:00:00Z', 0), rangeRateKmS: -6, dopplerHz: 2918 };
+    const b = { ...point('2026-09-19T00:00:10Z', 10), rangeRateKmS: -4, dopplerHz: 1946 };
+    const middle = sampleAt([a, b], Date.parse('2026-09-19T00:00:05Z'))!;
+    expect(middle.rangeRateKmS).toBe(-5);
+    expect(middle.dopplerHz).toBe(2432);
+    const without = sampleAt([a, { ...b, dopplerHz: null }], Date.parse('2026-09-19T00:00:05Z'))!;
+    expect(without.dopplerHz).toBeNull();
   });
 });

@@ -102,7 +102,10 @@ public class BatchPassController {
                 List<PassPrediction> predictions =
                         passQueryService.findPassesForSites(noradId, sites, window, query.minElevationDeg());
                 for (int i = 0; i < sites.size(); i++) {
-                    PassesResponse response = PassesResponse.from(predictions.get(i));
+                    // No carrier: a batch mixes satellites, and one frequency for all of
+                    // them would publish a Doppler shift for downlinks that do not exist.
+                    // The range rate is there; scale it by each satellite's own carrier.
+                    PassesResponse response = PassesResponse.from(predictions.get(i), null);
                     results.add(new Entry(noradId, i, response.observer(),
                             query.track() ? response : response.withoutTracks(), null));
                 }

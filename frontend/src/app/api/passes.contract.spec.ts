@@ -26,19 +26,20 @@ const CAPTURED_RESPONSE = `
   },
   "observer": { "latitudeDeg": 45.7578, "longitudeDeg": 4.832, "altitudeM": 170.0 },
   "minElevationDeg": 10.0,
+  "frequencyMhz": null,
   "computedAt": "2026-09-16T13:52:33Z",
   "passes": [
     {
-      "aos": { "instant": "2026-09-22T19:18:54Z", "azimuthDeg": 292.5, "elevationDeg": 10.0, "rangeKm": 1553.2 },
-      "culmination": { "instant": "2026-09-22T19:22:16Z", "azimuthDeg": 22.5, "elevationDeg": 63.1, "rangeKm": 462.7 },
-      "los": { "instant": "2026-09-22T19:25:38Z", "azimuthDeg": 112.4, "elevationDeg": 10.0, "rangeKm": 1551.8 },
+      "aos": { "instant": "2026-09-22T19:18:54Z", "azimuthDeg": 292.5, "elevationDeg": 10.0, "rangeKm": 1553.2, "rangeRateKmS": -6.21, "dopplerHz": null },
+      "culmination": { "instant": "2026-09-22T19:22:16Z", "azimuthDeg": 22.5, "elevationDeg": 63.1, "rangeKm": 462.7, "rangeRateKmS": 0.0, "dopplerHz": null },
+      "los": { "instant": "2026-09-22T19:25:38Z", "azimuthDeg": 112.4, "elevationDeg": 10.0, "rangeKm": 1551.8, "rangeRateKmS": 6.20, "dopplerHz": null },
       "durationSeconds": 404,
       "track": [
-        { "instant": "2026-09-22T19:18:54Z", "azimuthDeg": 292.5, "elevationDeg": 10.0, "rangeKm": 1553.2,
+        { "instant": "2026-09-22T19:18:54Z", "azimuthDeg": 292.5, "elevationDeg": 10.0, "rangeKm": 1553.2, "rangeRateKmS": -6.21, "dopplerHz": null,
           "subPoint": { "latitudeDeg": 38.71, "longitudeDeg": -4.92, "altitudeKm": 419.6 }, "illuminated": false, "visible": false },
-        { "instant": "2026-09-22T19:22:16Z", "azimuthDeg": 22.5, "elevationDeg": 63.1, "rangeKm": 462.7,
+        { "instant": "2026-09-22T19:22:16Z", "azimuthDeg": 22.5, "elevationDeg": 63.1, "rangeKm": 462.7, "rangeRateKmS": 0.0, "dopplerHz": null,
           "subPoint": { "latitudeDeg": 44.02, "longitudeDeg": 3.11, "altitudeKm": 421.3 }, "illuminated": true, "visible": true },
-        { "instant": "2026-09-22T19:25:38Z", "azimuthDeg": 112.4, "elevationDeg": 10.0, "rangeKm": 1551.8,
+        { "instant": "2026-09-22T19:25:38Z", "azimuthDeg": 112.4, "elevationDeg": 10.0, "rangeKm": 1551.8, "rangeRateKmS": 6.20, "dopplerHz": null,
           "subPoint": { "latitudeDeg": 48.90, "longitudeDeg": 12.40, "altitudeKm": 423.0 }, "illuminated": false, "visible": false }
       ]
     }
@@ -55,7 +56,7 @@ function keys(value: object): string[] {
 describe('the /api/passes contract', () => {
   it('carries exactly the documented top-level fields', () => {
     expect(keys(response)).toEqual([
-      'computedAt', 'minElevationDeg', 'observer', 'passes', 'satellite', 'tle',
+      'computedAt', 'frequencyMhz', 'minElevationDeg', 'observer', 'passes', 'satellite', 'tle',
     ]);
   });
 
@@ -71,7 +72,12 @@ describe('the /api/passes contract', () => {
   it('gives each pass three phases and a track', () => {
     const pass: PassDto = response.passes[0];
     expect(keys(pass)).toEqual(['aos', 'culmination', 'durationSeconds', 'los', 'track']);
-    expect(keys(pass.aos)).toEqual(['azimuthDeg', 'elevationDeg', 'instant', 'rangeKm']);
+    expect(keys(pass.aos)).toEqual(['azimuthDeg', 'dopplerHz', 'elevationDeg', 'instant', 'rangeKm', 'rangeRateKmS']);
+    // Approaching at rise, receding at set; no carrier was requested, so no Doppler.
+    expect(pass.aos.rangeRateKmS).toBeLessThan(0);
+    expect(pass.los.rangeRateKmS).toBeGreaterThan(0);
+    expect(pass.aos.dopplerHz).toBeNull();
+    expect(response.frequencyMhz).toBeNull();
   });
 
   /**
@@ -89,7 +95,7 @@ describe('the /api/passes contract', () => {
   it('gives every track point a sub-satellite position and an illumination flag', () => {
     const point: TrackPointDto = response.passes[0].track[1];
     expect(keys(point)).toEqual([
-      'azimuthDeg', 'elevationDeg', 'illuminated', 'instant', 'rangeKm', 'subPoint', 'visible',
+      'azimuthDeg', 'dopplerHz', 'elevationDeg', 'illuminated', 'instant', 'rangeKm', 'rangeRateKmS', 'subPoint', 'visible',
     ]);
     expect(keys(point.subPoint)).toEqual(['altitudeKm', 'latitudeDeg', 'longitudeDeg']);
     // The culmination is favourable; the boundaries are eclipsed.

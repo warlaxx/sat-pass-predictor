@@ -49,6 +49,18 @@ class TrackSamplingTest {
      */
     private static final double ELEVATION_TOLERANCE_DEG = 1.0e-3;
 
+    /**
+     * Range-rate tolerance against the sampled ranges, in km/s.
+     *
+     * <p>This bounds the truncation error of a trapezoid over 10 s, not the range rate
+     * itself, which comes from the velocity and is exact to the model. The error grows
+     * with how sharply the range turns at culmination, so the highest pass is the worst:
+     * 10 m/s measured on the reference day, for a culmination at 50 degrees. 50 m/s
+     * leaves room for a closer-to-zenith pass while a wrong sign or unit — kilometres
+     * per second off — still cannot pass.
+     */
+    private static final double RANGE_RATE_TOLERANCE_KM_S = 0.05;
+
     @Autowired
     PassPredictionService service;
 
@@ -202,5 +214,48 @@ class TrackSamplingTest {
                 .isThrownBy(() -> new SatellitePass(
                         pass.aos(), takenFromAnotherPass, pass.los(), pass.track()))
                 .withMessageContaining("culmination");
+    }
+
+    /**
+     * The range rate is the derivative of the range the same track publishes.
+     *
+     * <p>It comes from the propagated velocity, so the sampled ranges are an independent
+     * check of it — and of its sign convention, the one mistake a Doppler client cannot
+     * detect by itself. Between two consecutive points, the change in range must equal
+     * the trapezoidal integral of the two rates. Not a central difference: the
+     * culmination is inserted off the 10 s grid, the spacing around it is uneven, and a
+     * central difference over uneven spacing is only first-order accurate — near the
+     * culmination, where the range turns fastest, that alone is 0.2 km/s. The trapezoid
+     * stays second order whatever the spacing. A wrong sign or a factor of 1000 is
+     * kilometres per second off and cannot hide in the tolerance.
+     */
+    @Test
+    void theRangeRateIsTheDerivativeOfTheRange() {
+        assertThat(passes).allSatisfy(pass -> {
+            List<TrackPoint> track = pass.track();
+            for (int i = 0; i < track.size() - 1; i++) {
+                TrackPoint from = track.get(i);
+                TrackPoint to = track.get(i + 1);
+                double seconds = Duration.between(from.instant(), to.instant()).toNanos() / 1.0e9;
+                double meanRate = (from.rangeRateKmS() + to.rangeRateKmS()) / 2.0;
+                assertThat(meanRate)
+                        .as("mean range rate between %s and %s", from.instant(), to.instant())
+                        .isCloseTo((to.rangeKm() - from.rangeKm()) / seconds,
+                                within(RANGE_RATE_TOLERANCE_KM_S));
+            }
+        });
+    }
+
+    /** The satellite comes towards the observer at AOS and goes away at LOS. */
+    @Test
+    void theSatelliteApproachesAtAosAndRecedesAtLos() {
+        assertThat(passes).allSatisfy(pass -> {
+            assertThat(pass.aos().rangeRateKmS()).as("approaching at AOS").isNegative();
+            assertThat(pass.los().rangeRateKmS()).as("receding at LOS").isPositive();
+            // Below orbital velocity, and well above zero at the threshold: a low-orbit
+            // range rate at 10 degrees of elevation lives between the two.
+            assertThat(Math.abs(pass.aos().rangeRateKmS())).isBetween(1.0, 7.8);
+            assertThat(Math.abs(pass.los().rangeRateKmS())).isBetween(1.0, 7.8);
+        });
     }
 }
