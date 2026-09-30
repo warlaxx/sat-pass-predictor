@@ -17,6 +17,7 @@ class AccountDisabledWebTest {
     @Autowired MockMvc mvc;
     @MockitoBean Clock clock;
     @MockitoBean dev.abdallah.satpass.passes.PassQueryService passes;
+    @MockitoBean dev.abdallah.satpass.catalog.SatelliteCatalog catalog;
 
     @Test void disabledAccountsCannotStartLoginOrReadData() throws Exception {
         for (String path : new String[]{"/account/", "/account/api/me", "/oauth2/authorization/github"}) {

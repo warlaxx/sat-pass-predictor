@@ -1,5 +1,6 @@
 package dev.abdallah.satpass.api;
 
+import dev.abdallah.satpass.catalog.CatalogUnavailableException;
 import dev.abdallah.satpass.tle.TleException;
 import dev.abdallah.satpass.tle.TleNotFoundException;
 import dev.abdallah.satpass.tle.TleTooOldException;
@@ -43,6 +44,9 @@ public class ApiExceptionHandler {
     /** Suggested delay before retrying, in seconds, when the TLE sources falter. */
     private static final String RETRY_AFTER_SECONDS = "15";
 
+    /** Matches {@code catalog.retry-after}: asking sooner would be refused without a try. */
+    private static final String CATALOG_RETRY_AFTER_SECONDS = "300";
+
     @ExceptionHandler(TleException.class)
     public ResponseEntity<ProblemDetail> handleTleFailure(TleException e) {
         return switch (e) {
@@ -82,6 +86,22 @@ public class ApiExceptionHandler {
                     .body(problem(HttpStatus.SERVICE_UNAVAILABLE, tooOld.getMessage(),
                             "tle-stale", "Orbital elements too old"));
         };
+    }
+
+    /**
+     * Name search has nothing to search: 503 with its own type, so the page can say
+     * "type the NORAD number instead" rather than "orbital elements unavailable" — the
+     * elements may well be reachable, and a number still leads to a prediction.
+     */
+    @ExceptionHandler(CatalogUnavailableException.class)
+    public ResponseEntity<ProblemDetail> handleCatalogUnavailable(CatalogUnavailableException e) {
+        log.warn("satellite name search unavailable: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .header(HttpHeaders.RETRY_AFTER, CATALOG_RETRY_AFTER_SECONDS)
+                .body(problem(HttpStatus.SERVICE_UNAVAILABLE,
+                        "The satellite name list could not be downloaded. Enter the NORAD number instead,"
+                                + " or retry in a few minutes.",
+                        "catalog-unavailable", "Satellite name search unavailable"));
     }
 
     /**

@@ -11,3 +11,5 @@ article { border: 1px solid var(--line); padding: 18px; margin-block: 14px; bord
 article h3 { margin-top: 0; }
 strong { color: var(--lit); }
 .context, #discovery-help { font-size: 13px; }
+.add { border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); padding: 0 14px; }
+.add app-satellite-picker { width: 22ch; }
