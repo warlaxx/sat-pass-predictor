@@ -41,6 +41,17 @@
 </header>
 
 <!--
+  Below the header, not inside it: the header is sticky, and the notice would then take
+  a line of every screen for as long as the page is read. Here it scrolls away.
+-->
+<p class="dev-notice wrap" role="note">
+  <i class="dot" aria-hidden="true"></i>
+  <b i18n>This site is still under development.</b>
+  <span class="more" i18n>Features and figures may change, and the service can be briefly unavailable.</span>
+  <a [href]="repositoryUrl + '/issues'" rel="noopener" i18n>Report a problem ↗</a>
+</p>
+
+<!--
   The narrow-screen menu. Outside the header on purpose: the header's backdrop-filter
   would make it the containing block of anything fixed inside it.
 -->

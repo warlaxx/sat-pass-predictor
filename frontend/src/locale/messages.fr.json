@@ -650,6 +650,9 @@
     "5515045153402884361": "Ce que valent ces prévisions",
     "9023415226528602334": " Un satellite n'apparaît ici qu'une fois catalogué par CelesTrak, en général un jour ou plus après le lancement : le tout premier soir d'un train manque donc souvent. Les éléments d'un satellite qui rehausse encore son orbite vieillissent vite : les horaires d'une soirée peuvent glisser d'une minute ou plus, sortez donc quelques minutes en avance. ",
     "8637891250408620088": " « Potentiellement visible » signifie éclairé par le Soleil alors que celui-ci est à au moins 6° sous votre horizon ; les nuages et l'éclairage urbain ne sont pas pris en compte. La façon dont les passages sont calculés et vérifiés est décrite sur la page {$START_LINK}méthodologie{$CLOSE_LINK}, et tout autre satellite se trouve en une recherche sur la page {$START_LINK_1}satellites{$CLOSE_LINK}. ",
-    "1559845360468572835": "NextPass : l'heure de passage de l'ISS ce soir chez vous, sur une carte du ciel"
+    "1559845360468572835": "NextPass : l'heure de passage de l'ISS ce soir chez vous, sur une carte du ciel",
+    "2839207508598365909": "Ce site est encore en cours de développement.",
+    "5012868167973481129": "Les fonctions et les chiffres peuvent changer, et le service peut être brièvement indisponible.",
+    "1492664397964245265": "Signaler un problème ↗"
   }
 }
