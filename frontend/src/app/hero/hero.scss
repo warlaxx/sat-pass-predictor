@@ -53,7 +53,7 @@
   width: 8px;
 }
 
-h2 {
+h1 {
   font-size: clamp(46px, 7.4vw, 124px);
   font-stretch: 75%;
   letter-spacing: -0.03em;
@@ -61,7 +61,7 @@ h2 {
   text-wrap: balance;
 }
 
-h2 span { color: var(--signal); }
+h1 span { color: var(--signal); }
 
 .lede {
   color: var(--ink-2);

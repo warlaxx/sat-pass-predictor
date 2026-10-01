@@ -38,7 +38,8 @@ the prerendered HTML:
 | Open Graph, `twitter:card` | Title, description, URL, locale and alternate locale |
 | `og:image`, `twitter:image` | `public/og/en.png` or `fr.png`, 1200×630, with `summary_large_image`; left out without a known origin, since the address must be absolute |
 | `robots: noindex` | The not-found page only, which a static host answers with 200 |
-| JSON-LD | `WebApplication` on the home page |
+| JSON-LD | `WebApplication` on the home page; `BreadcrumbList` (NextPass › Satellites › …) on `/starlink` and the featured satellites' pages, which need an absolute origin |
+| Headings | One `<h1>` per page: its own title. The brand in the header is not a heading |
 
 **robots.txt and sitemap.xml** are written after the build by
 `frontend/scripts/build.mjs`, from `dist/frontend/prerendered-routes.json`: one `<url>` per
@@ -140,10 +141,10 @@ people search.
    HTML of two city pages would differ by the name alone - exactly what Google's
    scaled-content policy penalises. Such pages need their passes in the HTML, for instance
    from a daily rebuild (a Vercel deploy hook called on a schedule).
-3. **More prerendered satellites.** Only the ten featured ones are; NOAA weather satellites
-   and the CubeSats radio amateurs track are each a page people search for.
+3. **More prerendered satellites.** The seventeen featured ones are (`shared/featured.ts`,
+   numbers checked against CelesTrak on 1 October 2026). A featured satellite's meta
+   description is its blurb plus a fixed sentence: keep the blurb under about 95
+   characters in both languages, which a test checks in English only.
 4. **Links from other sites**: astronomy clubs, AMSAT and amateur-radio forums, Show HN
    for the API - see milestone 17 of the [roadmap](../ROADMAP.md). No setting replaces
    them.
-5. **The page heading.** Every page's `<h1>` is the brand in the header; the page's own
-   title is an `<h2>`. A minor signal, changed with the shared styles.

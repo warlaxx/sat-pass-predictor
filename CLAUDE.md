@@ -24,7 +24,7 @@ API stays on `https://sat-pass-predictor-api.onrender.com` until `api.nextpass.s
 configured on Render. The prerendered pages were checked on the production deployment on
 1 October 2026. `/starlink` lists the newest Starlink launches (`GET
 /api/satellites/launches`) and their train's passes; every page carries a 1200×630
-preview image (`frontend/public/og/`).
+preview image (`frontend/public/og/`) and a single `<h1>`, its own title.
 
 The backend is Java 25/Spring Boot, the frontend Angular. Run `backend/mvnw -f
 backend/pom.xml verify` with JDK 25 and a dedicated PostgreSQL `TEST_DATABASE_URL`,

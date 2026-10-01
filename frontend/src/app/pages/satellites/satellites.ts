@@ -13,7 +13,7 @@ import { FEATURED } from '../../shared/featured';
   template: `
     <section class="page-hero wrap" appReveal aria-labelledby="sats-title">
       <span class="kicker" i18n>Satellites</span>
-      <h2 id="sats-title" i18n>Pick something to look up at</h2>
+      <h1 id="sats-title" i18n>Pick something to look up at</h1>
       <p class="lede" i18n>
         A few satellites worth following, and every active one CelesTrak publishes. Each
         page shows the orbit, how fresh its elements are, and its next passes.

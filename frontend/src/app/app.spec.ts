@@ -26,9 +26,12 @@ describe('App shell', () => {
     return fixture;
   }
 
-  it('renders the brand as the heading of every page', async () => {
+  it('gives every page one h1, its own title, and keeps the brand out of the headings', async () => {
     const fixture = await at('/pricing');
-    expect((fixture.nativeElement.querySelector('h1') as HTMLElement).textContent).toContain('NextPass');
+    const headings = fixture.nativeElement.querySelectorAll('h1') as NodeListOf<HTMLElement>;
+    expect(headings).toHaveLength(1);
+    expect(headings[0].id).toBe('pricing-title');
+    expect(fixture.nativeElement.querySelector('header .brand').textContent).toContain('NextPass');
   });
 
   it('opens on the predictor, idle, without a request nobody asked for', async () => {
@@ -77,7 +80,7 @@ describe('App shell', () => {
 
   it('answers an unknown address with the not-found page', async () => {
     const fixture = await at('/no-such-page');
-    expect(fixture.nativeElement.querySelector('app-not-found h2').textContent).toContain('never rose');
+    expect(fixture.nativeElement.querySelector('app-not-found h1').textContent).toContain('never rose');
   });
 
   it('opens and closes the narrow-screen menu, and closes it on navigation', async () => {

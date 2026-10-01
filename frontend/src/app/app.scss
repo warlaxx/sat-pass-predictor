@@ -93,9 +93,17 @@ main {
 .brand:hover { color: var(--ink); }
 .logo { display: block; flex-shrink: 0; }
 
-h1 {
+/*
+ * The brand is not a heading: the h1 of a page is its own title, which is what a search
+ * engine and a screen reader should find first. It keeps the display type of one.
+ */
+.name {
+  font-family: var(--font-display);
   font-size: 20px;
+  font-stretch: 87.5%;
+  font-weight: 800;
   letter-spacing: -0.01em;
+  line-height: 1.02;
   white-space: nowrap;
 }
 
@@ -373,7 +381,7 @@ footer p {
   /* One line on a phone: the essential sentence; the footer still links to the code. */
   .dev-notice .more, .dev-notice a { display: none; }
 
-  h1 { font-size: 18px; }
+  .name { font-size: 18px; }
   .aside .account { display: none; }
   footer { flex-direction: column; }
   .columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
