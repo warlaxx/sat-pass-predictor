@@ -42,7 +42,7 @@ export function buildCalendar(response: PassesResponse): string | undefined {
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Sat Pass Predictor//Visible passes//EN',
+    'PRODID:-//NextPass//Visible passes//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${text(`${response.satellite.name} - visible passes`)}`,
@@ -87,7 +87,7 @@ function event(response: PassesResponse, pass: PassDto, window: VisibleWindow): 
     'BEGIN:VEVENT',
     // Stable across downloads of the same prediction, so re-importing updates rather
     // than duplicates. The AOS is the identity of a pass everywhere else in the app.
-    `UID:${satellite.noradId}-${basic(pass.aos.instant)}-${observer.latitudeDeg}-${observer.longitudeDeg}@sat-pass-predictor`,
+    `UID:${satellite.noradId}-${basic(pass.aos.instant)}-${observer.latitudeDeg}-${observer.longitudeDeg}@nextpass.space`,
     `DTSTAMP:${basic(response.computedAt)}`,
     `DTSTART:${basic(window.start)}`,
     `DTEND:${basic(end)}`,

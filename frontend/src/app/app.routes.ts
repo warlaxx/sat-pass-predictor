@@ -82,7 +82,7 @@ const pages: Routes = [
     path: 'legal',
     loadComponent: () => import('./pages/legal/legal').then((m) => m.LegalPage),
     title: $localize`:Page title:Legal notice, terms and privacy`,
-    data: { description: $localize`:Meta description:Legal notice, terms of use and privacy policy of Sat Pass Predictor.` },
+    data: { description: $localize`:Meta description:Legal notice, terms of use and privacy policy of NextPass.` },
   },
   {
     path: '**',
@@ -96,7 +96,7 @@ const pages: Routes = [
 export const routes: Routes = pages.map(route => ({ ...route, canActivate: [coverTransition] }));
 
 /**
- * "Page · Sat Pass Predictor" in the tab, and the head tags a search engine reads: the
+ * "Page · NextPass" in the tab, and the head tags a search engine reads: the
  * route's description, canonical and language alternates, Open Graph (see `Seo`).
  *
  * The pages are prerendered (app.routes.server.ts), so these tags are in the HTML a

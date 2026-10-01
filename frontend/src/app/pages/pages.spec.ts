@@ -76,7 +76,7 @@ describe('SatellitePage', () => {
     TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/passes')
       .flush({ ...prediction(), satellite: { noradId: 43013, name: 'NOAA 20' } });
     await fixture.whenStable();
-    expect(TestBed.inject(Title).getTitle()).toBe('NOAA 20: next passes and when to see it · Sat Pass Predictor');
+    expect(TestBed.inject(Title).getTitle()).toBe('NOAA 20: next passes and when to see it · NextPass');
   });
 
   it('computes no pass while prerendering: they would be stale before anyone read them', async () => {

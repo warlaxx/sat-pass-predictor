@@ -1,5 +1,5 @@
 # Build context is frontend/:
-#   docker build -t sat-pass-web frontend
+#   docker build -t nextpass-web frontend
 #
 # Two stages. Node and node_modules stay in the first one; what ships is nginx and the
 # static bundle Vercel serves in production - the same `npm run build`, the same output.

@@ -40,7 +40,7 @@ nothing here: reads and writes are swallowed and logged, and the store falls bac
 in-memory behaviour of the default deployment.
 
 Customers use the backend HTTPS hostname directly, currently
-`https://sat-pass-predictor-api.onrender.com/v1/passes`. A future `api.<domain>` should
+`https://sat-pass-predictor-api.onrender.com/v1/passes`. A future `api.nextpass.space` should
 point to the same backend; no frontend rewrite is required. The demo keeps `/api/passes`.
 Do not cache these responses at a proxy: the backend sends `Cache-Control: no-store`.
 That is about *shared* caches, and it is unrelated to the backend reusing its own
@@ -68,7 +68,7 @@ endpoint exists. Rotation means issuing a new key then revoking the old one. Rev
 prevents subsequent admissions; requests already admitted can complete.
 
 ```sh
-curl -H "X-API-Key: $SATPASS_API_KEY" \
+curl -H "X-API-Key: $NEXTPASS_API_KEY" \
   'https://sat-pass-predictor-api.onrender.com/v1/passes?noradId=25544&lat=45.75&lon=4.85'
 ```
 
@@ -110,7 +110,7 @@ monthly quotas arrived in milestone 14 ([billing](billing.md)).
 satellite is predicted for every site, with one window and one threshold:
 
 ```sh
-curl -H "X-API-Key: $SATPASS_API_KEY" \
+curl -H "X-API-Key: $NEXTPASS_API_KEY" \
   'https://sat-pass-predictor-api.onrender.com/v1/passes/batch?noradId=25544,20580&site=45.7578,4.8320,170&site=-33.92,18.42&track=false'
 ```
 

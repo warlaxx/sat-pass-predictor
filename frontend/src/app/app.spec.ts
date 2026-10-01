@@ -28,7 +28,7 @@ describe('App shell', () => {
 
   it('renders the brand as the heading of every page', async () => {
     const fixture = await at('/pricing');
-    expect((fixture.nativeElement.querySelector('h1') as HTMLElement).textContent).toContain('Sat Pass Predictor');
+    expect((fixture.nativeElement.querySelector('h1') as HTMLElement).textContent).toContain('NextPass');
   });
 
   it('opens on the predictor, idle, without a request nobody asked for', async () => {

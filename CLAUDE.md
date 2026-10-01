@@ -18,8 +18,9 @@ The frontend is now prerendered at build time and bilingual: English at the root
 under `/fr/` (`@angular/localize`), with canonical, hreflang, sitemap and robots.txt. See
 [search engines and languages](docs/seo.md). Every new text needs `i18n` or `$localize`
 and a French translation (`npm run i18n` in `frontend`); the build refuses a missing one.
-The production domain is still a `*.vercel.app` address, and the prerendered output was
-checked locally, not yet on a Vercel deployment.
+The product is **NextPass**, at `https://nextpass.space` (Vercel); the API stays on
+`https://sat-pass-predictor-api.onrender.com` until `api.nextpass.space` is configured on
+Render. The prerendered output was checked locally, not yet on a Vercel deployment.
 
 The backend is Java 25/Spring Boot, the frontend Angular. Run `backend/mvnw -f
 backend/pom.xml verify` with JDK 25 and a dedicated PostgreSQL `TEST_DATABASE_URL`,

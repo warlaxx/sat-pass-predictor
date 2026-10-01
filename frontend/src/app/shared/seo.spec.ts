@@ -16,7 +16,7 @@ describe('Seo', () => {
 
   it('titles the page after the site and describes it for previews too', () => {
     seo.apply('/pricing', { title: 'Plans and quotas', description: 'Quotas of the API.' });
-    expect(TestBed.inject(Title).getTitle()).toBe('Plans and quotas · Sat Pass Predictor');
+    expect(TestBed.inject(Title).getTitle()).toBe('Plans and quotas · NextPass');
     const meta = TestBed.inject(Meta);
     expect(meta.getTag('name="description"')!.content).toBe('Quotas of the API.');
     expect(meta.getTag('property="og:description"')!.content).toBe('Quotas of the API.');

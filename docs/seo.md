@@ -48,13 +48,19 @@ page and language, each listing its translations.
 Canonical links, hreflang and the sitemap need the absolute public origin. It is decided
 where the build runs, in this order:
 
-1. `SITE_URL` (for instance `https://satpass.example`), if set in the build environment;
+1. `SITE_URL` (for instance `https://nextpass.space`), if set in the build environment;
 2. `https://` + `VERCEL_PROJECT_PRODUCTION_URL`, which Vercel sets on every build to the
    project's production domain (its shortest custom domain, else its `*.vercel.app`);
 3. nothing: the build succeeds, canonical and hreflang links and the sitemap are left out.
 
 A wrong canonical is worse than none, so there is no hard-coded fallback. Preview
 deployments carry the production canonical, which is right: they are copies.
+
+The production domain is `nextpass.space`. Its apex must be the domain Vercel serves, with
+`www` redirecting to it, not the reverse: `VERCEL_PROJECT_PRODUCTION_URL` picks the
+shortest custom domain, so a project that redirects the apex to `www` would publish
+canonical links that themselves redirect. Either keep the apex primary in Vercel's
+domain settings or set `SITE_URL=https://www.nextpass.space` explicitly.
 
 ## Adding or changing text
 
@@ -91,10 +97,10 @@ and code samples.
 
 ## What is not done, by order of value
 
-1. **A domain of its own.** A `*.vercel.app` address is a subdomain of a shared domain:
-   any authority it earns stays with that address, and moving later costs a migration
-   (301 redirects, Search Console change of address). Buy the domain before investing in
-   content or links; `VERCEL_PROJECT_PRODUCTION_URL` follows it with no code change.
+1. **Search Console on the new domain.** `nextpass.space` replaced the `*.vercel.app`
+   address before the site earned links. Verify the domain property, submit
+   `https://nextpass.space/sitemap.xml`, and redirect the old address to it in Vercel's
+   domain settings: it still answers 200 with the same pages, which is duplicate content.
 2. **Pages that answer real searches.** "ISS pass tonight Paris", "voir l'ISS ce soir
    Lyon": a page per city is the long tail, but only with content unique to the city (its
    next visible passes, its local times). Thousands of near-identical pages are what

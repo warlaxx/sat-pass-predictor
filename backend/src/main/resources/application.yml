@@ -1,6 +1,6 @@
 spring:
   application:
-    name: sat-pass-predictor
+    name: nextpass
   mvc:
     problemdetails:
       # Off by default in Spring Boot. Without it, a parameter the framework rejects
@@ -31,7 +31,7 @@ tle:
   #
   # TLE_BASE_URLS replaces the whole list, comma-separated, for an environment that wants
   # a different order or a single source.
-  base-urls: ${TLE_BASE_URLS:https://celestrak.org,https://sat-pass-predictor-nine.vercel.app/tle-upstream}
+  base-urls: ${TLE_BASE_URLS:https://celestrak.org,https://nextpass.space/tle-upstream}
   # Render logs showed HttpConnectTimeoutException for both endpoints. This budget
   # includes connection establishment; increasing only read-timeout cannot fix it.
   connect-timeout: 5s

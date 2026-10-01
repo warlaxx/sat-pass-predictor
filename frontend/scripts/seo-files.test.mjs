@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { pageUrl, robotsTxt, siteOrigin, sitemapXml, splitLanguage } from './seo-files.mjs';
 
 test('the origin comes from SITE_URL first, then from Vercel, else is empty', () => {
-  assert.equal(siteOrigin({ SITE_URL: 'https://satpass.example/', VERCEL_PROJECT_PRODUCTION_URL: 'x.vercel.app' }), 'https://satpass.example');
-  assert.equal(siteOrigin({ VERCEL_PROJECT_PRODUCTION_URL: 'sat-pass.vercel.app' }), 'https://sat-pass.vercel.app');
+  assert.equal(siteOrigin({ SITE_URL: 'https://nextpass.example/', VERCEL_PROJECT_PRODUCTION_URL: 'x.vercel.app' }), 'https://nextpass.example');
+  assert.equal(siteOrigin({ VERCEL_PROJECT_PRODUCTION_URL: 'nextpass.vercel.app' }), 'https://nextpass.vercel.app');
   assert.equal(siteOrigin({}), '');
 });
 

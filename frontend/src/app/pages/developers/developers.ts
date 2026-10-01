@@ -26,7 +26,7 @@ export class DevelopersPage {
   protected readonly batch = BATCH_LIMITS;
   protected readonly free = PLANS[0];
 
-  protected readonly firstCall = `curl -H "X-API-Key: $SATPASS_API_KEY" \\
+  protected readonly firstCall = `curl -H "X-API-Key: $NEXTPASS_API_KEY" \\
   '${API_ORIGIN}/v1/passes?noradId=25544&lat=45.7578&lon=4.832&alt=170'`;
 
   protected readonly response = `{
@@ -56,16 +56,16 @@ export class DevelopersPage {
   ]
 }`;
 
-  protected readonly doppler = `curl -H "X-API-Key: $SATPASS_API_KEY" \\
+  protected readonly doppler = `curl -H "X-API-Key: $NEXTPASS_API_KEY" \\
   '${API_ORIGIN}/v1/passes?noradId=25544&lat=45.7578&lon=4.832&frequencyMhz=145.8'`;
 
-  protected readonly batchCall = `curl -H "X-API-Key: $SATPASS_API_KEY" \\
+  protected readonly batchCall = `curl -H "X-API-Key: $NEXTPASS_API_KEY" \\
   '${API_ORIGIN}/v1/passes/batch?noradId=25544,20580&site=45.7578,4.8320,170&site=-33.92,18.42&track=false'`;
 
   protected readonly javascript = `const url = new URL('${API_ORIGIN}/v1/passes');
 url.search = new URLSearchParams({ noradId: '25544', lat: '45.7578', lon: '4.832' }).toString();
 
-const response = await fetch(url, { headers: { 'X-API-Key': process.env.SATPASS_API_KEY } });
+const response = await fetch(url, { headers: { 'X-API-Key': process.env.NEXTPASS_API_KEY } });
 if (!response.ok) {
   const problem = await response.json();          // RFC 9457: branch on problem.type
   throw new Error(\`\${problem.title}: \${problem.detail}\`);
@@ -78,7 +78,7 @@ for (const pass of passes) console.log(pass.aos.instant, pass.culmination.elevat
 response = requests.get(
     "${API_ORIGIN}/v1/passes",
     params={"noradId": 25544, "lat": 45.7578, "lon": 4.832},
-    headers={"X-API-Key": os.environ["SATPASS_API_KEY"]},
+    headers={"X-API-Key": os.environ["NEXTPASS_API_KEY"]},
     timeout=60,
 )
 if not response.ok:

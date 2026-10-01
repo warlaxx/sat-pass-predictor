@@ -13,7 +13,7 @@ import { LANGUAGES, SiteLanguage, currentLanguage, pathIn } from './locale';
 declare const ngSiteOrigin: string | undefined;
 export const SITE_ORIGIN: string = typeof ngSiteOrigin === 'string' ? ngSiteOrigin.replace(/\/+$/, '') : '';
 
-export const SITE_NAME = 'Sat Pass Predictor';
+export const SITE_NAME = 'NextPass';
 
 export interface PageMeta {
   /** The page's own title, without the site name. */

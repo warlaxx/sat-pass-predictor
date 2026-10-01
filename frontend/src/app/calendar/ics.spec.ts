@@ -49,7 +49,7 @@ describe('buildCalendar', () => {
     expect(lines).toContain('DTSTAMP:20260919T200000Z');
     expect(lines).toContain('SUMMARY:Satellite 25544 - max 45° E');
     expect(lines).toContain('TRIGGER:-PT10M');
-    expect(lines.find(line => line.startsWith('UID:'))).toBe('UID:25544-20260919T200100Z-45-5@sat-pass-predictor');
+    expect(lines.find(line => line.startsWith('UID:'))).toBe('UID:25544-20260919T200100Z-45-5@nextpass.space');
   });
 
   it('skips passes with no favourable sample, and has nothing to offer without one', () => {
