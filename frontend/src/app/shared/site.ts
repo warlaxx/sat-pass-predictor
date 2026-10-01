@@ -26,16 +26,16 @@ export interface Plan {
 
 export const PLANS: readonly Plan[] = [
   {
-    id: 'free', name: 'Free preview', requests: 100, period: 'UTC day', perMinute: 10, keys: 1,
-    summary: 'Try the API and prototype an integration.',
+    id: 'free', name: $localize`Free preview`, requests: 100, period: 'UTC day', perMinute: 10, keys: 1,
+    summary: $localize`Try the API and prototype an integration.`,
   },
   {
     id: 'hobby', name: 'Hobby', requests: 25_000, period: 'UTC calendar month', perMinute: 30, keys: 1,
-    summary: 'A ground station, a club tracker, a personal dashboard.',
+    summary: $localize`A ground station, a club tracker, a personal dashboard.`,
   },
   {
     id: 'pro', name: 'Pro', requests: 250_000, period: 'UTC calendar month', perMinute: 120, keys: 1,
-    summary: 'A product that serves predictions to its own users.',
+    summary: $localize`A product that serves predictions to its own users.`,
   },
 ];
 

@@ -7,9 +7,9 @@ export interface Position {
 }
 
 const GEOLOCATION_ERRORS: Record<number, string> = {
-  1: 'Permission refused. Type the position in instead.',
-  2: 'Your device could not determine a position.',
-  3: 'The position request timed out.',
+  1: $localize`Permission refused. Type the position in instead.`,
+  2: $localize`Your device could not determine a position.`,
+  3: $localize`The position request timed out.`,
 };
 
 function round(value: number, decimals: number): number {
@@ -26,7 +26,7 @@ function round(value: number, decimals: number): number {
  */
 export function requestPosition(): Promise<Position> {
   if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
-    return Promise.reject(new Error('This browser does not offer geolocation. Type the position in.'));
+    return Promise.reject(new Error($localize`This browser does not offer geolocation. Type the position in.`));
   }
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(
@@ -40,7 +40,7 @@ export function requestPosition(): Promise<Position> {
         // the datum ObserverLocation expects - no conversion, and no guess when absent.
         alt: position.coords.altitude === null ? null : Math.round(position.coords.altitude),
       }),
-      (error) => reject(new Error(GEOLOCATION_ERRORS[error.code] ?? 'Position unavailable.')),
+      (error) => reject(new Error(GEOLOCATION_ERRORS[error.code] ?? $localize`Position unavailable.`)),
       {
         // Metres are pointless here and a GPS fix costs battery and seconds: the coarse
         // network position is already far below the accuracy this computation needs.

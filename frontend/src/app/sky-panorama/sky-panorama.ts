@@ -62,7 +62,7 @@ interface Run {
         <line x1="0" [attr.x2]="f.width" [attr.y1]="line.y" [attr.y2]="line.y" stroke="#fff"
               [attr.stroke-opacity]="line.threshold ? 0.28 : 0.16" [attr.stroke-dasharray]="line.threshold ? '4 6' : '1 7'" />
         <text class="grid-label" [attr.x]="f.width - 12" [attr.y]="line.y - 6" text-anchor="end">
-          {{ line.deg }}°{{ line.threshold ? ' threshold' : '' }}
+          {{ line.deg }}°{{ line.threshold ? thresholdSuffix : '' }}
         </text>
       }
 
@@ -101,6 +101,7 @@ interface Run {
   `,
 })
 export class SkyPanorama {
+  protected readonly thresholdSuffix = $localize`:Appended to an elevation: threshold`;
   readonly pass = input.required<PassDto>();
   readonly observer = input.required<ObserverDto>();
   readonly threshold = input.required<number>();

@@ -88,23 +88,23 @@ for p in response.json()["passes"]:
     print(p["aos"]["instant"], p["culmination"]["elevationDeg"])`;
 
   protected readonly parameters = [
-    { name: 'noradId', format: 'integer, 1–99999', fallback: 'required', meaning: 'NORAD catalogue number of the satellite.' },
-    { name: 'lat', format: 'degrees, −90 to 90', fallback: 'required', meaning: 'Latitude of the observer (WGS84).' },
-    { name: 'lon', format: 'degrees, −180 to 180', fallback: 'required', meaning: 'Longitude of the observer.' },
-    { name: 'alt', format: 'metres, −500 to 9000', fallback: '0', meaning: 'Altitude above the WGS84 ellipsoid, not above sea level.' },
-    { name: 'hours', format: 'integer, 1–240', fallback: '48', meaning: 'Length of the window, starting at the request.' },
-    { name: 'minElevation', format: 'degrees, 0–89', fallback: '10', meaning: 'Elevation a pass must exceed to count; AOS and LOS sit on it.' },
-    { name: 'frequencyMhz', format: 'MHz, 1–300000', fallback: 'none', meaning: 'Downlink carrier; adds dopplerHz to every point and phase.' },
+    { name: 'noradId', format: $localize`integer, 1–99999`, fallback: $localize`required`, meaning: $localize`NORAD catalogue number of the satellite.` },
+    { name: 'lat', format: $localize`degrees, −90 to 90`, fallback: $localize`required`, meaning: $localize`Latitude of the observer (WGS84).` },
+    { name: 'lon', format: $localize`degrees, −180 to 180`, fallback: $localize`required`, meaning: $localize`Longitude of the observer.` },
+    { name: 'alt', format: $localize`metres, −500 to 9000`, fallback: '0', meaning: $localize`Altitude above the WGS84 ellipsoid, not above sea level.` },
+    { name: 'hours', format: $localize`integer, 1–240`, fallback: '48', meaning: $localize`Length of the window, starting at the request.` },
+    { name: 'minElevation', format: $localize`degrees, 0–89`, fallback: '10', meaning: $localize`Elevation a pass must exceed to count; AOS and LOS sit on it.` },
+    { name: 'frequencyMhz', format: $localize`MHz, 1–300000`, fallback: $localize`none`, meaning: $localize`Downlink carrier; adds dopplerHz to every point and phase.` },
   ];
 
   protected readonly errors = [
-    { status: 400, type: 'invalid-request', meaning: 'A parameter is missing, malformed or out of bounds. Not retryable as is.' },
-    { status: 400, type: 'batch-exceeds-rate-limit', meaning: 'A batch larger than the key’s per-minute limit: it could never be admitted.' },
-    { status: 401, type: 'invalid-api-key', meaning: 'Missing, unknown or revoked X-API-Key.' },
-    { status: 404, type: 'unknown-satellite', meaning: 'The number is absent from CelesTrak: most likely a re-entered object.' },
-    { status: 429, type: 'rate-limit-exceeded · daily-quota-exceeded · monthly-quota-exceeded', meaning: 'Limit reached. Retry-After and resetsAt say when; limit says which.' },
-    { status: 503, type: 'tle-unavailable', meaning: 'No source of elements answered and none is held. Retry in about 15 s.' },
-    { status: 503, type: 'tle-stale', meaning: 'The only elements held are older than 7 days: refused rather than shown.' },
-    { status: 503, type: 'api-access-unavailable', meaning: 'Quota accounting is unavailable. The API fails closed; retry later.' },
+    { status: 400, type: 'invalid-request', meaning: $localize`A parameter is missing, malformed or out of bounds. Not retryable as is.` },
+    { status: 400, type: 'batch-exceeds-rate-limit', meaning: $localize`A batch larger than the key’s per-minute limit: it could never be admitted.` },
+    { status: 401, type: 'invalid-api-key', meaning: $localize`Missing, unknown or revoked X-API-Key.` },
+    { status: 404, type: 'unknown-satellite', meaning: $localize`The number is absent from CelesTrak: most likely a re-entered object.` },
+    { status: 429, type: 'rate-limit-exceeded · daily-quota-exceeded · monthly-quota-exceeded', meaning: $localize`Limit reached. Retry-After and resetsAt say when; limit says which.` },
+    { status: 503, type: 'tle-unavailable', meaning: $localize`No source of elements answered and none is held. Retry in about 15 s.` },
+    { status: 503, type: 'tle-stale', meaning: $localize`The only elements held are older than 7 days: refused rather than shown.` },
+    { status: 503, type: 'api-access-unavailable', meaning: $localize`Quota accounting is unavailable. The API fails closed; retry later.` },
   ];
 }

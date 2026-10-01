@@ -3,42 +3,42 @@
 <section id="query" class="console-band wrap" aria-labelledby="query-title">
   <form class="query" (submit)="$event.preventDefault(); search()">
     <div class="console-head">
-      <h2 id="query-title">Compute a pass</h2>
+      <h2 id="query-title" i18n>Compute a pass</h2>
       @if (!searched()) {
-        <p class="state hint">Pick a satellite and a place, then compute. Defaults: the ISS over Lyon, the next two days, passes above 10&deg;.</p>
+        <p class="state hint" i18n>Pick a satellite and a place, then compute. Defaults: the ISS over Lyon, the next two days, passes above 10&deg;.</p>
       } @else {
-        <p class="hint">Defaults: the ISS over Lyon, the next two days, passes above 10&deg;.</p>
+        <p class="hint" i18n>Defaults: the ISS over Lyon, the next two days, passes above 10&deg;.</p>
       }
     </div>
 
     <div class="fields">
       <div class="field satellite">
-        <span class="caption" id="q-satellite">Satellite</span>
+        <span class="caption" id="q-satellite" i18n>Satellite</span>
         <span class="entry">
-          <app-satellite-picker label="Satellite name or NORAD catalogue number"
+          <app-satellite-picker label="Satellite name or NORAD catalogue number" i18n-label
                                 describedBy="q-satellite" [initial]="'' + form().noradId"
                                 (changed)="setSatellite($event)" />
-          <span class="unit" aria-hidden="true">{{ satelliteResolved() ? 'NORAD ' + form().noradId : 'choose' }}</span>
+          <span class="unit" aria-hidden="true">@if (satelliteResolved()) {NORAD {{ form().noradId }}} @else {<ng-container i18n>choose</ng-container>}</span>
         </span>
       </div>
       <label class="field">
-        <span class="caption">Latitude</span>
+        <span class="caption" i18n>Latitude</span>
         <span class="entry">
           <input class="num" type="number" step="0.0001" min="-90" max="90" required
                  [value]="form().lat" (input)="patch('lat', $any($event.target).value)">
-          <span class="unit" aria-hidden="true">° lat</span>
+          <span class="unit" aria-hidden="true" i18n>° lat</span>
         </span>
       </label>
       <label class="field">
-        <span class="caption">Longitude</span>
+        <span class="caption" i18n>Longitude</span>
         <span class="entry">
           <input class="num" type="number" step="0.0001" min="-180" max="180" required
                  [value]="form().lon" (input)="patch('lon', $any($event.target).value)">
-          <span class="unit" aria-hidden="true">° lon</span>
+          <span class="unit" aria-hidden="true" i18n>° lon</span>
         </span>
       </label>
       <label class="field">
-        <span class="caption">Altitude</span>
+        <span class="caption" i18n>Altitude</span>
         <span class="entry">
           <input class="num" type="number" step="1" min="-500" max="9000" required
                  [value]="form().alt" (input)="patch('alt', $any($event.target).value)">
@@ -46,7 +46,7 @@
         </span>
       </label>
       <label class="field">
-        <span class="caption">Window</span>
+        <span class="caption" i18n>Window</span>
         <span class="entry">
           <input class="num" type="number" min="1" [max]="maxHours" required
                  [value]="form().hours" (input)="patch('hours', $any($event.target).value)">
@@ -54,7 +54,7 @@
         </span>
       </label>
       <label class="field">
-        <span class="caption">Threshold <span class="visually-hidden">(minimum elevation)</span></span>
+        <span class="caption" i18n>Threshold <span class="visually-hidden">(minimum elevation)</span></span>
         <span class="entry">
           <input class="num" type="number" step="0.5" min="0" max="89" required
                  [value]="form().minElevation" (input)="patch('minElevation', $any($event.target).value)">
@@ -62,7 +62,7 @@
         </span>
       </label>
       <label class="field">
-        <span class="caption">Downlink <span class="optional">(optional)</span><span class="visually-hidden">, for the Doppler shift</span></span>
+        <span class="caption" i18n>Downlink <span class="optional">(optional)</span><span class="visually-hidden">, for the Doppler shift</span></span>
         <span class="entry">
           <input class="num w-freq" type="number" step="any" [min]="frequencyBounds.min" [max]="frequencyBounds.max"
                  placeholder="145.800" [value]="form().frequencyMhz ?? ''" (input)="setFrequency($any($event.target).value)">
@@ -73,16 +73,16 @@
 
     <div class="console-foot">
       <button type="button" class="btn outline" [disabled]="locating()" (click)="useMyPosition()">
-        {{ locating() ? 'Locating...' : 'Use my position' }}
+        @if (locating()) {<ng-container i18n>Locating…</ng-container>} @else {<ng-container i18n>Use my position</ng-container>}
       </button>
-      <span class="utc">Every instant is computed in UTC; local times are your browser's.</span>
+      <span class="utc" i18n>Every instant is computed in UTC; local times are your browser's.</span>
       <button type="submit" class="btn primary compute" [class.computing]="loading()" [disabled]="loading()">
         <svg class="compute-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="32 18" />
           <circle cx="19" cy="8" r="2.5" fill="currentColor" />
           <circle cx="12" cy="12" r="2" fill="currentColor" />
         </svg>
-        {{ loading() ? 'Computing...' : 'Compute passes' }}
+        @if (loading()) {<ng-container i18n>Computing…</ng-container>} @else {<ng-container i18n>Compute passes</ng-container>}
       </button>
     </div>
 
@@ -105,7 +105,7 @@
 } @else if (loading()) {
   <p class="state wrap" role="status">
     <span class="pulse" aria-hidden="true"></span>
-    Retrieving orbital elements and computing passes. A server starting up can take longer&hellip;
+    <ng-container i18n>Retrieving orbital elements and computing passes. A server starting up can take longer&hellip;</ng-container>
   </p>
 } @else if (problem(); as failure) {
   <div class="wrap">
@@ -114,16 +114,16 @@
       @if (failure.detail) {
         <p>{{ failure.detail }}</p>
       }
-      <button type="button" class="btn outline" (click)="reload()">Try again</button>
+      <button type="button" class="btn outline" (click)="reload()" i18n>Try again</button>
     </section>
   </div>
 } @else if (isEmptyResult()) {
-  <p class="state wrap" role="status">
+  <p class="state wrap" role="status" i18n>
     No pass above {{ response()!.minElevationDeg }}&deg; in this window. Lower the
     threshold, or widen the window.
   </p>
 } @else if (response(); as loaded) {
-  <nav class="sections wrap" aria-label="Result sections">
+  <nav class="sections wrap" aria-label="Result sections" i18n-aria-label>
     @for (section of sections; track section.id) {
       <a routerLink="." [fragment]="section.id" queryParamsHandling="preserve"
          [class.current]="activeSection() === section.id"
@@ -139,25 +139,25 @@
 
       <div class="hero-text wrap" appReveal>
         <div class="title-block">
-          <span class="kicker">
+          <span class="kicker" i18n>
             {{ loaded.satellite.name }} over
             <span class="num">{{ loaded.observer.latitudeDeg | number: '1.3-4' }}°, {{ loaded.observer.longitudeDeg | number: '1.3-4' }}°</span>,
             facing {{ facing(pass) }}
           </span>
-          <h2 id="pass-title">Pass of {{ pass.aos.instant | date: 'd MMM y' }}</h2>
+          <h2 id="pass-title" i18n>Pass of {{ pass.aos.instant | date: 'd MMM y' }}</h2>
           <div class="times">
             <span class="num span">{{ pass.aos.instant | date: 'HH:mm' }} → {{ pass.los.instant | date: 'HH:mm' }}</span>
-            <span class="zone">local time ({{ zone(pass) }})</span>
+            <span class="zone" i18n>local time ({{ zone(pass) }})</span>
           </div>
           <p class="key">
-            <span><i class="stroke track"></i>trajectory</span>
-            <span><i class="stroke threshold"></i>{{ loaded.minElevationDeg }}° threshold</span>
-            <span><i class="dot"></i>satellite</span>
+            <span i18n><i class="stroke track"></i>trajectory</span>
+            <span i18n><i class="stroke threshold"></i>{{ loaded.minElevationDeg }}° threshold</span>
+            <span i18n><i class="dot"></i>satellite</span>
           </p>
         </div>
 
         <div class="nights">
-          <h3>Passes &ge; {{ loaded.minElevationDeg }}&deg; &mdash; {{ loaded.passes.length }} in {{ nightCount() }} nights</h3>
+          <h3 i18n>Passes &ge; {{ loaded.minElevationDeg }}&deg; &mdash; {{ loaded.passes.length }} in {{ nightCount() }} nights</h3>
           <app-pass-ribbon
             [passes]="loaded.passes"
             [selected]="pass.aos.instant"
@@ -177,11 +177,11 @@
 
   <section appReveal id="table" class="wrap section table-section" aria-labelledby="table-title">
     <div class="section-head">
-      <h2 id="table-title">Pass list</h2>
-      <span>Text equivalent of the globe and the sky chart</span>
+      <h2 id="table-title" i18n>Pass list</h2>
+      <span i18n>Text equivalent of the globe and the sky chart</span>
       <!-- Inline so app.scss stays inside its 6 kB budget. -->
       <button type="button" class="btn outline calendar" style="margin-left: auto" [disabled]="!calendar()" (click)="downloadCalendar()"
-              [title]="calendar() ? 'One event per potentially visible pass, with a reminder 10 minutes before' : 'No pass in this window has a favourable sample'">
+              [title]="calendarHint()" i18n>
         Add visible passes to calendar (.ics)
       </button>
     </div>
@@ -195,8 +195,8 @@
 
 <section class="features wrap" appReveal aria-labelledby="features-title">
   <div class="features-head">
-    <h2 id="features-title">One pass, read four ways.</h2>
-    <p>Each view answers a different question, and the pass list is always the text equivalent of the globe and the sky chart.</p>
+    <h2 id="features-title" i18n>One pass, read four ways.</h2>
+    <p i18n>Each view answers a different question, and the pass list is always the text equivalent of the globe and the sky chart.</p>
   </div>
   <div class="feature-grid">
     @for (feature of features; track feature.title; let index = $index) {

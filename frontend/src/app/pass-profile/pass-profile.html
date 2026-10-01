@@ -2,20 +2,23 @@
 <article class="card profile" aria-labelledby="profile-title">
   <header>
     <div>
-      <h3 id="profile-title">Pass profile</h3>
+      <h3 id="profile-title" i18n>Pass profile</h3>
       <p class="hint">
-        Elevation and {{ doppler() ? 'Doppler shift at ' + (frequencyMhz()! | number: '1.3-3') + ' MHz' : 'range rate' }}
-        against time. Click to move the playhead.
+        @if (doppler()) {
+          <ng-container i18n>Elevation and Doppler shift at {{ frequencyMhz()! | number: '1.3-3' }} MHz against time. Click to move the playhead.</ng-container>
+        } @else {
+          <ng-container i18n>Elevation and range rate against time. Click to move the playhead.</ng-container>
+        }
       </p>
     </div>
     <button type="button" class="export" [disabled]="!hasTrack()" (click)="download()"
-            title="Every 10 s sample of this pass: UTC time, azimuth, elevation, range, range rate, Doppler, sub-satellite point, sunlight">
+            title="Every 10 s sample of this pass: UTC time, azimuth, elevation, range, range rate, Doppler, sub-satellite point, sunlight" i18n-title i18n>
       Download track (.csv)
     </button>
   </header>
 
   <svg [attr.viewBox]="'0 0 ' + f.width + ' ' + f.height" role="img" (click)="seek($event)"
-       [attr.aria-label]="'Elevation and ' + (doppler() ? 'Doppler shift' : 'range rate') + ' of the selected pass over time. ' + shiftSummary() + '.'">
+       [attr.aria-label]="chartLabel()">
     <!-- Elevation panel, scaled against 90 degrees like the ribbon: a low pass looks low. -->
     @for (elevation of elevationGrid; track elevation) {
       <line class="grid" [attr.x1]="f.left" [attr.x2]="f.right" [attr.y1]="elevationY(elevation)" [attr.y2]="elevationY(elevation)" />
@@ -54,19 +57,19 @@
 
   <p class="legend">
     @if (hasTrack()) {
-      <span><i class="swatch visible"></i>potentially visible</span>
-      <span><i class="swatch lit"></i>sunlit, sky too bright</span>
-      <span><i class="swatch shade"></i>eclipse</span>
+      <span i18n><i class="swatch visible"></i>potentially visible</span>
+      <span i18n><i class="swatch lit"></i>sunlit, sky too bright</span>
+      <span i18n><i class="swatch shade"></i>eclipse</span>
     }
-    <span><i class="rule threshold-key"></i>{{ threshold() }}° threshold</span>
+    <span i18n><i class="rule threshold-key"></i>{{ threshold() }}° threshold</span>
     @if (approach(); as closest) {
-      <span class="num"><i class="rule approach-key"></i>closest approach {{ closest.instant | date: 'HH:mm:ss' }}, {{ closest.rangeKm | number: '1.0-0' }} km</span>
+      <span class="num" i18n><i class="rule approach-key"></i>closest approach {{ closest.instant | date: 'HH:mm:ss' }}, {{ closest.rangeKm | number: '1.0-0' }} km</span>
     }
   </p>
   <p class="summary num">
     {{ shiftSummary() }}.
     @if (!doppler()) {
-      <span class="note">Give a downlink frequency in the query to read the shift in hertz.</span>
+      <span class="note" i18n>Give a downlink frequency in the query to read the shift in hertz.</span>
     }
   </p>
 </article>

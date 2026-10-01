@@ -18,7 +18,7 @@ import { aosUncertaintySeconds, expectedDriftKm, formatAge } from '../format';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @let t = tle();
-    <section class="banner" [class.stale]="isStale()" aria-label="Freshness of the orbital elements">
+    <section class="banner" [class.stale]="isStale()" aria-label="Freshness of the orbital elements" i18n-aria-label>
       <div class="inner">
         <svg class="icon" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
           <circle cx="11" cy="11" r="9.5" fill="none" stroke="currentColor" stroke-width="1.6" />
@@ -26,22 +26,22 @@ import { aosUncertaintySeconds, expectedDriftKm, formatAge } from '../format';
         </svg>
 
         <div class="fact">
-          <span class="label">TLE epoch</span>
+          <span class="label" i18n>TLE epoch</span>
           <span class="num value">{{ t.epoch | date: 'yyyy-MM-dd HH:mm' : 'UTC' }} UTC</span>
         </div>
         <div class="fact">
-          <span class="label">Age</span>
+          <span class="label" i18n>Age</span>
           <span class="num value age">{{ age() }}</span>
         </div>
         <div class="fact">
-          <span class="label">Fetched from {{ t.source }}</span>
+          <span class="label" i18n>Fetched from {{ t.source }}</span>
           <span class="num value">{{ t.fetchedAt | date: 'yyyy-MM-dd HH:mm' : 'UTC' }} UTC</span>
         </div>
 
-        <p class="detail">
+        <p class="detail" i18n>
           Indicative SGP4 drift at this age:
           <b class="num">{{ drift().low }} to {{ drift().high }} km</b>, a timing scale of
-          <b class="num">{{ uncertainty() === 0 ? 'less than 1 s' : 'about ±' + uncertainty() + ' s' }}</b>
+          <b class="num">{{ uncertaintyText() }}</b>
           on rise times. Times are shown to the second but are worth no better than this;
           these are rough estimates, not accuracy guarantees.
         </p>
@@ -131,6 +131,10 @@ export class TleBanner {
   readonly age = computed(() => formatAge(this.tle().ageSeconds));
   readonly drift = computed(() => expectedDriftKm(this.tle().ageSeconds));
   readonly uncertainty = computed(() => aosUncertaintySeconds(this.tle().ageSeconds));
+  readonly uncertaintyText = computed(() => {
+    const seconds = this.uncertainty();
+    return seconds === 0 ? $localize`less than 1 s` : $localize`about ±${seconds}:seconds: s`;
+  });
 
   /**
    * Past three days the elements are old enough for the banner to change colour.

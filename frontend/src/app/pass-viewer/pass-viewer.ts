@@ -69,10 +69,14 @@ export class PassViewer {
     return runs;
   });
 
+  protected readonly pauseLabel = $localize`Pause animation`;
+  protected readonly playLabel = $localize`Play animation`;
+  protected readonly localTimeSuffix = $localize`:Appended to a time read aloud: local time`;
+
   protected readonly phases = computed(() => [
-    { name: 'Rise', kind: 'rise', point: this.pass().aos },
-    { name: 'Culmination', kind: 'peak', point: this.pass().culmination },
-    { name: 'Set', kind: 'set', point: this.pass().los },
+    { name: $localize`Rise`, kind: 'rise', point: this.pass().aos },
+    { name: $localize`Culmination`, kind: 'peak', point: this.pass().culmination },
+    { name: $localize`Set`, kind: 'set', point: this.pass().los },
   ]);
 
   protected readonly ticks = computed(() => {
@@ -97,7 +101,8 @@ export class PassViewer {
   protected readonly peakColour = computed(() => elevationColour(this.pass().culmination.elevationDeg));
   protected readonly peakWords = computed(() => {
     const elevation = this.pass().culmination.elevationDeg;
-    return isRemarkable(elevation) ? `remarkable pass, ${describeElevation(elevation)}` : describeElevation(elevation);
+    const words = describeElevation(elevation);
+    return isRemarkable(elevation) ? $localize`remarkable pass, ${words}:elevation:` : words;
   });
 
   constructor() {
@@ -121,7 +126,7 @@ export class PassViewer {
 
   protected timing(seconds: number): string {
     const uncertainty = aosUncertaintySeconds(seconds);
-    return uncertainty === 0 ? 'timing good to about a second' : `times good to about ±${uncertainty} s`;
+    return uncertainty === 0 ? $localize`timing good to about a second` : $localize`times good to about ±${uncertainty}:seconds: s`;
   }
 
   protected scrub(event: Event): void {

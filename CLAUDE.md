@@ -3,7 +3,7 @@
 See [README.md](README.md) for what this project is and [ROADMAP.md](ROADMAP.md) for
 its milestones, decisions and current status.
 
-## Current state — 21 September 2026
+## Current state — 1 October 2026
 
 Milestones 0–12 are implemented (the showcase demo GIF is still missing).
 Milestone 13 adds GitHub accounts, but real production OAuth remains unverified.
@@ -14,10 +14,18 @@ replay and the exact quota contract, and [commercial readiness](docs/commercial-
 for release gates. Next work is milestone 15 plus real OAuth/Stripe sandbox checks;
 do not confuse local test success with commercial launch readiness.
 
+The frontend is now prerendered at build time and bilingual: English at the root, French
+under `/fr/` (`@angular/localize`), with canonical, hreflang, sitemap and robots.txt. See
+[search engines and languages](docs/seo.md). Every new text needs `i18n` or `$localize`
+and a French translation (`npm run i18n` in `frontend`); the build refuses a missing one.
+The production domain is still a `*.vercel.app` address, and the prerendered output was
+checked locally, not yet on a Vercel deployment.
+
 The backend is Java 25/Spring Boot, the frontend Angular. Run `backend/mvnw -f
 backend/pom.xml verify` with JDK 25 and a dedicated PostgreSQL `TEST_DATABASE_URL`,
 `TEST_DATABASE_USERNAME`, `TEST_DATABASE_PASSWORD`; database tests otherwise skip.
-Run `npm run build` and `npm test -- --watch=false` in `frontend`, then
+Run `npm run build` and `npm test -- --watch=false` in `frontend` (Node ≥ 22.22.3 or 24),
+then `node --test scripts/seo-files.test.mjs` there and
 `node --test scripts/account-dashboard.test.mjs` at the repository root.
 Do not put `.env` secrets in documentation or commits.
 

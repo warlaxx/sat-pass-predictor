@@ -97,9 +97,9 @@ export class HomePage {
     }
     return {
       type: 'about:blank',
-      title: 'The backend could not be reached',
+      title: $localize`The backend could not be reached`,
       status: 0,
-      detail: 'The server may be starting. Please try again shortly.',
+      detail: $localize`The server may be starting. Please try again shortly.`,
     };
   });
 
@@ -107,19 +107,19 @@ export class HomePage {
 
   /** The four views of a result, as the page introduces them below the console. */
   protected readonly features = [
-    { title: 'Sky chart', text: 'The pass drawn across your horizon, with the elevation threshold and the direction to face.' },
-    { title: 'Globe', text: 'Ground track coloured by sunlight on the satellite, the visibility circle and the imaging swath.' },
-    { title: 'Elevation profile', text: 'Elevation and range over time, with the Doppler shift when you give a downlink frequency.' },
-    { title: 'Pass list', text: 'Every pass in the window as a table, exportable to CSV and to your calendar as .ics.' },
+    { title: $localize`Sky chart`, text: $localize`The pass drawn across your horizon, with the elevation threshold and the direction to face.` },
+    { title: $localize`Globe`, text: $localize`Ground track coloured by sunlight on the satellite, the visibility circle and the imaging swath.` },
+    { title: $localize`Elevation profile`, text: $localize`Elevation and range over time, with the Doppler shift when you give a downlink frequency.` },
+    { title: $localize`Pass list`, text: $localize`Every pass in the window as a table, exportable to CSV and to your calendar as .ics.` },
   ] as const;
 
   // --- Page sections ------------------------------------------------------
 
   protected readonly sections = [
-    { id: 'passes', label: 'Passes' },
-    { id: 'globe', label: 'Globe' },
-    { id: 'sky', label: 'Sky chart' },
-    { id: 'table', label: 'Table' },
+    { id: 'passes', label: $localize`Passes` },
+    { id: 'globe', label: $localize`Globe` },
+    { id: 'sky', label: $localize`Sky chart` },
+    { id: 'table', label: $localize`Table` },
   ] as const;
 
   /**
@@ -181,6 +181,10 @@ export class HomePage {
   // --- Calendar export ----------------------------------------------------
 
   /** The .ics of the potentially visible passes on screen; undefined when there is none. */
+  protected readonly calendarHint = computed(() => this.calendar()
+    ? $localize`One event per potentially visible pass, with a reminder 10 minutes before`
+    : $localize`No pass in this window has a favourable sample`);
+
   protected readonly calendar = computed(() => {
     const response = this.response();
     return response ? buildCalendar(response) : undefined;
@@ -268,7 +272,7 @@ export class HomePage {
     // Computing with the previous number while the field shows another name would draw
     // the passes of a satellite the user did not ask for, under the one they did.
     if (!this.satelliteResolved()) {
-      this.satelliteError.set('Choose a satellite from the suggestions, or type its NORAD number.');
+      this.satelliteError.set($localize`Choose a satellite from the suggestions, or type its NORAD number.`);
       return;
     }
     this.discovered.set(undefined);

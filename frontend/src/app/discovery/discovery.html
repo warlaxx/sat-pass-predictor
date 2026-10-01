@@ -1,26 +1,26 @@
 <section class="card" aria-labelledby="discovery-title">
   <div class="intro">
-    <span class="eyebrow">Next favourable window · 7 days</span>
-    <h2 id="discovery-title">Compare up to five satellites.</h2>
-    <p>
+    <span class="eyebrow" i18n>Next favourable window · 7 days</span>
+    <h2 id="discovery-title" i18n>Compare up to five satellites.</h2>
+    <p i18n>
       Enter NORAD numbers or add satellites by name; the observer and threshold are the ones
       of the console above. Potential visibility means a sunlit satellite above a dark
       observer — weather and brightness are not modelled.
     </p>
     <form (submit)="$event.preventDefault(); find()">
       <label class="tile add">
-        <span class="caption">Add by name</span>
-        <app-satellite-picker mode="add" label="Add a satellite by name" placeholder="Hubble, NOAA 19…"
+        <span class="caption" i18n>Add by name</span>
+        <app-satellite-picker mode="add" label="Add a satellite by name" i18n-label placeholder="Hubble, NOAA 19…"
                               (picked)="add($event.noradId)" />
       </label>
       <label class="tile" for="discovery-ids">
-        <span class="caption">NORAD numbers</span>
+        <span class="caption" i18n>NORAD numbers</span>
         <input id="discovery-ids" class="num" required [value]="ids()" (input)="ids.set($any($event.target).value)"
                aria-describedby="discovery-help">
       </label>
-      <button type="submit" class="btn light">{{ results.isLoading() ? 'Restart search' : 'Find next windows' }}</button>
+      <button type="submit" class="btn light">@if (results.isLoading()) {<ng-container i18n>Restart search</ng-container>} @else {<ng-container i18n>Find next windows</ng-container>}</button>
     </form>
-    <p id="discovery-help" class="small">
+    <p id="discovery-help" class="small" i18n>
       Times delimit favourable samples, with 10 s resolution; a single sample is not a measured duration.
     </p>
     @if (validation()) { <p class="small warn" role="alert">{{ validation() }}</p> }
@@ -28,7 +28,7 @@
 
   <div class="results">
     @if (results.isLoading()) {
-      <p class="empty" role="status"><i class="pulse" aria-hidden="true"></i>Comparing satellite predictions over seven days…</p>
+      <p class="empty" role="status" i18n><i class="pulse" aria-hidden="true"></i>Comparing satellite predictions over seven days…</p>
     } @else if (search(); as request) {
       @for (opportunity of opportunities(); track opportunity.response.satellite.noradId; let first = $first) {
         <article class="row">
@@ -40,13 +40,13 @@
           </div>
           <div class="when">
             <span class="num">{{ opportunity.start | date:'d MMM HH:mm' }} → {{ opportunity.end | date:'HH:mm' }}</span>
-            <span class="num sub">
+            <span class="num sub" i18n>
               {{ opportunity.start | date:'HH:mm:ss':'UTC' }} → {{ opportunity.end | date:'HH:mm:ss':'UTC' }} UTC ·
               TLE {{ (opportunity.response.tle.ageSeconds + (toMillis(opportunity.start) - toMillis(opportunity.response.computedAt)) / 1000) / 86400 | number:'1.1-1' }} d old then
             </span>
           </div>
           <span class="tag num" [class.earliest]="first">
-            {{ first ? 'Earliest' : 'Sunlit' }}<span class="visually-hidden">{{ first ? ' among successful predictions' : '' }}</span>
+            @if (first) {<ng-container i18n>Earliest<span class="visually-hidden"> among successful predictions</span></ng-container>} @else {<ng-container i18n>Sunlit</ng-container>}
           </span>
         </article>
       }
@@ -56,8 +56,8 @@
             <span class="name">{{ result.response!.satellite.name }}</span>
             <span class="num">NORAD {{ result.noradId }}</span>
           </div>
-          <span class="when num">—<span class="visually-hidden">: no favourable sample in the next seven days.</span></span>
-          <span class="tag num none">None in 7 days</span>
+          <span class="when num">—<span class="visually-hidden" i18n>: no favourable sample in the next seven days.</span></span>
+          <span class="tag num none" i18n>None in 7 days</span>
         </div>
       }
       @for (result of unavailable(); track result.noradId) {
@@ -67,16 +67,16 @@
             <span class="num">{{ result.error }}</span>
           </div>
           <span class="when num">—</span>
-          <span class="tag num failed">Unavailable</span>
+          <span class="tag num failed" i18n>Unavailable</span>
         </div>
       }
-      <p class="small context">
+      <p class="small context" i18n>
         Searched at {{ request.query.lat | number:'1.3-4' }}°, {{ request.query.lon | number:'1.3-4' }}°, {{ request.query.alt }} m ·
         threshold {{ request.query.minElevation }}°. Each window begins when its prediction is computed; times are local.
         Predictions become less reliable further ahead. Select a satellite to inspect its pass.
       </p>
     } @else {
-      <p class="empty">The earliest favourable window of each satellite appears here, soonest first.</p>
+      <p class="empty" i18n>The earliest favourable window of each satellite appears here, soonest first.</p>
     }
   </div>
 </section>

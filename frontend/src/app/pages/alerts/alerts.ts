@@ -83,7 +83,7 @@ export class AlertsPage {
     if (!error) return undefined;
     const body = error instanceof HttpErrorResponse ? error.error : undefined;
     if (body && typeof body === 'object' && 'title' in body) return body as ProblemDetail;
-    return { type: 'about:blank', title: 'The backend could not be reached', status: 0, detail: 'The server may be starting. Please try again shortly.' };
+    return { type: 'about:blank', title: $localize`The backend could not be reached`, status: 0, detail: $localize`The server may be starting. Please try again shortly.` };
   });
 
   /** The favourable interval of every pass that has one: what the calendar will hold. */
@@ -118,14 +118,14 @@ export class AlertsPage {
     this.validation.set(undefined);
     const form = this.form();
     if (!this.satelliteResolved()) {
-      this.validation.set('Choose a satellite from the suggestions, or type its NORAD number.');
+      this.validation.set($localize`Choose a satellite from the suggestions, or type its NORAD number.`);
       return;
     }
     const bounds: [number, number, number][] = [
       [form.lat, -90, 90], [form.lon, -180, 180], [form.alt, -500, 9000], [form.days, 1, MAX_DAYS], [form.minElevation, 0, 89],
     ];
     if (bounds.some(([value, min, max]) => !Number.isFinite(value) || value < min || value > max)) {
-      this.validation.set(`Check the fields: latitude −90 to 90, longitude −180 to 180, 1 to ${MAX_DAYS} days, threshold 0 to 89°.`);
+      this.validation.set($localize`Check the fields: latitude −90 to 90, longitude −180 to 180, 1 to ${MAX_DAYS}:maxDays: days, threshold 0 to 89°.`);
       return;
     }
     this.query.set({ ...form, days: Math.round(form.days) });

@@ -105,6 +105,7 @@ cd backend && ./mvnw spring-boot:run
 
 # 3. Frontend (http://localhost:4200, /api proxied to 8080)
 cd frontend && npm install && npm start
+# French instead of English: npx ng serve --configuration fr
 ```
 
 ## Tests
@@ -315,9 +316,14 @@ shared and reopened. The other pages are lazy-loaded routes sharing one styleshe
 | `/legal` | Legal notice, terms, privacy — a **draft**: operator identity, retention and hosting addresses are marked *to be completed* in `frontend/src/app/shared/site.ts` and the page |
 
 Figures quoted by several pages (quotas, batch bounds, URLs) live in
-`frontend/src/app/shared/site.ts`, each mirroring its source of truth. Deep links need a
-single-page fallback: `vercel.json` rewrites unknown paths to `index.html` and nginx
-already did. The status page reads the backend's `/actuator/health` through a
+`frontend/src/app/shared/site.ts`, each mirroring its source of truth.
+
+Every page exists in English at the root and in French under `/fr/` (two builds of
+`@angular/localize`), and is prerendered to HTML at build time, with its title,
+description, canonical and hreflang links - see [search engines and languages](docs/seo.md).
+Paths that are not prerendered (a satellite outside the featured list, an unknown
+address) need a single-page fallback: `vercel.json` and nginx rewrite them to
+`index.csr.html`, or `fr/index.csr.html`, the shell that renders in the browser. The status page reads the backend's `/actuator/health` through a
 `/status-probe/health` rewrite (Vercel, nginx and the dev proxy); no other actuator path
 is exposed through the frontend origin.
 

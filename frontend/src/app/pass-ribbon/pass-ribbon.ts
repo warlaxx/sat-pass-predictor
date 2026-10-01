@@ -23,7 +23,7 @@ import { Night, groupIntoNights } from './nights';
   imports: [DatePipe, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="ribbon" role="group" aria-label="Passes by night">
+    <div class="ribbon" role="group" aria-label="Passes by night" i18n-aria-label>
       @for (night of nights(); track night.key; let nightIndex = $index) {
         <div class="night" [class.current]="hasSelected(night)">
           <div class="bars">
@@ -36,12 +36,12 @@ import { Night, groupIntoNights } from './nights';
                 [style.background]="colour(pass)"
                 [attr.aria-pressed]="pass.aos.instant === selected()"
                 [attr.aria-label]="describe(night, pass)"
-                [attr.title]="night.label + ' · ' + (pass.aos.instant | date: 'HH:mm:ss') + ' · max ' + (pass.culmination.elevationDeg | number: '1.0-0') + '°'"
+                [attr.title]="night.label + ' · ' + (pass.aos.instant | date: 'HH:mm:ss') + ' · ' + maxLabel + ' ' + (pass.culmination.elevationDeg | number: '1.0-0') + '°'"
                 [class.selected]="pass.aos.instant === selected()"
                 (click)="select.emit(pass.aos.instant)"
               ></button>
             } @empty {
-              <p class="none" aria-label="{{ night.longLabel }}: no pass">&ndash;</p>
+              <p class="none" [attr.aria-label]="noPass(night)">&ndash;</p>
             }
           </div>
           <div class="date" aria-hidden="true">
@@ -52,7 +52,7 @@ import { Night, groupIntoNights } from './nights';
       }
     </div>
     <p class="legend">
-      <span>Bar height = maximum elevation</span>
+      <span i18n>Bar height = maximum elevation</span>
       <span><i style="background: var(--accent-dim)"></i>&lt; 25°</span>
       <span><i style="background: var(--accent)"></i>25–45°</span>
       <span><i style="background: var(--lit)"></i>45–70°</span>
@@ -211,8 +211,14 @@ export class PassRibbon {
       minute: '2-digit',
     });
     const peak = Math.round(pass.culmination.elevationDeg);
-    return `${night.longLabel}, rises at ${time} toward ${compassPoint(pass.aos.azimuthDeg)},`
-      + ` peaks at ${peak} degrees toward ${compassPoint(pass.culmination.azimuthDeg)},`
-      + ` lasts ${formatDuration(pass.durationSeconds)}`;
+    const when = night.longLabel, rise = compassPoint(pass.aos.azimuthDeg);
+    const top = compassPoint(pass.culmination.azimuthDeg), lasts = formatDuration(pass.durationSeconds);
+    return $localize`${when}:night:, rises at ${time}:time: toward ${rise}:riseDirection:, peaks at ${peak}:peak: degrees toward ${top}:peakDirection:, lasts ${lasts}:duration:`;
+  }
+
+  protected readonly maxLabel = $localize`:Maximum elevation, short:max`;
+
+  protected noPass(night: Night): string {
+    return $localize`${night.longLabel}:night:: no pass`;
   }
 }

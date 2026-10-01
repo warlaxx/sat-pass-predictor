@@ -1,21 +1,21 @@
-import { DestroyRef, Injectable, inject } from '@angular/core';
+import { DOCUMENT, DestroyRef, Injectable, inject } from '@angular/core';
 import {
   CanActivateFn, NavigationCancel, NavigationEnd, NavigationError, NavigationSkipped, Router,
 } from '@angular/router';
 
 /** The pages of the header, in its order: the curtain numbers them the same way. */
 export const NAV_PAGES = [
-  { path: '/', label: 'Predictor' },
-  { path: '/satellites', label: 'Satellites' },
-  { path: '/alerts', label: 'Alerts' },
-  { path: '/developers', label: 'Developers' },
-  { path: '/pricing', label: 'Pricing' },
-  { path: '/methodology', label: 'Methodology' },
-  { path: '/status', label: 'Status' },
+  { path: '/', label: $localize`:Header link:Predictor` },
+  { path: '/satellites', label: $localize`:Header link:Satellites` },
+  { path: '/alerts', label: $localize`:Header link:Alerts` },
+  { path: '/developers', label: $localize`:Header link:Developers` },
+  { path: '/pricing', label: $localize`:Header link:Pricing` },
+  { path: '/methodology', label: $localize`:Header link:Methodology` },
+  { path: '/status', label: $localize`:Header link:Status` },
 ] as const;
 
 /** Pages that are reachable but not in the header: named, not numbered. */
-const OTHER_PAGES: Record<string, string> = { legal: 'Legal', satellite: 'Satellite' };
+const OTHER_PAGES: Record<string, string> = { legal: $localize`Legal`, satellite: $localize`Satellite` };
 
 /** "04 — Developers" for a header page, "Satellite" for a detail page, "Page" otherwise. */
 export function pageLabel(url: string): string {
@@ -24,7 +24,7 @@ export function pageLabel(url: string): string {
   const path = '/' + (segments[0] ?? '');
   const index = NAV_PAGES.findIndex(page => page.path === path);
   if (index >= 0) return `${String(index + 1).padStart(2, '0')} — ${NAV_PAGES[index].label}`;
-  return OTHER_PAGES[segments[0] ?? ''] ?? 'Page';
+  return OTHER_PAGES[segments[0] ?? ''] ?? $localize`Page`;
 }
 
 export interface CurtainElements {
@@ -66,6 +66,7 @@ export class RouteTransition {
 
   constructor() {
     const router = inject(Router);
+    const document = inject(DOCUMENT);
     const subscription = router.events.subscribe(event => {
       if (event instanceof NavigationEnd || event instanceof NavigationCancel ||
           event instanceof NavigationError || event instanceof NavigationSkipped) {

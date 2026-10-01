@@ -18,46 +18,46 @@ import { nextPassState } from './next-pass-state';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (state(); as s) {
-      <section class="next" [class.live]="s.kind === 'now'" aria-label="Next pass">
+      <section class="next" [class.live]="s.kind === 'now'" aria-label="Next pass" i18n-aria-label>
         @switch (s.kind) {
           @case ('now') {
             <span class="pulse" aria-hidden="true"></span>
             <div class="text">
-              <p class="headline">Passing now <span class="num">· sets in {{ countdown(s.remainingMs) }}</span></p>
-              <p class="detail num">
+              <p class="headline" i18n>Passing now <span class="num">· sets in {{ countdown(s.remainingMs) }}</span></p>
+              <p class="detail num" i18n>
                 Look {{ compass(s.position.azimuthDeg) }} ({{ s.position.azimuthDeg | number: '1.0-0' }}°),
                 {{ s.position.elevationDeg | number: '1.0-0' }}° above the horizon · sets {{ s.pass.los.instant | date: 'HH:mm' }}
                 towards {{ compass(s.pass.los.azimuthDeg) }}
               </p>
             </div>
-            <button type="button" (click)="select.emit(s.pass.aos.instant)">Follow this pass</button>
+            <button type="button" (click)="select.emit(s.pass.aos.instant)" i18n>Follow this pass</button>
           }
           @case ('next') {
             <div class="text">
-              <p class="headline">Next pass in <span class="num">{{ countdown(s.waitMs) }}</span></p>
+              <p class="headline" i18n>Next pass in <span class="num">{{ countdown(s.waitMs) }}</span></p>
               <p class="detail num">
-                Rises {{ s.pass.aos.instant | date: 'EEE HH:mm' }} in the {{ compass(s.pass.aos.azimuthDeg) }},
-                peaks at {{ s.pass.culmination.elevationDeg | number: '1.0-0' }}° towards {{ compass(s.pass.culmination.azimuthDeg) }}
+                <ng-container i18n>Rises {{ s.pass.aos.instant | date: 'EEE HH:mm' }} in the {{ compass(s.pass.aos.azimuthDeg) }},
+                peaks at {{ s.pass.culmination.elevationDeg | number: '1.0-0' }}° towards {{ compass(s.pass.culmination.azimuthDeg) }}</ng-container>
                 @if (s.visibleFrom) {
-                  · <span class="lit">potentially visible from {{ s.visibleFrom | date: 'HH:mm' }}</span>
+                  · <span class="lit" i18n>potentially visible from {{ s.visibleFrom | date: 'HH:mm' }}</span>
                 } @else {
-                  · not visible to the eye
+                  · <ng-container i18n>not visible to the eye</ng-container>
                 }
               </p>
               @if (s.nextVisible; as visible) {
-                <p class="detail num">
+                <p class="detail num" i18n>
                   Next potentially visible pass: <span class="lit">{{ visible.start | date: 'EEE HH:mm' }}</span>,
                   in {{ countdown(visible.waitMs) }}
                   <button type="button" class="link" (click)="select.emit(visible.pass.aos.instant)">show</button>
                 </p>
               }
             </div>
-            <button type="button" (click)="select.emit(s.pass.aos.instant)">Show this pass</button>
+            <button type="button" (click)="select.emit(s.pass.aos.instant)" i18n>Show this pass</button>
           }
           @case ('over') {
             <div class="text">
-              <p class="headline">Every pass of this window has set</p>
-              <p class="detail num">The last one set {{ s.last.los.instant | date: 'EEE HH:mm' }}. Compute again for the next ones.</p>
+              <p class="headline" i18n>Every pass of this window has set</p>
+              <p class="detail num" i18n>The last one set {{ s.last.los.instant | date: 'EEE HH:mm' }}. Compute again for the next ones.</p>
             </div>
           }
         }

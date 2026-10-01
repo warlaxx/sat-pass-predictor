@@ -46,12 +46,24 @@ describe('App shell', () => {
 
   it('links every footer entry to a page that exists', async () => {
     const fixture = await at('/');
-    const paths = [...fixture.nativeElement.querySelectorAll('footer a[href^="/"]')]
+    // The language link leaves this build for the other one (/fr/), which no route of
+    // this router serves: it has its own test below.
+    const paths = [...fixture.nativeElement.querySelectorAll('footer a[href^="/"]:not([hreflang])')]
       .map((link) => new URL((link as HTMLAnchorElement).href).pathname);
     expect(paths.length).toBeGreaterThan(5);
     for (const path of new Set(paths)) {
       const page = await at(path);
       expect(page.nativeElement.querySelector('app-not-found'), path).toBeNull();
+    }
+  });
+
+  it('links to the same page in French, as a full load of the other build', async () => {
+    const fixture = await at('/legal#privacy');
+    const links = [...fixture.nativeElement.querySelectorAll('a[hreflang="fr"]')] as HTMLAnchorElement[];
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) {
+      expect(link.getAttribute('href')).toBe('/fr/legal#privacy');
+      expect(link.getAttribute('routerlink')).toBeNull();
     }
   });
 

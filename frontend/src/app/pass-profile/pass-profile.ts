@@ -106,9 +106,19 @@ export class PassProfile {
   /** The two ends of the lower curve, in words: what the screen reader gets instead of the S. */
   protected readonly shiftSummary = computed(() => {
     const aos = this.pass().aos, los = this.pass().los;
+    if (this.doppler()) {
+      const rise = formatDoppler(aos.dopplerHz!), set = formatDoppler(los.dopplerHz!);
+      return $localize`Doppler ${rise}:rise: at rise, ${set}:set: at set`;
+    }
+    const rise = this.signed(aos.rangeRateKmS), set = this.signed(los.rangeRateKmS);
+    return $localize`Range rate ${rise}:rise: km/s at rise, ${set}:set: km/s at set`;
+  });
+
+  protected readonly chartLabel = computed(() => {
+    const summary = this.shiftSummary();
     return this.doppler()
-      ? `Doppler ${formatDoppler(aos.dopplerHz!)} at rise, ${formatDoppler(los.dopplerHz!)} at set`
-      : `Range rate ${this.signed(aos.rangeRateKmS)} km/s at rise, ${this.signed(los.rangeRateKmS)} km/s at set`;
+      ? $localize`Elevation and Doppler shift of the selected pass over time. ${summary}:summary:.`
+      : $localize`Elevation and range rate of the selected pass over time. ${summary}:summary:.`;
   });
 
   protected readonly hasTrack = computed(() => this.pass().track.length > 0);

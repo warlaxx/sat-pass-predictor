@@ -34,10 +34,7 @@ export function elevationColour(maxElevationDeg: number): string {
   return BAND_VARIABLE[elevationBand(maxElevationDeg)];
 }
 
-const COMPASS = [
-  'N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
-  'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW',
-];
+const COMPASS = $localize`:Sixteen compass points from north clockwise, separated by spaces:N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW`.split(' ');
 
 /**
  * Azimuth as a compass point, on sixteen sectors of 22.5 degrees.
@@ -61,7 +58,7 @@ export function formatDuration(seconds: number): string {
 /** "2 d 10 h" for a TLE age. Days first: it is the unit the drift is expressed in. */
 export function formatAge(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
-  return hours < 24 ? `${hours} h` : `${Math.floor(hours / 24)} d ${hours % 24} h`;
+  return hours < 24 ? `${hours} h` : $localize`:Age, days and hours:${Math.floor(hours / 24)}:days: d ${hours % 24}:hours: h`;
 }
 
 /**
@@ -100,10 +97,10 @@ export function isRemarkable(maxElevationDeg: number): boolean {
 }
 
 const BAND_WORDS: Record<ElevationBand, string> = {
-  faint: 'grazes the horizon',
-  ordinary: 'clears the rooftops',
-  good: 'high in the sky',
-  overhead: 'almost overhead',
+  faint: $localize`grazes the horizon`,
+  ordinary: $localize`clears the rooftops`,
+  good: $localize`high in the sky`,
+  overhead: $localize`almost overhead`,
 };
 
 /** The elevation band, said in the words someone standing outside would use. */
@@ -172,5 +169,5 @@ export function formatCountdown(milliseconds: number): string {
   if (minutes < 60) return `${minutes} min ${String(seconds % 60).padStart(2, '0')} s`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} h ${String(minutes % 60).padStart(2, '0')} min`;
-  return `${Math.floor(hours / 24)} d ${hours % 24} h`;
+  return $localize`:Age, days and hours:${Math.floor(hours / 24)}:days: d ${hours % 24}:hours: h`;
 }

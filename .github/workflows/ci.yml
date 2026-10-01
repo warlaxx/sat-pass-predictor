@@ -99,5 +99,14 @@ jobs:
         working-directory: frontend
         run: npm test -- --watch=false
 
+      # The build refuses a missing translation; this also catches a dropped placeholder.
+      - name: Check French translations
+        working-directory: frontend
+        run: npm run i18n
+
+      - name: Verify robots.txt and sitemap generation
+        working-directory: frontend
+        run: node --test scripts/seo-files.test.mjs
+
       - name: Verify account dashboard interactions
         run: node --test scripts/account-dashboard.test.mjs

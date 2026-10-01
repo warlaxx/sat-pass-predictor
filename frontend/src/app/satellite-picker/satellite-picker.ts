@@ -35,6 +35,7 @@ export class SatellitePicker implements OnInit {
   readonly mode = input<'value' | 'add'>('value');
   readonly initial = input<string>('');
   readonly label = input.required<string>();
+  protected readonly suggestionsLabel = computed(() => $localize`${this.label()}:label: suggestions`);
   readonly describedBy = input<string | null>(null);
   readonly placeholder = input<string>('ISS, HST, 25544…');
 
@@ -65,7 +66,7 @@ export class SatellitePicker implements OnInit {
         map(response => ({ query, matches: response.results }) as Lookup),
         catchError((error: HttpErrorResponse) => of<Lookup>({ query, matches: [],
           error: typeof error.error?.detail === 'string' ? error.error.detail
-            : 'Name search is unavailable. Type the NORAD number instead.',
+            : $localize`Name search is unavailable. Type the NORAD number instead.`,
         })),
       )),
       takeUntilDestroyed(inject(DestroyRef)),

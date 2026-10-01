@@ -75,12 +75,13 @@ function event(response: PassesResponse, pass: PassDto, window: VisibleWindow): 
   const end = window.end === window.start
     ? new Date(Date.parse(window.start) + 60_000).toISOString()
     : window.end;
+  const elevation = Math.round(peak.elevationDeg);
   const description = [
-    `Rise ${stamp(pass.aos.instant)} UTC towards ${compassPoint(pass.aos.azimuthDeg)}`,
-    `Peak ${stamp(peak.instant)} UTC, ${Math.round(peak.elevationDeg)}° towards ${compassPoint(peak.azimuthDeg)}`,
-    `Set ${stamp(pass.los.instant)} UTC towards ${compassPoint(pass.los.azimuthDeg)}`,
-    `Elements epoch ${stamp(tle.epoch)} UTC (${tle.source}). Times drift as the elements age.`,
-    'Potentially visible: sunlit satellite, Sun at least 6° below the horizon. Weather and brightness are not modelled.',
+    $localize`Rise ${stamp(pass.aos.instant)}:time: UTC towards ${compassPoint(pass.aos.azimuthDeg)}:direction:`,
+    $localize`Peak ${stamp(peak.instant)}:time: UTC, ${elevation}:elevation:° towards ${compassPoint(peak.azimuthDeg)}:direction:`,
+    $localize`Set ${stamp(pass.los.instant)}:time: UTC towards ${compassPoint(pass.los.azimuthDeg)}:direction:`,
+    $localize`Elements epoch ${stamp(tle.epoch)}:time: UTC (${tle.source}:source:). Times drift as the elements age.`,
+    $localize`Potentially visible: sunlit satellite, Sun at least 6° below the horizon. Weather and brightness are not modelled.`,
   ].join('\n');
   return [
     'BEGIN:VEVENT',
@@ -90,13 +91,13 @@ function event(response: PassesResponse, pass: PassDto, window: VisibleWindow): 
     `DTSTAMP:${basic(response.computedAt)}`,
     `DTSTART:${basic(window.start)}`,
     `DTEND:${basic(end)}`,
-    `SUMMARY:${text(`${satellite.name} - max ${Math.round(peak.elevationDeg)}° ${compassPoint(peak.azimuthDeg)}`)}`,
+    `SUMMARY:${text($localize`${satellite.name}:satellite: - max ${elevation}:elevation:° ${compassPoint(peak.azimuthDeg)}:direction:`)}`,
     `DESCRIPTION:${text(description)}`,
     `GEO:${observer.latitudeDeg};${observer.longitudeDeg}`,
     'TRANSP:TRANSPARENT',
     'BEGIN:VALARM',
     'ACTION:DISPLAY',
-    `DESCRIPTION:${text(`${satellite.name} visible in ${REMINDER_MINUTES} min`)}`,
+    `DESCRIPTION:${text($localize`${satellite.name}:satellite: visible in ${REMINDER_MINUTES}:minutes: min`)}`,
     `TRIGGER:-PT${REMINDER_MINUTES}M`,
     'END:VALARM',
     'END:VEVENT',
@@ -111,7 +112,7 @@ function basic(instant: string): string {
 /** 2026-09-22T19:48:31Z -> "22 Sep 19:48:31". */
 function stamp(instant: string): string {
   const date = new Date(instant);
-  const month = date.toLocaleString('en', { month: 'short', timeZone: 'UTC' });
+  const month = date.toLocaleString($localize.locale ?? 'en', { month: 'short', timeZone: 'UTC' });
   return `${date.getUTCDate()} ${month} ${date.toISOString().slice(11, 19)}`;
 }
 

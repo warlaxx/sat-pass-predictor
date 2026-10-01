@@ -1,6 +1,7 @@
 import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection, Type } from '@angular/core';
+import { PLATFORM_ID, provideZonelessChangeDetection, Type } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
@@ -56,10 +57,34 @@ describe('SatellitePage', () => {
     await fixture.whenStable();
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelector('#sat-title')!.textContent).toContain('ISS (ZARYA)');
-    expect(page.querySelector('.lede')!.textContent).toContain('Low Earth orbit');
+    expect(page.querySelector('.page-hero')!.textContent).toContain('Low Earth orbit');
     expect(page.querySelector('.facts')!.textContent).toContain('51.65°');
     expect(page.querySelectorAll('app-pass-table tbody tr')).toHaveLength(1);
     expect(page.textContent).toContain('1 potentially visible');
+  });
+
+  it('names a featured satellite and describes it before any answer arrives', async () => {
+    const fixture = await render(SatellitePage, { noradId: '20580' });
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('#sat-title')!.textContent).toContain('Hubble Space Telescope');
+    expect(page.querySelector('.lede')!.textContent).toContain('28.5°');
+    TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/passes');
+  });
+
+  it('titles a satellite outside the featured list by its catalogue name once known', async () => {
+    const fixture = await render(SatellitePage, { noradId: '43013' });
+    TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/passes')
+      .flush({ ...prediction(), satellite: { noradId: 43013, name: 'NOAA 20' } });
+    await fixture.whenStable();
+    expect(TestBed.inject(Title).getTitle()).toBe('NOAA 20: next passes and when to see it · Sat Pass Predictor');
+  });
+
+  it('computes no pass while prerendering: they would be stale before anyone read them', async () => {
+    TestBed.overrideProvider(PLATFORM_ID, { useValue: 'server' });
+    const fixture = await render(SatellitePage, { noradId: '25544' });
+    await fixture.whenStable();
+    TestBed.inject(HttpTestingController).expectNone((r) => r.url === '/api/passes');
+    expect((fixture.nativeElement as HTMLElement).querySelector('#sat-title')!.textContent).toContain('International Space Station');
   });
 
   it('refuses a number that is not one, without asking the backend', async () => {
