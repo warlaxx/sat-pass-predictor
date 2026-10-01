@@ -38,6 +38,7 @@ class AccountWebTest {
                 .andExpect(header().string("Content-Security-Policy", containsString("frame-ancestors 'none'")))
                 .andExpect(content().string(containsString("Continue with GitHub")));
         mvc.perform(get("/account/dashboard.js")).andExpect(status().isOk());
+        mvc.perform(get("/account/favicon.svg")).andExpect(status().isOk());
     }
 
     @Test void accountDataRequiresSessionAndDoesNotAcceptAnApiKey() throws Exception {
