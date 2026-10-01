@@ -631,7 +631,7 @@ a thousand times, on a container sized for a free plan.
   deleted only when the catalogue says the object is gone. Follows `api-access.enabled`;
   the default demo is unchanged.
 - [x] Measured before and after, with `scripts/measure-passes.sh` and the two meters it
-  reads (`satpass.predictions`, `satpass.prediction.duration`).
+  reads (`nextpass.predictions`, `nextpass.prediction.duration`).
 
 **The measurement.** 200 sequential calls, ISS over Lyon, 48 h window, JDK 25 on an
 Apple M-series laptop — an order of magnitude, not a datacenter benchmark:

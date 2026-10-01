@@ -218,8 +218,8 @@ Measured rather than asserted, with `scripts/measure-passes.sh` against a local 
 | 200 distinct observers, cache on | 113.4 ms | 120.8 ms | 112 s |
 
 The third row is the point of the table: on a workload the cache cannot help, it costs
-nothing measurable. The two meters behind those numbers, `satpass.predictions` and
-`satpass.prediction.duration`, are on `/actuator/metrics`. The last column is **elapsed
+nothing measurable. The two meters behind those numbers, `nextpass.predictions` and
+`nextpass.prediction.duration`, are on `/actuator/metrics`. The last column is **elapsed
 time inside the propagation, not CPU time** — a Micrometer timer measures a duration, and
 nothing here samples a thread's CPU clock. On this single-threaded run the two are close;
 they are not the same quantity.

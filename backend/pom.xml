@@ -11,10 +11,10 @@
     <relativePath/>
   </parent>
 
-  <groupId>dev.abdallah</groupId>
+  <groupId>space.nextpass</groupId>
   <artifactId>backend</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>sat-pass-predictor-backend</name>
+  <name>nextpass-backend</name>
   <description>Satellite pass prediction (Orekit)</description>
 
   <properties>

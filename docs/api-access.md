@@ -12,7 +12,7 @@ Set these backend environment variables, then restart:
 ```text
 API_ACCESS_ENABLED=true
 API_DATABASE_URL=jdbc:postgresql://HOST:5432/DATABASE?sslmode=require
-API_DATABASE_USERNAME=satpass
+API_DATABASE_USERNAME=nextpass
 API_DATABASE_PASSWORD=<database password>
 API_ALLOWED_ORIGINS=https://your-client.example
 ```
@@ -151,7 +151,7 @@ computed one after the other; ask for `track=false` unless the polylines are nee
 ## Verification
 
 Normal `./mvnw verify` verifies the database-free deployment. Set `TEST_DATABASE_URL`
-(and optionally `TEST_DATABASE_USERNAME`, default `satpass`, and
+(and optionally `TEST_DATABASE_USERNAME`, default `nextpass`, and
 `TEST_DATABASE_PASSWORD`, default empty) to run PostgreSQL integration tests too.
 Use a test database where the user can create schemas. Tests create a random schema
 and drop only that schema afterwards. CI provides PostgreSQL 16 and runs these tests
