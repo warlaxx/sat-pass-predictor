@@ -48,7 +48,7 @@ describe('Seo', () => {
 
   it('replaces the structured data of the previous page, and escapes it', () => {
     seo.apply('/', { jsonLd: { name: '</script><b>' } });
-    seo.apply('/', { jsonLd: seo.application('Pass predictions.') });
+    seo.apply('/', { jsonLd: seo.home('Pass predictions.') });
     const scripts = document.head.querySelectorAll('script[type="application/ld+json"]');
     expect(scripts).toHaveLength(1);
     expect(JSON.parse(scripts[0].textContent!)['@type']).toBe('WebApplication');

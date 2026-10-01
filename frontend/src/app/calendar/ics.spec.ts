@@ -47,7 +47,7 @@ describe('buildCalendar', () => {
     expect(lines).toContain('DTSTART:20260919T200110Z');
     expect(lines).toContain('DTEND:20260919T200120Z');
     expect(lines).toContain('DTSTAMP:20260919T200000Z');
-    expect(lines).toContain('SUMMARY:Satellite 25544 - max 45° E');
+    expect(lines).toContain('SUMMARY:Satellite 25544 · max 45° E');
     expect(lines).toContain('TRIGGER:-PT10M');
     expect(lines.find(line => line.startsWith('UID:'))).toBe('UID:25544-20260919T200100Z-45-5@nextpass.space');
   });
@@ -72,7 +72,7 @@ describe('buildCalendar', () => {
     const response = prediction(25544, 1);
     const named = { ...response, satellite: { ...response.satellite, name: 'A; B, C\\ D' } };
     const calendar = buildCalendar(named)!;
-    expect(unfold(calendar)).toContain('SUMMARY:A\\; B\\, C\\\\ D - max 45° E');
+    expect(unfold(calendar)).toContain('SUMMARY:A\\; B\\, C\\\\ D · max 45° E');
     expect(calendar).not.toMatch(/[^\r]\n/);
     for (const line of calendar.split('\r\n')) {
       expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
