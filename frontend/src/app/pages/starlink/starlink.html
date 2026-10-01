@@ -1,0 +1,107 @@
+@let loaded = response();
+
+<section class="page-hero wrap" appReveal aria-labelledby="starlink-title">
+  <span class="kicker" i18n><a routerLink="/satellites">Satellites</a> · Starlink</span>
+  <h2 id="starlink-title" i18n>Starlink train tonight: when to see it</h2>
+  <p class="lede" i18n>
+    A line of bright dots crossing the sky in single file, one after another: a Starlink
+    launch from the last few days. Below are the newest launches and when their train
+    passes over you.
+  </p>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="train-title">
+  <div class="section-head">
+    <h2 id="train-title" i18n>Next passes of the newest launches</h2>
+    <span i18n>Over the next {{ windowHours }} h, from fresh CelesTrak elements</span>
+  </div>
+
+  @if (problem(); as failure) {
+    <div class="note" role="alert">
+      <b>{{ failure.title }}.</b> {{ failure.detail }}
+      <div class="actions"><button type="button" class="btn outline small" (click)="reload()" i18n>Try again</button></div>
+    </div>
+  } @else if (launches.isLoading() && !launch()) {
+    <p class="state" role="status" i18n><span class="dot wait" aria-hidden="true"></span>Looking for the newest Starlink launches…</p>
+  } @else if (launch(); as current) {
+    <div class="launches" role="group" aria-label="Launch" i18n-aria-label>
+      @for (item of launchList(); track item.designator) {
+        <button type="button" class="btn outline small" [attr.aria-pressed]="item.designator === current.designator"
+                (click)="choose(item.designator)">
+          <span class="num">{{ item.designator }}</span> · <ng-container i18n>{item.satellites, plural, =1 {1 satellite} other {{{ item.satellites }} satellites}}</ng-container>
+        </button>
+      }
+    </div>
+    <p class="muted" i18n>
+      Launch <span class="num">{{ current.designator }}</span>: passes of
+      <a [routerLink]="['/satellites', current.noradId]">{{ current.name }}</a>, the first of its
+      satellites. The others follow it within seconds to minutes while the train holds together.
+    </p>
+
+    <div class="observer">
+      <span class="muted">
+        <ng-container i18n>Seen from
+        <span class="num">{{ observer().lat | number: '1.2-4' }}°, {{ observer().lon | number: '1.2-4' }}°</span></ng-container>
+        @if (isDefaultObserver()) {<ng-container i18n>(Lyon, the default)</ng-container>} @else {<ng-container i18n>(your position)</ng-container>}
+      </span>
+      <button type="button" class="btn outline small" [disabled]="locating()" (click)="useMyPosition()">
+        @if (locating()) {<ng-container i18n>Locating…</ng-container>} @else {<ng-container i18n>Use my position</ng-container>}
+      </button>
+      @if (passes.isLoading()) { <span class="muted" role="status" i18n>Updating…</span> }
+      @if (locationError(); as failure) { <span class="error" role="status">{{ failure }}</span> }
+    </div>
+
+    @if (loaded) {
+      @if (loaded.passes.length === 0) {
+        <p class="state" role="status" i18n>No pass above {{ loaded.minElevationDeg }}° from here in the next {{ windowHours }} hours.</p>
+      } @else {
+        <app-next-pass [passes]="loaded.passes" (select)="inspect($event)" />
+        <p class="muted" i18n>{{ loaded.passes.length }} passes above {{ loaded.minElevationDeg }}°, {{ visibleCount() }} potentially visible: sunlit while your sky is dark.</p>
+        <app-pass-table [passes]="loaded.passes" (select)="inspect($event)" />
+        <p class="muted" i18n>Choose a pass to open it in the predictor, with the globe and the sky chart.</p>
+      }
+    }
+  } @else if (launches.hasValue()) {
+    <p class="state" role="status" i18n>No Starlink launch in the catalogue right now.</p>
+  }
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="explain-title">
+  <div class="section-head">
+    <h2 id="explain-title" i18n>What you saw, and when to look</h2>
+  </div>
+  <div class="cards">
+    <article class="card">
+      <h3 i18n>A train of satellites</h3>
+      <p i18n>Each Falcon 9 launch releases a few dozen Starlink satellites together, low above the Earth. For the first days they fly one behind the other on almost the same orbit, which is why they cross the sky as a line of dots.</p>
+    </article>
+    <article class="card">
+      <h3 i18n>Only at dusk and dawn</h3>
+      <p i18n>A satellite shines only by reflecting sunlight. It is seen when it is still in the Sun while your sky is already dark: in the hour or two after sunset or before sunrise. A pass in the middle of the night is in the Earth's shadow and invisible.</p>
+    </article>
+    <article class="card">
+      <h3 i18n>A few days, then it fades</h3>
+      <p i18n>The satellites then climb to their working altitude, spread out along the orbit and grow fainter. A train is most striking in its first days and is rarely seen as one after a week or two.</p>
+    </article>
+  </div>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="limits-title">
+  <div class="section-head">
+    <h2 id="limits-title" i18n>What these predictions are worth</h2>
+  </div>
+  <div class="split">
+    <p i18n>
+      A satellite appears here once CelesTrak has catalogued it, usually a day or more after
+      launch, so the very first evening of a train is often missing. Elements of a satellite
+      that is still raising its orbit age quickly: an evening's times can shift by a minute
+      or more, so step outside a few minutes early.
+    </p>
+    <p i18n>
+      “Potentially visible” means sunlit while the Sun is at least 6° below your horizon; clouds and
+      city light are not part of the calculation. How the passes are computed and checked is
+      on the <a routerLink="/methodology">methodology</a> page, and any other satellite is a
+      search away on the <a routerLink="/satellites">satellites</a> page.
+    </p>
+  </div>
+</section>

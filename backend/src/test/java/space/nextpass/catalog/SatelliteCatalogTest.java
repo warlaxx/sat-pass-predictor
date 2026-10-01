@@ -110,6 +110,29 @@ class SatelliteCatalogTest {
     }
 
     @Test
+    void groupsSatellitesByLaunchNewestFirst() {
+        SatelliteCatalog catalog = catalog(new ScriptedSource().then(List.of(
+                new SatelliteEntry(25544, "ISS (ZARYA)", "1998-067"),
+                new SatelliteEntry(44713, "STARLINK-1007", "2019-074"),
+                new SatelliteEntry(64002, "STARLINK-34002", "2026-045"),
+                new SatelliteEntry(64001, "STARLINK-34001", "2026-045"),
+                new SatelliteEntry(63990, "STARLINK-33990", "2026-041"),
+                new SatelliteEntry(63000, "STARLINK-33000", null),
+                new SatelliteEntry(62000, "NOT STARLINK", "2026-050"))));
+
+        SatelliteCatalog.Launches result = catalog.latestLaunches("starlink", 2);
+
+        // The lowest number of the launch stands for it; a name merely containing the
+        // query, and a satellite without a designator, are not part of any launch.
+        assertThat(result.launches()).containsExactly(
+                new SatelliteCatalog.Launch("2026-045", 2, 64001, "STARLINK-34001"),
+                new SatelliteCatalog.Launch("2026-041", 1, 63990, "STARLINK-33990"));
+        assertThat(result.catalogFetchedAt()).isEqualTo(START);
+        assertThat(catalog.latestLaunches("starlink", 10).launches()).hasSize(3);
+        assertThatIllegalArgumentException().isThrownBy(() -> catalog.latestLaunches("s", 3));
+    }
+
+    @Test
     void downloadsOnceThenAgainOnlyPastRefreshAfter() {
         ScriptedSource source = new ScriptedSource();
         SatelliteCatalog catalog = catalog(source);

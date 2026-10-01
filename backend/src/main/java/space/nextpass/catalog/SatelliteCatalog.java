@@ -5,8 +5,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -41,6 +43,13 @@ import org.slf4j.LoggerFactory;
  * names with a word starting with it, then any substring; shorter names first within a
  * rank, so {@code ISS (ZARYA)} comes before {@code ISS OBJECT XK}. A query made of digits
  * also matches the NORAD number exactly, ranked above every name.
+ *
+ * <h2>Launches</h2>
+ * {@link #latestLaunches} answers "which Starlink launch is the newest?" from the same
+ * index: the satellites whose name starts with the query, grouped by the launch of their
+ * international designator, newest launch first. A satellite enters CelesTrak's active
+ * group only once it is catalogued, a day or more after launch, so the very first hours of
+ * a train are not there.
  */
 public class SatelliteCatalog {
 
@@ -79,15 +88,26 @@ public class SatelliteCatalog {
     }
 
     /**
+     * The satellites of one launch: its designator ({@code "2026-045"}), how many of them
+     * the index holds, and the lowest-numbered one, whose passes stand for the group's
+     * while it still flies as a train.
+     */
+    public record Launch(String designator, int satellites, int noradId, String name) {
+    }
+
+    /** The newest launches, and the age of the index that produced them. */
+    public record Launches(List<Launch> launches, Instant catalogFetchedAt) {
+    }
+
+    /**
      * @throws IllegalArgumentException    if the query is too short to mean anything.
      * @throws CatalogUnavailableException if no index has ever been downloaded.
      */
     public Result search(String query, int limit) {
         String needle = normalize(query == null ? "" : query);
         boolean numeric = NORAD_NUMBER.matcher(needle).matches();
-        if (!numeric && needle.length() < MIN_QUERY_LENGTH) {
-            throw new IllegalArgumentException("Type at least " + MIN_QUERY_LENGTH
-                    + " letters or digits of the satellite name, or its NORAD number.");
+        if (!numeric) {
+            requireName(needle, "of the satellite name, or its NORAD number");
         }
         Index current = current();
 
@@ -109,6 +129,45 @@ public class SatelliteCatalog {
                 .map(match -> match.entry().entry())
                 .toList();
         return new Result(ranked, current.fetchedAt());
+    }
+
+    /**
+     * Launches of the satellites whose name starts with {@code query}, newest first.
+     *
+     * @throws IllegalArgumentException    if the query is too short to mean anything.
+     * @throws CatalogUnavailableException if no index has ever been downloaded.
+     */
+    public Launches latestLaunches(String query, int limit) {
+        String needle = normalize(query == null ? "" : query);
+        requireName(needle, "of the start of the satellite names");
+        Index current = current();
+
+        Map<String, List<SatelliteEntry>> byLaunch = new LinkedHashMap<>();
+        for (Indexed entry : current.entries()) {
+            String launch = entry.entry().launch();
+            if (launch != null && entry.normalized().startsWith(needle)) {
+                byLaunch.computeIfAbsent(launch, key -> new ArrayList<>()).add(entry.entry());
+            }
+        }
+        List<Launch> launches = byLaunch.entrySet().stream()
+                // "2026-045" sorts as text: four-digit year, then a zero-padded number.
+                .sorted(Map.Entry.<String, List<SatelliteEntry>>comparingByKey().reversed())
+                .limit(limit)
+                .map(group -> {
+                    SatelliteEntry first = group.getValue().stream()
+                            .min(Comparator.comparingInt(SatelliteEntry::noradId))
+                            .orElseThrow();
+                    return new Launch(group.getKey(), group.getValue().size(), first.noradId(), first.name());
+                })
+                .toList();
+        return new Launches(launches, current.fetchedAt());
+    }
+
+    private static void requireName(String needle, String what) {
+        if (needle.length() < MIN_QUERY_LENGTH) {
+            throw new IllegalArgumentException("Type at least " + MIN_QUERY_LENGTH
+                    + " letters or digits " + what + ".");
+        }
     }
 
     /** Lower is better; negative means no match. */

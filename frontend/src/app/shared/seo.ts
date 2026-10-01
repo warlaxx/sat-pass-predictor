@@ -15,6 +15,13 @@ export const SITE_ORIGIN: string = typeof ngSiteOrigin === 'string' ? ngSiteOrig
 
 export const SITE_NAME = 'NextPass';
 
+/**
+ * The preview image of every page, one per language (public/og/): 1200×630, the size
+ * Facebook, LinkedIn, X and messaging apps crop to. They require an absolute address,
+ * so the tags need the public origin like the canonical link does.
+ */
+export const SHARE_IMAGE = { width: 1200, height: 630 } as const;
+
 export interface PageMeta {
   /** The page's own title, without the site name. */
   readonly title?: string;
@@ -48,7 +55,7 @@ export class Seo {
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.meta.updateTag({ property: 'og:locale', content: LANGUAGES[this.language].ogLocale });
     this.meta.updateTag({ property: 'og:locale:alternate', content: LANGUAGES[this.other()].ogLocale });
-    this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+    this.shareImage();
 
     if (page.description) {
       this.meta.updateTag({ name: 'description', content: page.description });
@@ -75,6 +82,24 @@ export class Seo {
       ...(SITE_ORIGIN ? { url: SITE_ORIGIN + pathIn(this.language, '/') } : {}),
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
     };
+  }
+
+  /** A large preview when the image has an absolute address, the small card otherwise. */
+  private shareImage(): void {
+    if (!SITE_ORIGIN) {
+      for (const selector of ['property="og:image"', 'property="og:image:width"', 'property="og:image:height"',
+        'property="og:image:alt"', 'name="twitter:image"']) this.meta.removeTag(selector);
+      this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
+      return;
+    }
+    const url = `${SITE_ORIGIN}/og/${this.language}.png`;
+    const alt = $localize`:Alt text of the link preview image:NextPass: when the ISS passes over you tonight, on a sky chart`;
+    this.meta.updateTag({ property: 'og:image', content: url });
+    this.meta.updateTag({ property: 'og:image:width', content: String(SHARE_IMAGE.width) });
+    this.meta.updateTag({ property: 'og:image:height', content: String(SHARE_IMAGE.height) });
+    this.meta.updateTag({ property: 'og:image:alt', content: alt });
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ name: 'twitter:image', content: url });
   }
 
   private other(): SiteLanguage {

@@ -33,6 +33,10 @@ public class SatelliteController {
     public record SatelliteSearchResponse(List<SatelliteEntry> results, Instant catalogFetchedAt) {
     }
 
+    /** The newest launches of a constellation, for the Starlink page. */
+    public record LaunchesResponse(List<SatelliteCatalog.Launch> launches, Instant catalogFetchedAt) {
+    }
+
     private final SatelliteCatalog catalog;
 
     public SatelliteController(SatelliteCatalog catalog) {
@@ -60,5 +64,29 @@ public class SatelliteController {
             @RequestParam(defaultValue = "10") @Min(1) @Max(25) int limit) {
         SatelliteCatalog.Result result = catalog.search(q, limit);
         return new SatelliteSearchResponse(result.matches(), result.catalogFetchedAt());
+    }
+
+    @GetMapping("/launches")
+    @Operation(
+            summary = "Newest launches of the satellites whose name starts with the query",
+            description = "Groups the active satellites whose name starts with the query (for example"
+                    + " starlink) by the launch of their international designator, newest first. Each"
+                    + " launch names its lowest-numbered satellite: while a launch still flies as a"
+                    + " train, its passes are the group's. A satellite appears once CelesTrak catalogues"
+                    + " it, usually a day or more after launch.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Launches (the list may be empty)"),
+            @ApiResponse(responseCode = "400", description = "Query missing, too short or too long",
+                    content = @io.swagger.v3.oas.annotations.media.Content),
+            @ApiResponse(responseCode = "503", description = "The catalogue has never been downloaded"
+                    + " and no source answered",
+                    content = @io.swagger.v3.oas.annotations.media.Content)})
+    public LaunchesResponse launches(
+            @Parameter(description = "Start of the satellite name", example = "starlink")
+            @RequestParam @Size(max = 64) String q,
+            @Parameter(description = "Maximum number of launches", example = "3")
+            @RequestParam(defaultValue = "3") @Min(1) @Max(10) int limit) {
+        SatelliteCatalog.Launches result = catalog.latestLaunches(q, limit);
+        return new LaunchesResponse(result.launches(), result.catalogFetchedAt());
     }
 }

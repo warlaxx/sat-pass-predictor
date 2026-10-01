@@ -25,6 +25,10 @@ import { FEATURED } from '../../shared/featured';
                                 placeholder="Starlink, NOAA, 43013…" i18n-placeholder (picked)="open($event)" />
         </div>
       </div>
+      <p class="muted" i18n>
+        Saw a line of lights crossing the sky? It was probably a
+        <a routerLink="/starlink">Starlink train</a> from a recent launch.
+      </p>
     </section>
 
     @for (group of groups; track group.title) {

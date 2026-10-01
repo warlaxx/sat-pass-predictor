@@ -13,6 +13,22 @@ export interface SatelliteSearchResponse {
   readonly catalogFetchedAt: string;
 }
 
+/**
+ * One entry of `GET /api/satellites/launches`: a launch (`2026-045`), how many of its
+ * satellites the catalogue holds, and the lowest-numbered one, which stands for the group.
+ */
+export interface Launch {
+  readonly designator: string;
+  readonly satellites: number;
+  readonly noradId: number;
+  readonly name: string;
+}
+
+export interface LaunchesResponse {
+  readonly launches: Launch[];
+  readonly catalogFetchedAt: string;
+}
+
 /** A NORAD number as the pass endpoint accepts it, or undefined. */
 export function asNoradId(text: string): number | undefined {
   const trimmed = text.trim();

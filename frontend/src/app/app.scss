@@ -49,6 +49,39 @@ main {
   z-index: 30;
 }
 
+/* --- Development notice ------------------------------------------------------------ */
+
+.dev-notice {
+  align-items: center;
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--warn) 28%, transparent);
+  color: var(--warn);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 4px 8px;
+  line-height: 1.4;
+  margin: 0;
+  padding-block: 8px;
+}
+
+.dev-notice b { font-weight: 600; }
+.dev-notice .more { color: color-mix(in srgb, var(--warn) 75%, var(--ink-2)); }
+.dev-notice .dot {
+  background: var(--warn);
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 6px;
+  width: 6px;
+}
+.dev-notice a {
+  color: var(--warn);
+  margin-left: auto;
+  text-decoration-color: color-mix(in srgb, var(--warn) 45%, transparent);
+  white-space: nowrap;
+}
+.dev-notice a:hover { color: var(--ink); }
+
 .brand {
   align-items: center;
   color: var(--ink);
@@ -337,6 +370,9 @@ footer p {
 }
 
 @media (width < 640px) {
+  /* One line on a phone: the essential sentence; the footer still links to the code. */
+  .dev-notice .more, .dev-notice a { display: none; }
+
   h1 { font-size: 18px; }
   .aside .account { display: none; }
   footer { flex-direction: column; }

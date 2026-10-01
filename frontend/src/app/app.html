@@ -41,6 +41,21 @@
 </header>
 
 <!--
+  Below the header, not inside it: the header is sticky, and the notice would then take
+  a line of every screen for as long as the page is read. Here it scrolls away.
+-->
+<p class="dev-notice wrap" role="note">
+  <i class="dot" aria-hidden="true"></i>
+  <b i18n>This site is still under development.</b>
+  <span class="more" i18n>Features and figures may change, and the service can be briefly unavailable.</span>
+  @if (feedbackByMail) {
+    <a [href]="feedbackHref()" i18n>Send feedback</a>
+  } @else {
+    <a [href]="feedbackHref()" rel="noopener" i18n>Report a problem ↗</a>
+  }
+</p>
+
+<!--
   The narrow-screen menu. Outside the header on purpose: the header's backdrop-filter
   would make it the containing block of anything fixed inside it.
 -->
@@ -95,6 +110,7 @@
         <h2 i18n>Product</h2>
         <a routerLink="/" i18n>Pass predictor</a>
         <a routerLink="/satellites" i18n>Satellites</a>
+        <a routerLink="/starlink" i18n>Starlink train</a>
         <a routerLink="/alerts" i18n>Pass reminders</a>
       </nav>
       <nav aria-label="Developers" i18n-aria-label>
@@ -110,6 +126,7 @@
         <a routerLink="/legal" fragment="notice" i18n>Legal notice</a>
         <a routerLink="/legal" fragment="terms" i18n>Terms of use</a>
         <a routerLink="/legal" fragment="privacy" i18n>Privacy</a>
+        @if (feedbackByMail) { <a [href]="feedbackHref()" i18n>Write to us</a> }
         <a [href]="repositoryUrl" rel="noopener" i18n>Source code ↗</a>
         <a [href]="otherLanguage().href" [attr.hreflang]="otherLanguage().code"
            [attr.lang]="otherLanguage().code">{{ otherLanguage().label }}</a>
