@@ -6,11 +6,11 @@
 
 /*
  * Full-bleed bands, centred content. Every horizontal band of the site - header, query,
- * banner, hero, footer - runs edge to edge, and what is inside it lines up on one 1280 px
+ * banner, hero, footer - runs edge to edge, and what is inside it lines up on one 1360 px
  * column with the gutter as its minimum margin.
  */
 .wrap {
-  padding-inline: max(var(--gutter), (100% - 1280px) / 2);
+  padding-inline: max(var(--gutter), (100% - var(--column)) / 2);
 }
 
 main {
@@ -34,20 +34,26 @@ main {
 
 /* --- Header ---------------------------------------------------------------------------- */
 
+/* Sticky and translucent: the globe of the hero keeps turning under it as the page scrolls. */
 .appbar {
   align-items: center;
-  border-bottom: 1px solid var(--line);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  background: rgb(0 0 0 / 55%);
+  border-bottom: 1px solid rgb(255 255 255 / 7%);
   display: flex;
-  gap: 14px;
-  height: 72px;
-  position: relative;
+  gap: 20px;
+  height: var(--header);
+  position: sticky;
+  top: 0;
+  z-index: 30;
 }
 
 .brand {
   align-items: center;
   color: var(--ink);
   display: flex;
-  gap: 14px;
+  gap: 12px;
   text-decoration: none;
 }
 
@@ -55,59 +61,89 @@ main {
 .logo { display: block; flex-shrink: 0; }
 
 h1 {
-  font-size: 22px;
+  font-size: 20px;
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
 nav#site-nav {
-  align-items: stretch;
-  align-self: stretch;
+  background: rgb(255 255 255 / 3%);
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: var(--r-pill);
   display: flex;
-  gap: 28px;
-  margin-left: auto;
+  gap: 4px;
+  margin-left: 28px;
+  padding: 4px;
 }
 
 nav#site-nav a {
-  color: var(--ink);
-  font-size: 15px;
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+  font-size: 14px;
   font-weight: 500;
-  padding: 25px 0 22px;
-  position: relative;
+  padding: 6px 14px;
   text-decoration: none;
-  transition: color var(--motion-fast);
+  transition: color var(--motion-fast), background-color var(--motion-fast);
   white-space: nowrap;
 }
 
-nav#site-nav a::after {
-  background: var(--signal);
-  bottom: -1px;
-  content: '';
-  height: 3px;
-  left: 0;
-  position: absolute;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 260ms var(--ease-out);
-  width: 100%;
+nav#site-nav a:hover { color: var(--ink); }
+nav#site-nav a.current { background: rgb(255 255 255 / 9%); color: var(--ink); }
+
+.aside {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  margin-left: auto;
 }
 
-nav#site-nav a:hover::after { background: var(--line-strong); transform: scaleX(1); }
-nav#site-nav a.current::after { background: var(--signal); transform: scaleX(1); }
-nav#site-nav a.account { color: var(--ink-3); }
-nav#site-nav a.account:hover { color: var(--ink); }
+.status {
+  align-items: center;
+  color: var(--ink-3);
+  display: flex;
+  font: 13px var(--font-mono);
+  gap: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.status:hover { color: var(--ink); }
+
+.status .dot {
+  --tone: var(--ink-4);
+  background: var(--tone);
+  border-radius: 99px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 18%, transparent);
+  height: 7px;
+  width: 7px;
+}
+
+.status[data-state='checking'] .dot { animation: blink 1.4s ease-in-out infinite; }
+.status[data-state='ok'] .dot { --tone: var(--observer); }
+.status[data-state='slow'] .dot { --tone: var(--lit); }
+.status[data-state='down'] .dot { --tone: var(--signal); }
+
+.account {
+  color: var(--ink-2);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account:hover { color: var(--ink); }
 
 .menu-toggle {
   align-items: center;
   background: transparent;
   border: 1px solid var(--line-strong);
-  border-radius: 4px;
+  border-radius: var(--r-pill);
   color: var(--ink-2);
   cursor: pointer;
   display: none;
   font: 500 15px var(--font-body);
   gap: 8px;
-  margin-left: auto;
+  order: 3;
   padding: 8px 14px;
 }
 
@@ -120,7 +156,7 @@ footer {
   border-top: 1px solid var(--line);
   display: flex;
   gap: 24px 80px;
-  padding-block: 48px;
+  padding-block: 56px;
 }
 
 .footer-brand {
@@ -145,7 +181,7 @@ footer {
 
 .columns {
   display: grid;
-  gap: 24px 48px;
+  gap: 24px 56px;
   grid-template-columns: repeat(3, minmax(0, max-content));
 }
 
@@ -174,42 +210,121 @@ footer {
 .columns a:hover { color: var(--ink); }
 
 footer p {
-  color: var(--ink-2);
+  color: var(--ink-3);
   font-size: 13px;
   line-height: 1.6;
   margin: 0;
   max-width: 72ch;
 }
 
-/* 1100 px: seven links and a brand stop fitting on one line, and fold into a menu. */
-@media (width < 1100px) {
-  .menu-toggle { display: inline-flex; }
+/* --- Narrow-screen menu: a full-screen sheet ---------------------------------------- */
 
-  nav#site-nav {
-    align-self: auto;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: var(--r);
-    box-shadow: 0 18px 40px rgb(0 0 0 / 60%);
-    display: none;
-    flex-direction: column;
-    gap: 0;
-    padding: 8px 0;
-    position: absolute;
-    right: var(--gutter);
-    top: calc(100% + 8px);
-    min-width: 220px;
-    z-index: 20;
-  }
+.sheet {
+  background: var(--bg);
+  display: none;
+  flex-direction: column;
+  inset: 0;
+  overflow: hidden auto;
+  padding: 10px var(--gutter) 32px;
+  position: fixed;
+  z-index: 40;
+}
 
-  nav#site-nav.open { display: flex; }
-  nav#site-nav a { padding: 10px 18px; }
-  nav#site-nav a::after { bottom: 8px; height: auto; left: 0; top: 8px; width: 3px; }
+/* Two orbits bleed off the top-right corner, as on the page heroes. */
+.orbit {
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  height: 420px;
+  pointer-events: none;
+  position: absolute;
+  right: -160px;
+  top: -120px;
+  width: 420px;
+}
+
+.orbit.dashed { border: 1px dashed var(--line-soft); height: 290px; right: -90px; top: -60px; width: 290px; }
+
+.sheet-head {
+  align-items: center;
+  display: flex;
+  height: 48px;
+  justify-content: space-between;
+  position: relative;
+}
+
+.sheet-label { color: var(--ink-3); font: 12px var(--font-mono); letter-spacing: 0.08em; }
+
+.sheet-close {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  height: 44px;
+  place-items: center;
+  width: 44px;
+}
+
+.sheet-close:hover { border-color: var(--ink-3); }
+
+.sheet-nav { display: flex; flex-direction: column; margin-top: 20px; position: relative; }
+
+.sheet-nav a {
+  align-items: baseline;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-2);
+  display: flex;
+  gap: 14px;
+  padding: 9px 0;
+  text-decoration: none;
+}
+
+.sheet-nav .n { color: var(--ink-4); font: 12px var(--font-mono); width: 22px; }
+
+.sheet-nav .label {
+  font: 800 40px/1 var(--font-display);
+  font-stretch: 75%;
+  letter-spacing: -0.02em;
+  transition: transform 260ms var(--ease-out);
+}
+
+.sheet-nav a:hover .label { transform: translateX(6px); }
+.sheet-nav a.current { color: var(--ink); }
+.sheet-nav a.current .n { color: var(--signal); }
+
+.sheet-foot {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 32px;
+  position: relative;
+}
+
+.sheet-foot .status { font-size: 12px; }
+
+/* The entrance: the sheet fades in, its orbits settle, the links rise one after another. */
+.sheet.open { animation: sheet-in 320ms var(--ease-out) both; }
+.sheet.open .orbit { animation: orbit-in 900ms var(--ease-out) both; }
+.sheet.open .sheet-nav a { animation: link-in 560ms var(--ease-out) both; animation-delay: calc(60ms + var(--i) * 45ms); }
+.sheet.open .sheet-foot { animation: link-in 560ms var(--ease-out) 420ms both; }
+
+@keyframes sheet-in { from { opacity: 0; } }
+@keyframes orbit-in { from { opacity: 0; transform: scale(0.85) rotate(-20deg); } }
+@keyframes link-in { from { opacity: 0; transform: translateY(24px); } }
+
+/* 1180 px: the pill of seven links and the status stop fitting, and fold into the sheet. */
+@media (width < 1180px) {
+  .menu-toggle { display: inline-flex; height: 44px; }
+  nav#site-nav,
+  .aside .status { display: none; }
+  .sheet.open { display: flex; }
 }
 
 @media (width < 640px) {
-  .appbar { height: 60px; }
-  h1 { font-size: 19px; }
+  h1 { font-size: 18px; }
+  .aside .account { display: none; }
   footer { flex-direction: column; }
   .columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

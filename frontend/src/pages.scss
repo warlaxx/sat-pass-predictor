@@ -7,7 +7,7 @@
  * scoped under `.page`, the host class of those pages, so nothing here can reach the
  * predictor, whose own styles stay where they are.
  *
- * The vocabulary is the predictor's, not a new one: the same bands on the same 1280 px
+ * The vocabulary is the predictor's, not a new one: the same bands on the same 1360 px
  * column, the same narrow display type, DM Mono for every figure, and --signal for the
  * one thing on a screen that means "act".
  */
@@ -17,18 +17,46 @@
   padding-bottom: 112px;
 
   .wrap {
-    padding-inline: max(var(--gutter), (100% - 1280px) / 2);
+    padding-inline: max(var(--gutter), (100% - var(--column)) / 2);
   }
 
   /* --- Hero band --------------------------------------------------------------------- */
 
+  /*
+   * Two orbits bleed off the top-right corner: the hero of the home page is a globe, and
+   * these are its echo on pages that have no reason to load one.
+   */
   .page-hero {
     border-bottom: 1px solid var(--line);
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    padding-block: 72px 56px;
+    gap: 22px;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: 120px 72px;
+    position: relative;
+
+    &::before,
+    &::after {
+      border-radius: 50%;
+      content: '';
+      pointer-events: none;
+      position: absolute;
+      z-index: -1;
+    }
+
+    &::before { border: 1px solid var(--line); height: 60vw; right: -12vw; top: -18vw; width: 60vw; }
+    &::after { border: 1px dashed var(--line-soft); height: 44vw; right: -4vw; top: -10vw; width: 44vw; }
   }
+
+  .page-hero > .kicker {
+    color: var(--signal);
+    font: 500 12px var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .page-hero > .kicker a { color: inherit; }
 
   .kicker {
     color: var(--ink-2);
@@ -36,11 +64,12 @@
   }
 
   .page-hero h2 {
-    font-size: clamp(44px, 5.3vw, 76px);
+    font-size: clamp(48px, 7vw, 112px);
     font-stretch: 75%;
-    letter-spacing: -0.02em;
-    line-height: 0.95;
-    max-width: 18ch;
+    letter-spacing: -0.03em;
+    line-height: 0.9;
+    max-width: 16ch;
+    text-wrap: balance;
   }
 
   .lede {

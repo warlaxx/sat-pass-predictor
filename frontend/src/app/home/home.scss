@@ -4,7 +4,7 @@
 
 /* The shell's column, repeated: component styles do not reach across the boundary. */
 .wrap {
-  padding-inline: max(var(--gutter), (100% - 1280px) / 2);
+  padding-inline: max(var(--gutter), (100% - var(--column)) / 2);
 }
 
 .section {
@@ -45,131 +45,152 @@
 .sections a:hover::after { background: var(--line-strong); transform: scaleX(1); }
 .sections a.current::after { background: var(--signal); transform: scaleX(1); }
 
-/* --- Query bar ------------------------------------------------------------------------- */
+/* --- Query console --------------------------------------------------------------------- */
+
+.console-band { padding-top: 40px; }
 
 .query {
-  align-items: flex-end;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px 28px;
-  padding-block: 18px;
-}
-
-.group {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-console);
+  box-shadow: 0 40px 120px rgb(0 0 0 / 60%);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 22px;
+  padding: 28px;
 }
 
-.caption {
-  color: var(--ink-3);
-  font-size: 13px;
-}
-
-.row {
+.console-head {
+  align-items: baseline;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 8px 16px;
+  justify-content: space-between;
 }
 
-/* A field is the chip of the mockup made editable: the border belongs to the label, so the unit sits inside it. */
+.console-head h2 { font-size: 30px; }
+.console-head p { animation: none; color: var(--ink-3); font-size: 13px; margin: 0; padding: 0; }
+
+.fields {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+/* The border belongs to the label, so a click anywhere in the tile reaches its input. */
 .field {
-  align-items: baseline;
   background: var(--bg);
-  border: 1px solid var(--line-strong);
-  border-radius: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-field);
   cursor: text;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
-  padding: 0 14px;
-  transition: border-color 120ms ease;
+  padding: 12px 14px;
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast);
 }
 
-.field:hover {
-  border-color: var(--ink-4);
+.field:hover { border-color: var(--ink-4); }
+.field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(150 164 255 / 12%); }
+.caption { color: var(--ink-3); font-size: 12px; }
+.optional { color: var(--ink-4); }
+
+.entry {
+  align-items: baseline;
+  display: flex;
+  font: 500 17px var(--font-mono);
+  gap: 6px;
+  justify-content: space-between;
 }
 
-.field:focus-within {
-  border-color: var(--ink);
-}
-
-.field input {
+.entry input {
   -moz-appearance: textfield;
   appearance: textfield;
   background: transparent;
   border: 0;
   color: var(--ink);
-  font-size: 15px;
+  font: inherit;
+  min-width: 0;
   outline: none;
-  padding: 9px 0;
+  padding: 0;
+  width: 100%;
 }
 
-.field input::-webkit-inner-spin-button,
-.field input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+.entry input::-webkit-inner-spin-button,
+.entry input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.entry input::placeholder { color: var(--ink-4); }
+.satellite app-satellite-picker { flex: 1; width: auto; }
 
-.prefix,
 .unit {
   color: var(--ink-3);
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font: 12px var(--font-mono);
   white-space: nowrap;
 }
 
-.satellite .prefix { min-width: 11ch; text-align: right; }
-.w-coord { width: 8ch; }
-.w-alt { width: 5ch; }
-.w-small { width: 4ch; }
-.w-freq { width: 8ch; }
-.optional { color: var(--ink-4); }
-
-button {
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
-  padding: 9px 18px;
-  white-space: nowrap;
+.console-foot {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-button.primary {
-  background: var(--signal);
-  border: 1px solid var(--signal);
-  color: #fff;
-  margin-left: auto;
-}
-
-button.primary:hover:not(:disabled) {
-  filter: brightness(1.1);
-}
-
-button.ghost {
-  background: transparent;
-  border: 1px solid var(--line-strong);
-  color: var(--ink-2);
-  font-weight: 500;
-}
-
-button.ghost:hover:not(:disabled) {
-  border-color: var(--ink-3);
-  color: var(--ink);
-}
-
-button:disabled {
-  cursor: progress;
-  opacity: 0.6;
-}
+.console-foot .ghost { font-size: 14px; padding: 10px 18px; }
+.utc { color: var(--ink-4); font-size: 13px; }
+.compute { box-shadow: 0 8px 30px rgb(252 61 33 / 25%); margin-left: auto; min-width: 192px; padding: 12px 24px; }
+.compute-icon { flex-shrink: 0; }
+.computing .compute-icon { animation: orbit 1.6s linear infinite; }
+@keyframes orbit { to { transform: rotate(360deg); } }
 
 .location-error {
   color: var(--warn);
-  flex-basis: 100%;
   font-size: 13px;
   margin: 0;
 }
+
+/* --- Features ---------------------------------------------------------------------- */
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding-top: 140px;
+}
+
+.features-head {
+  align-items: end;
+  display: grid;
+  gap: 24px 40px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+}
+
+.features-head h2 {
+  font-size: clamp(44px, 5vw, 80px);
+  font-stretch: 75%;
+  letter-spacing: -0.025em;
+  line-height: 0.92;
+  text-wrap: balance;
+}
+
+.features-head p { color: var(--ink-2); font-size: 17px; margin: 0; max-width: 48ch; }
+
+.feature-grid {
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.feature-grid article {
+  border-right: 1px solid var(--line-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-right: 28px;
+  padding: 28px 28px 32px 0;
+}
+
+.feature-grid .num { color: var(--signal); font-size: 12px; }
+.feature-grid h3 { font-size: 26px; }
+.feature-grid p { color: var(--ink-3); font-size: 14px; line-height: 1.6; margin: 0; }
 
 /* --- States ---------------------------------------------------------------------------- */
 
@@ -376,50 +397,10 @@ button:disabled {
 }
 
 @media (width < 640px) {
-  .query {
-    gap: 14px 16px;
-  }
-
-  /* Under 16 px, iOS Safari zooms the page into the field on focus and leaves it zoomed. */
-  .field input {
-    font-size: 16px;
-  }
-
-  button.primary {
-    margin-left: 0;
-    width: 100%;
-  }
+  .query { padding: 20px 16px; }
+  .features { padding-top: 96px; }
+  .feature-grid article { margin-right: 0; border-right: 0; border-bottom: 1px solid var(--line-soft); }
+  .compute { margin-left: 0; width: 100%; }
 }
-
-/* Feedback follows the query lifecycle, never a fabricated progress percentage. */
-button.primary {
-  align-items: center;
-  display: inline-flex;
-  gap: 10px;
-  justify-content: center;
-  min-width: 192px;
-}
-
-.compute-icon { flex-shrink: 0; }
-.computing .compute-icon { animation: orbit 1.6s linear infinite; }
-@keyframes orbit { to { transform: rotate(360deg); } }
-
-.field {
-  transition: border-color var(--motion-fast), box-shadow var(--motion-fast), background-color var(--motion-fast);
-}
-.field:focus-within {
-  background: var(--panel);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgb(150 164 255 / 12%);
-}
-
 
 .state { animation: section-enter 360ms var(--ease-out) both; }
-
-@media (hover: hover) {
-  button.primary:hover:not(:disabled) {
-    box-shadow: 0 4px 20px rgb(252 61 33 / 20%);
-    transform: translateY(-2px);
-  }
-  button.primary:active:not(:disabled) { transform: translateY(0); }
-}

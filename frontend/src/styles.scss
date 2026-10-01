@@ -61,17 +61,20 @@
   --swath: #5fc4e8;
 
   --r: 6px;
-  --gutter: 80px;
+  /* Pills for buttons, tags and the nav; rounder cards for what floats over the globe. */
+  --r-pill: 999px;
+  --r-field: 12px;
+  --r-card: 16px;
+  --r-console: 20px;
+
+  /* One content column, edge-to-edge bands around it, and the gutter as its minimum margin. */
+  --column: 1360px;
+  --gutter: 40px;
+  --header: 68px;
 
   --font-display: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
   --font-body: 'Public Sans', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'DM Mono', ui-monospace, Menlo, monospace;
-}
-
-@media (width < 1100px) {
-  :root {
-    --gutter: 40px;
-  }
 }
 
 @media (width < 640px) {
@@ -92,7 +95,13 @@ body {
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 1rem;
+  /* The header is sticky: an anchor must land below it, not under it. */
+  scroll-padding-top: calc(var(--header) + 1rem);
+}
+
+/* Set by the shell while its full-screen menu is open. */
+html.menu-locked {
+  overflow: hidden;
 }
 
 body {
@@ -222,4 +231,54 @@ button:active:not(:disabled) {
 
 .card:focus-within {
   border-color: var(--accent-dim);
+}
+
+/*
+ * The pill buttons of the home page and its cards. Global because the hero, the query
+ * console and the discovery card all draw them, and three copies would drift.
+ */
+.btn {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  display: inline-flex;
+  font: 600 15px var(--font-body);
+  gap: 10px;
+  justify-content: center;
+  padding: 13px 22px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn.primary {
+  background: var(--signal);
+  box-shadow: 0 10px 40px rgb(252 61 33 / 28%);
+  color: #fff;
+}
+
+.btn.primary:hover:not(:disabled) { color: #fff; filter: brightness(1.1); }
+
+.btn.outline {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.btn.outline:hover:not(:disabled) { border-color: var(--ink-3); color: var(--ink); }
+
+.btn.light {
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 14px;
+  padding: 11px 20px;
+}
+
+.btn.light:hover:not(:disabled) { background: var(--ink-2); color: var(--bg); }
+
+.btn:disabled { cursor: progress; opacity: 0.6; }
+
+@keyframes blink {
+  50% { opacity: 0.25; }
 }

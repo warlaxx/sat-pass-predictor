@@ -1,7 +1,7 @@
 :host { display: inline-block; position: relative; min-width: 0; width: 18ch; }
 input {
   appearance: none; background: transparent; border: 0; color: var(--ink); font: inherit;
-  font-size: 15px; outline: none; padding: 9px 0; width: 100%; min-width: 0;
+  outline: none; padding: 9px 0; width: 100%; min-width: 0;
 }
 ul {
   background: var(--panel, var(--bg)); border: 1px solid var(--line-strong, var(--line));

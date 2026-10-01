@@ -1,0 +1,149 @@
+import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, inject, input, signal } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { PassDto, PassesResponse } from '../api/passes.model';
+import { DEFAULT_QUERY, PassQuery } from '../api/passes.query';
+import { compassPoint } from '../format';
+import { visibilityRadiusDeg } from '../globe/globe-geometry';
+import { nextPassState } from '../next-pass/next-pass-state';
+import { orbitFromTle } from '../shared/orbit';
+import { HeroGlobe } from './hero-globe';
+
+const MU_KM3_S2 = 398_600.4418;
+const EARTH_RADIUS_KM = 6378.137;
+/** The satellite and the place of the defaults, named: the form only knows their numbers. */
+const DEFAULT_NAME = 'ISS (ZARYA)';
+const DEFAULT_PLACE = 'Lyon';
+
+/** "T−02:14:37": hours, minutes and seconds to go, never negative. */
+export function tMinus(milliseconds: number): string {
+  const seconds = Math.max(0, Math.floor(milliseconds / 1000));
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  return `T−${pad(Math.floor(seconds / 3600))}:${pad(Math.floor(seconds / 60) % 60)}:${pad(seconds % 60)}`;
+}
+
+/** "6 m 48 s". */
+export function shortDuration(seconds: number): string {
+  const whole = Math.max(0, Math.round(seconds));
+  return `${Math.floor(whole / 60)} m ${String(whole % 60).padStart(2, '0')} s`;
+}
+
+type Tone = 'go' | 'quiet' | 'busy';
+
+/**
+ * The first screen of the predictor: what it does, the way in, and a countdown to the next
+ * pass over a globe that turns behind it.
+ *
+ * Every figure on it is either computed or a dash. Before the first search there is no
+ * prediction to count down to, and the card says so rather than ticking towards an
+ * invented pass: fetching one on every visit would spend the anonymous quota the whole
+ * site shares. The globe follows the form as it is typed, so the observer moves when the
+ * coordinates do.
+ */
+@Component({
+  selector: 'app-hero',
+  imports: [DatePipe, DecimalPipe, RouterLink, HeroGlobe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './hero.html',
+  styleUrl: './hero.scss',
+})
+export class Hero {
+  readonly query = input.required<PassQuery>();
+  readonly response = input<PassesResponse>();
+  readonly loading = input(false);
+
+  private readonly now = signal(Date.now());
+
+  protected readonly state = computed(() => {
+    const response = this.response();
+    return response ? nextPassState(response.passes, this.now()) : undefined;
+  });
+
+  /** The pass the facts describe: the one under way or next, or the last one once all have set. */
+  protected readonly pass = computed<PassDto | undefined>(() => {
+    const state = this.state();
+    if (!state) return undefined;
+    return state.kind === 'over' ? state.last : state.pass;
+  });
+
+  protected readonly satellite = computed(() => {
+    const response = this.response();
+    if (response) return { name: response.satellite.name, noradId: response.satellite.noradId };
+    const noradId = this.query().noradId;
+    return { name: noradId === DEFAULT_QUERY.noradId ? DEFAULT_NAME : `NORAD ${noradId}`, noradId };
+  });
+
+  /** Where the observer is: the response's once there is one, the form's until then. */
+  protected readonly observer = computed(() => {
+    const observer = this.response()?.observer;
+    const query = this.query();
+    return observer
+      ? { lat: observer.latitudeDeg, lon: observer.longitudeDeg, alt: observer.altitudeM }
+      : { lat: query.lat, lon: query.lon, alt: query.alt };
+  });
+
+  protected readonly place = computed(() => {
+    const { lat, lon } = this.observer();
+    if (lat === DEFAULT_QUERY.lat && lon === DEFAULT_QUERY.lon) return DEFAULT_PLACE;
+    return `${Math.abs(lat).toFixed(2)}° ${lat < 0 ? 'S' : 'N'}, ${Math.abs(lon).toFixed(2)}° ${lon < 0 ? 'W' : 'E'}`;
+  });
+
+  protected readonly orbit = computed(() => {
+    const line2 = this.response()?.tle.line2;
+    const orbit = line2 ? orbitFromTle(line2) : undefined;
+    if (!orbit) return undefined;
+    const altitudeKm = (orbit.perigeeKm + orbit.apogeeKm) / 2;
+    return {
+      inclinationDeg: orbit.inclinationDeg,
+      altitudeKm,
+      speedKmS: Math.sqrt(MU_KM3_S2 / (EARTH_RADIUS_KM + altitudeKm)),
+    };
+  });
+
+  /** The ground circle from which the satellite clears the threshold, at the ISS's height until known. */
+  protected readonly visibility = computed(() =>
+    visibilityRadiusDeg(this.orbit()?.altitudeKm ?? 420, this.response()?.minElevationDeg ?? this.query().minElevation));
+
+  protected readonly heading = computed(() => {
+    const where = `${this.satellite().name} over ${this.place()}`;
+    return this.state()?.kind === 'now' ? `Passing now · ${where}` : `Next pass · ${where}`;
+  });
+
+  protected readonly countdown = computed(() => {
+    const state = this.state();
+    if (!state) return 'T−––:––:––';
+    if (state.kind === 'now') return tMinus(state.remainingMs);
+    if (state.kind === 'next') return tMinus(state.waitMs);
+    return tMinus(0);
+  });
+
+  protected readonly tag = computed<{ text: string; tone: Tone }>(() => {
+    if (this.loading()) return { text: 'COMPUTING', tone: 'busy' };
+    const response = this.response();
+    if (!response) return { text: 'NOT YET COMPUTED', tone: 'quiet' };
+    const state = this.state();
+    if (!state) return { text: 'NO PASS', tone: 'quiet' };
+    if (state.kind === 'now') return { text: 'ABOVE HORIZON', tone: 'go' };
+    if (state.kind === 'over') return { text: 'WINDOW OVER', tone: 'quiet' };
+    return state.visibleFrom ? { text: 'VISIBLE', tone: 'go' } : { text: 'NOT VISIBLE', tone: 'quiet' };
+  });
+
+  protected readonly legend = computed(() => [
+    { name: this.response() ? this.satellite().name : 'ISS', colour: 'var(--signal)' },
+    { name: 'NOAA 19', colour: '#fff' },
+    { name: 'METEOR-M2', colour: 'var(--lit)' },
+    { name: 'HST', colour: 'var(--swath)' },
+  ]);
+
+  protected readonly compass = compassPoint;
+  protected readonly duration = shortDuration;
+  protected readonly abs = Math.abs;
+
+  constructor() {
+    const destroyRef = inject(DestroyRef);
+    afterNextRender(() => {
+      const timer = setInterval(() => this.now.set(Date.now()), 1000);
+      destroyRef.onDestroy(() => clearInterval(timer));
+    });
+  }
+}

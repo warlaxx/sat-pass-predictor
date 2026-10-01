@@ -1,90 +1,99 @@
-<form class="query wrap" appReveal (submit)="$event.preventDefault(); search()">
-  <div class="group">
-    <span class="caption" id="q-satellite">Satellite</span>
-    <div class="field satellite">
-      <app-satellite-picker label="Satellite name or NORAD catalogue number"
-                            describedBy="q-satellite" [initial]="'' + form().noradId"
-                            (changed)="setSatellite($event)" />
-      <span class="prefix" aria-hidden="true">{{ satelliteResolved() ? 'NORAD ' + form().noradId : 'choose' }}</span>
-    </div>
-  </div>
+<app-hero [query]="form()" [response]="response()" [loading]="loading()" />
 
-  <div class="group">
-    <span class="caption" id="q-observer">Observer</span>
-    <div class="row">
+<section id="query" class="console-band wrap" aria-labelledby="query-title">
+  <form class="query" (submit)="$event.preventDefault(); search()">
+    <div class="console-head">
+      <h2 id="query-title">Compute a pass</h2>
+      @if (!searched()) {
+        <p class="state hint">Pick a satellite and a place, then compute. Defaults: the ISS over Lyon, the next two days, passes above 10&deg;.</p>
+      } @else {
+        <p class="hint">Defaults: the ISS over Lyon, the next two days, passes above 10&deg;.</p>
+      }
+    </div>
+
+    <div class="fields">
+      <div class="field satellite">
+        <span class="caption" id="q-satellite">Satellite</span>
+        <span class="entry">
+          <app-satellite-picker label="Satellite name or NORAD catalogue number"
+                                describedBy="q-satellite" [initial]="'' + form().noradId"
+                                (changed)="setSatellite($event)" />
+          <span class="unit" aria-hidden="true">{{ satelliteResolved() ? 'NORAD ' + form().noradId : 'choose' }}</span>
+        </span>
+      </div>
       <label class="field">
-        <span class="visually-hidden">Latitude, degrees</span>
-        <input class="num w-coord" type="number" step="0.0001" min="-90" max="90" required aria-describedby="q-observer"
-               [value]="form().lat" (input)="patch('lat', $any($event.target).value)">
-        <span class="unit" aria-hidden="true">° lat</span>
+        <span class="caption">Latitude</span>
+        <span class="entry">
+          <input class="num" type="number" step="0.0001" min="-90" max="90" required
+                 [value]="form().lat" (input)="patch('lat', $any($event.target).value)">
+          <span class="unit" aria-hidden="true">° lat</span>
+        </span>
       </label>
       <label class="field">
-        <span class="visually-hidden">Longitude, degrees</span>
-        <input class="num w-coord" type="number" step="0.0001" min="-180" max="180" required aria-describedby="q-observer"
-               [value]="form().lon" (input)="patch('lon', $any($event.target).value)">
-        <span class="unit" aria-hidden="true">° lon</span>
+        <span class="caption">Longitude</span>
+        <span class="entry">
+          <input class="num" type="number" step="0.0001" min="-180" max="180" required
+                 [value]="form().lon" (input)="patch('lon', $any($event.target).value)">
+          <span class="unit" aria-hidden="true">° lon</span>
+        </span>
       </label>
       <label class="field">
-        <span class="visually-hidden">Altitude, metres</span>
-        <input class="num w-alt" type="number" step="1" min="-500" max="9000" required aria-describedby="q-observer"
-               [value]="form().alt" (input)="patch('alt', $any($event.target).value)">
-        <span class="unit" aria-hidden="true">m</span>
+        <span class="caption">Altitude</span>
+        <span class="entry">
+          <input class="num" type="number" step="1" min="-500" max="9000" required
+                 [value]="form().alt" (input)="patch('alt', $any($event.target).value)">
+          <span class="unit" aria-hidden="true">m</span>
+        </span>
       </label>
-      <button type="button" class="ghost" [disabled]="locating()" (click)="useMyPosition()">
+      <label class="field">
+        <span class="caption">Window</span>
+        <span class="entry">
+          <input class="num" type="number" min="1" [max]="maxHours" required
+                 [value]="form().hours" (input)="patch('hours', $any($event.target).value)">
+          <span class="unit" aria-hidden="true">h</span>
+        </span>
+      </label>
+      <label class="field">
+        <span class="caption">Threshold <span class="visually-hidden">(minimum elevation)</span></span>
+        <span class="entry">
+          <input class="num" type="number" step="0.5" min="0" max="89" required
+                 [value]="form().minElevation" (input)="patch('minElevation', $any($event.target).value)">
+          <span class="unit" aria-hidden="true">°</span>
+        </span>
+      </label>
+      <label class="field">
+        <span class="caption">Downlink <span class="optional">(optional)</span><span class="visually-hidden">, for the Doppler shift</span></span>
+        <span class="entry">
+          <input class="num w-freq" type="number" step="any" [min]="frequencyBounds.min" [max]="frequencyBounds.max"
+                 placeholder="145.800" [value]="form().frequencyMhz ?? ''" (input)="setFrequency($any($event.target).value)">
+          <span class="unit" aria-hidden="true">MHz</span>
+        </span>
+      </label>
+    </div>
+
+    <div class="console-foot">
+      <button type="button" class="btn outline ghost" [disabled]="locating()" (click)="useMyPosition()">
         {{ locating() ? 'Locating...' : 'Use my position' }}
       </button>
+      <span class="utc">Every instant is computed in UTC; local times are your browser's.</span>
+      <button type="submit" class="btn primary compute" [class.computing]="loading()" [disabled]="loading()">
+        <svg class="compute-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="32 18" />
+          <circle cx="19" cy="8" r="2.5" fill="currentColor" />
+          <circle cx="12" cy="12" r="2" fill="currentColor" />
+        </svg>
+        {{ loading() ? 'Computing...' : 'Compute passes' }}
+      </button>
     </div>
-  </div>
 
-  <div class="group">
-    <span class="caption" id="q-window">Window</span>
-    <label class="field">
-      <span class="visually-hidden">Window, hours</span>
-      <input class="num w-small" type="number" min="1" [max]="maxHours" required aria-describedby="q-window"
-             [value]="form().hours" (input)="patch('hours', $any($event.target).value)">
-      <span class="unit" aria-hidden="true">h</span>
-    </label>
-  </div>
-
-  <div class="group">
-    <span class="caption" id="q-threshold">Threshold</span>
-    <label class="field">
-      <span class="visually-hidden">Minimum elevation, degrees</span>
-      <input class="num w-small" type="number" step="0.5" min="0" max="89" required aria-describedby="q-threshold"
-             [value]="form().minElevation" (input)="patch('minElevation', $any($event.target).value)">
-      <span class="unit" aria-hidden="true">°</span>
-    </label>
-  </div>
-
-  <div class="group">
-    <span class="caption" id="q-frequency">Downlink <span class="optional">(optional)</span></span>
-    <label class="field">
-      <span class="visually-hidden">Downlink frequency in megahertz, for the Doppler shift</span>
-      <input class="num w-freq" type="number" step="any" [min]="frequencyBounds.min" [max]="frequencyBounds.max"
-             placeholder="145.800" aria-describedby="q-frequency"
-             [value]="form().frequencyMhz ?? ''" (input)="setFrequency($any($event.target).value)">
-      <span class="unit" aria-hidden="true">MHz</span>
-    </label>
-  </div>
-
-  <button type="submit" class="primary" [class.computing]="loading()" [disabled]="loading()">
-    <svg class="compute-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="32 18" />
-      <circle cx="19" cy="8" r="2.5" fill="currentColor" />
-      <circle cx="12" cy="12" r="2" fill="currentColor" />
-    </svg>
-    {{ loading() ? 'Computing...' : 'Compute passes' }}
-  </button>
-
-  @if (satelliteError(); as failure) {
-    <p class="location-error" role="alert">{{ failure }}</p>
-  }
-  @if (locationError(); as failure) {
-    <p class="location-error" role="status">{{ failure }}</p>
-  }
-</form>
-
-<app-discovery [query]="form()" (open)="inspect($event)" />
+    @if (satelliteError(); as failure) {
+      <p class="location-error" role="alert">{{ failure }}</p>
+    }
+    @if (locationError(); as failure) {
+      <p class="location-error" role="status">{{ failure }}</p>
+    }
+  </form>
+</section>
 
 <!--
   Four states, four answers. The @else chain is ordered by what the reader needs to
@@ -92,10 +101,7 @@
   error.
 -->
 @if (!searched()) {
-  <p class="state hint wrap">
-    Pick a satellite and a place, then compute. Defaults: the ISS over Lyon, the next
-    two days, passes above 10&deg;.
-  </p>
+  <!-- Idle: the console head says what to do. -->
 } @else if (loading()) {
   <p class="state wrap" role="status">
     <span class="pulse" aria-hidden="true"></span>
@@ -108,7 +114,7 @@
       @if (failure.detail) {
         <p>{{ failure.detail }}</p>
       }
-      <button type="button" class="ghost" (click)="reload()">Try again</button>
+      <button type="button" class="btn outline" (click)="reload()">Try again</button>
     </section>
   </div>
 } @else if (isEmptyResult()) {
@@ -174,7 +180,7 @@
       <h2 id="table-title">Pass list</h2>
       <span>Text equivalent of the globe and the sky chart</span>
       <!-- Inline so app.scss stays inside its 6 kB budget. -->
-      <button type="button" class="ghost calendar" style="margin-left: auto" [disabled]="!calendar()" (click)="downloadCalendar()"
+      <button type="button" class="btn outline calendar" style="margin-left: auto" [disabled]="!calendar()" (click)="downloadCalendar()"
               [title]="calendar() ? 'One event per potentially visible pass, with a reminder 10 minutes before' : 'No pass in this window has a favourable sample'">
         Add visible passes to calendar (.ics)
       </button>
@@ -186,3 +192,21 @@
     />
   </section>
 }
+
+<section class="features wrap" appReveal aria-labelledby="features-title">
+  <div class="features-head">
+    <h2 id="features-title">One pass, read four ways.</h2>
+    <p>Each view answers a different question, and the pass list is always the text equivalent of the globe and the sky chart.</p>
+  </div>
+  <div class="feature-grid">
+    @for (feature of features; track feature.title; let index = $index) {
+      <article>
+        <span class="num">{{ (index + 1).toString().padStart(2, '0') }}</span>
+        <h3>{{ feature.title }}</h3>
+        <p>{{ feature.text }}</p>
+      </article>
+    }
+  </div>
+</section>
+
+<app-discovery appReveal [query]="form()" (open)="inspect($event)" />
