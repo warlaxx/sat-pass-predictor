@@ -25,6 +25,11 @@ import org.springframework.web.client.RestClient;
  * Checksums are not verified — no prediction is made from these lines, only a number is
  * read from them.
  *
+ * <h2>The launch</h2>
+ * Columns 10–14 of line 1 hold the year and the launch number of the international
+ * designator. They are kept, as {@code "2026-045"}, so that the satellites of one launch
+ * can be found together; a line whose columns are not digits gets no launch, not a refusal.
+ *
  * <h2>What is skipped</h2>
  * Alpha-5 catalogue numbers (above 99999) are dropped one by one: the pass endpoint does
  * not accept them, so offering them would only lead to a 400.
@@ -106,7 +111,7 @@ public class CelestrakCatalogSource implements CatalogSource {
             }
             int noradId = Integer.parseInt(number);
             if (noradId >= 1) {
-                entries.putIfAbsent(noradId, new SatelliteEntry(noradId, name));
+                entries.putIfAbsent(noradId, new SatelliteEntry(noradId, name, launch(line1)));
             }
         }
         if (entries.isEmpty()) {
@@ -114,6 +119,16 @@ public class CelestrakCatalogSource implements CatalogSource {
                     endpoint + " returned a catalogue with no usable NORAD number");
         }
         return List.copyOf(entries.values());
+    }
+
+    /** {@code "2026-045"} from {@code "26045A"}; null when the columns are blank or not digits. */
+    static String launch(String line1) {
+        if (line1.length() < 14) return null;
+        String designator = line1.substring(9, 14);
+        if (!designator.chars().allMatch(Character::isDigit)) return null;
+        int year = Integer.parseInt(designator.substring(0, 2));
+        // The same pivot as the epoch year: Sputnik was launched in 1957.
+        return (year < 57 ? 2000 + year : 1900 + year) + "-" + designator.substring(2);
     }
 
     /** Same rule as the single-TLE parser: the 3LE {@code "0 "} prefix is not part of it. */

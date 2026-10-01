@@ -49,6 +49,12 @@ const pages: Routes = [
     data: { description: satelliteRouteDescription },
   },
   {
+    path: 'starlink',
+    loadComponent: () => import('./pages/starlink/starlink').then((m) => m.StarlinkPage),
+    title: $localize`:Page title:Starlink train tonight: when and where to see it`,
+    data: { description: $localize`:Meta description:Saw a line of lights crossing the sky? The newest Starlink launches and when their train passes over you, from fresh CelesTrak elements.` },
+  },
+  {
     path: 'alerts',
     loadComponent: () => import('./pages/alerts/alerts').then((m) => m.AlertsPage),
     title: $localize`:Page title:Satellite pass reminders in your calendar`,

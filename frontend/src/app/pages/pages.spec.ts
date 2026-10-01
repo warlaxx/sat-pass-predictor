@@ -10,6 +10,7 @@ import { SatellitePage } from './satellite/satellite';
 import { StatusPage } from './status/status';
 import { AlertsPage } from './alerts/alerts';
 import { LegalPage } from './legal/legal';
+import { StarlinkPage } from './starlink/starlink';
 
 const ISS_LINE_1 = '1 25544U 98067A   21035.14486477  .00001026  00000-0  26816-4 0  9998';
 const ISS_LINE_2 = '2 25544  51.6455 280.7636 0002243 335.6496 186.1723 15.48938788267977';
@@ -44,6 +45,71 @@ async function render<T>(component: Type<T>, inputs: Record<string, unknown> = {
   TestBed.tick();
   return fixture;
 }
+
+/** Lets a resource take its answer in, then runs change detection: the next request leaves. */
+async function settle() {
+  await new Promise((resolve) => setTimeout(resolve));
+  TestBed.tick();
+}
+
+describe('StarlinkPage', () => {
+  beforeEach(configure);
+
+  const launches = {
+    catalogFetchedAt: '2026-10-01T10:00:00Z',
+    launches: [
+      { designator: '2026-045', satellites: 28, noradId: 64001, name: 'STARLINK-34001' },
+      { designator: '2026-041', satellites: 1, noradId: 63990, name: 'STARLINK-33990' },
+    ],
+  };
+
+  it('shows the passes of the newest launch, standing for its train', async () => {
+    const fixture = await render(StarlinkPage);
+    const http = TestBed.inject(HttpTestingController);
+    const lookup = http.expectOne((r) => r.url === '/api/satellites/launches');
+    expect(lookup.request.params.get('q')).toBe('starlink');
+    lookup.flush(launches);
+    // Not whenStable: the passes request it waits for is the one this test answers.
+    await settle();
+
+    const request = http.expectOne((r) => r.url === '/api/passes');
+    expect(request.request.params.get('noradId')).toBe('64001');
+    expect(request.request.params.get('hours')).toBe('72');
+    request.flush({ ...prediction(), satellite: { noradId: 64001, name: 'STARLINK-34001' } });
+    await fixture.whenStable();
+
+    const page = fixture.nativeElement as HTMLElement;
+    const buttons = page.querySelectorAll<HTMLButtonElement>('.launches button');
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0].getAttribute('aria-pressed')).toBe('true');
+    expect(buttons[0].textContent).toContain('28 satellites');
+    expect(buttons[1].textContent).toContain('1 satellite');
+    expect(page.querySelectorAll('app-pass-table tbody tr')).toHaveLength(1);
+    expect(page.textContent).toContain('1 potentially visible');
+  });
+
+  it('switches to an older launch on request', async () => {
+    const fixture = await render(StarlinkPage);
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((r) => r.url === '/api/satellites/launches').flush(launches);
+    await settle();
+    http.expectOne((r) => r.url === '/api/passes').flush(prediction());
+    await fixture.whenStable();
+
+    (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('.launches button')[1].click();
+    TestBed.tick();
+    expect(http.expectOne((r) => r.url === '/api/passes').request.params.get('noradId')).toBe('63990');
+  });
+
+  it('says so when the catalogue holds no launch', async () => {
+    const fixture = await render(StarlinkPage);
+    TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/satellites/launches')
+      .flush({ catalogFetchedAt: '2026-10-01T10:00:00Z', launches: [] });
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No Starlink launch in the catalogue');
+    TestBed.inject(HttpTestingController).expectNone((r) => r.url === '/api/passes');
+  });
+});
 
 describe('SatellitePage', () => {
   beforeEach(configure);

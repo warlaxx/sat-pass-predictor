@@ -15,7 +15,7 @@ export const NAV_PAGES = [
 ] as const;
 
 /** Pages that are reachable but not in the header: named, not numbered. */
-const OTHER_PAGES: Record<string, string> = { legal: $localize`Legal`, satellite: $localize`Satellite` };
+const OTHER_PAGES: Record<string, string> = { legal: $localize`Legal`, satellite: $localize`Satellite`, starlink: $localize`Starlink` };
 
 /** "04 — Developers" for a header page, "Satellite" for a detail page, "Page" otherwise. */
 export function pageLabel(url: string): string {

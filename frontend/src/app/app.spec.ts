@@ -52,7 +52,15 @@ describe('App shell', () => {
       .map((link) => new URL((link as HTMLAnchorElement).href).pathname);
     expect(paths.length).toBeGreaterThan(5);
     for (const path of new Set(paths)) {
-      const page = await at(path);
+      const page = TestBed.createComponent(App);
+      await TestBed.inject(Router).navigateByUrl(path);
+      TestBed.tick();
+      // A page that asks the backend on load (the Starlink one) is told it is down: this
+      // test is about the route, and a pending request would keep the page from settling.
+      for (const request of TestBed.inject(HttpTestingController).match(() => true)) {
+        if (!request.cancelled) request.flush(null, { status: 503, statusText: 'Service Unavailable' });
+      }
+      await page.whenStable();
       expect(page.nativeElement.querySelector('app-not-found'), path).toBeNull();
     }
   });

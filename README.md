@@ -3,7 +3,7 @@
 [![CI](https://github.com/warlaxx/sat-pass-predictor/actions/workflows/ci.yml/badge.svg)](https://github.com/warlaxx/sat-pass-predictor/actions/workflows/ci.yml)
 
 Computing and visualising satellite passes over a given point on Earth, live at
-<https://nextpass.space>.
+<https://www.nextpass.space>.
 Java / Spring Boot backend with [Orekit](https://www.orekit.org/), Angular frontend.
 
 > A learning project aimed at the space ecosystem: SGP4 propagation from TLEs, reference
@@ -148,7 +148,7 @@ Orbital elements come from a **chain of sources, tried in order**, configured by
 `tle.base-urls` and overridable in one go with `TLE_BASE_URLS` (comma-separated):
 
 1. `https://celestrak.org` — the origin.
-2. `https://nextpass.space/tle-upstream` — the same CelesTrak, reached
+2. `https://www.nextpass.space/tle-upstream` — the same CelesTrak, reached
    through a rewrite on the frontend's host. It exists because CelesTrak silently drops
    packets coming from the shared outbound IPs of the platform the API is deployed on: a
    connect timeout, no refusal, no DNS error, on a host that answers other datacenters in
@@ -172,7 +172,7 @@ Connection establishment has a 5 s timeout and each source has its own 15 s requ
 budget. Render logs showed connection timeouts on both endpoints; response timings alone
 cannot establish whether a connection or a response timed out. `render.yaml` prefers the
 Vercel relay on Render. For a manually configured service, set `TLE_BASE_URLS` to
-`https://nextpass.space/tle-upstream,https://celestrak.org` in its dashboard.
+`https://www.nextpass.space/tle-upstream,https://celestrak.org` in its dashboard.
 A Blueprint setting does not automatically update a manually created service.
 
 Failed sources remain available but move to the end for ten minutes. When nothing has
@@ -244,6 +244,11 @@ The satellite field accepts a name as well as a NORAD number. Digits are used as
 no lookup. Anything else queries `GET /api/satellites?q=…&limit=…`, which returns
 `{ results: [{ noradId, name }], catalogFetchedAt }`, and a suggestion must be chosen before
 passes are computed: a half-typed name never silently keeps the previous satellite.
+
+The same index answers `GET /api/satellites/launches?q=starlink&limit=3`: the satellites
+whose name starts with the query, grouped by the launch of their international designator
+(`2026-045` for `26045A`), newest first, each with its count and its lowest-numbered
+satellite. The `/starlink` page shows that satellite's passes as the train's.
 
 The index is CelesTrak's `active` group (`gp.php?GROUP=active&FORMAT=TLE`), fetched through
 the same `tle.base-urls` chain — the Vercel relay already forwards that path. It is

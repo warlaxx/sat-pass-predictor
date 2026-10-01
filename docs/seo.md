@@ -36,6 +36,7 @@ the prerendered HTML:
 | `link rel=canonical` | The page in its own language, without query string |
 | `link rel=alternate hreflang` | `en`, `fr`, and `x-default` → English |
 | Open Graph, `twitter:card` | Title, description, URL, locale and alternate locale |
+| `og:image`, `twitter:image` | `public/og/en.png` or `fr.png`, 1200×630, with `summary_large_image`; left out without a known origin, since the address must be absolute |
 | `robots: noindex` | The not-found page only, which a static host answers with 200 |
 | JSON-LD | `WebApplication` on the home page |
 
@@ -48,7 +49,7 @@ page and language, each listing its translations.
 Canonical links, hreflang and the sitemap need the absolute public origin. It is decided
 where the build runs, in this order:
 
-1. `SITE_URL` (for instance `https://nextpass.space`), if set in the build environment;
+1. `SITE_URL` (for instance `https://www.nextpass.space`), if set in the build environment;
 2. `https://` + `VERCEL_PROJECT_PRODUCTION_URL`, which Vercel sets on every build to the
    project's production domain (its shortest custom domain, else its `*.vercel.app`);
 3. nothing: the build succeeds, canonical and hreflang links and the sitemap are left out.
@@ -56,11 +57,18 @@ where the build runs, in this order:
 A wrong canonical is worse than none, so there is no hard-coded fallback. Preview
 deployments carry the production canonical, which is right: they are copies.
 
-The production domain is `nextpass.space`. Its apex must be the domain Vercel serves, with
-`www` redirecting to it, not the reverse: `VERCEL_PROJECT_PRODUCTION_URL` picks the
-shortest custom domain, so a project that redirects the apex to `www` would publish
-canonical links that themselves redirect. Either keep the apex primary in Vercel's
-domain settings or set `SITE_URL=https://www.nextpass.space` explicitly.
+The production domain is `www.nextpass.space`: Vercel serves `www`, and the apex
+`nextpass.space` answers 308 to it (checked on 1 October 2026). The canonical links,
+hreflang and the sitemap all name `www`, which is consistent. What matters is that they
+name the domain that answers 200, never the one that redirects: if the apex is ever made
+primary in Vercel's domain settings, the next build follows it through
+`VERCEL_PROJECT_PRODUCTION_URL`, unless `SITE_URL` pins it. Anything else that names the
+site - `TLE_BASE_URLS` on Render, the account page's links - should use `www` too, or it
+pays one redirect per call.
+
+The Search Console property is best a *Domain* property (DNS TXT record): it covers both
+hosts. A URL-prefix property for `https://nextpass.space` would refuse the sitemap, whose
+addresses are on `www`.
 
 ## Adding or changing text
 
@@ -99,7 +107,7 @@ and code samples.
 
 `src/index.html` loads the AdSense script with **Auto ads**: Google decides where ads go,
 so the templates hold no `<ins class="adsbygoogle">` slot. `public/ads.txt` authorises the
-publisher id `pub-7308548223772082` and must answer at `https://nextpass.space/ads.txt`.
+publisher id `pub-7308548223772082` and must answer at `https://www.nextpass.space/ads.txt`.
 
 The code cannot collect consent. Before the script reaches production, enable the GDPR
 message (EEA, UK, Switzerland) under *Privacy & messaging* in the AdSense console: it is
@@ -109,22 +117,33 @@ will not. Auto ads scans a page when it loads; the router's later navigations do
 re-run it. The API account page is served by the backend and never loads the script;
 `/legal` and `/fr/legal` are worth excluding in the Auto ads settings.
 
+## The Starlink page
+
+`/starlink` and `/fr/starlink` answer the searches that follow every Starlink launch ("line
+of lights in the sky", "train Starlink ce soir"). The explanation is prerendered; the
+browser asks `GET /api/satellites/launches?q=starlink&limit=3` for the newest launches -
+active satellites grouped by the launch part of their international designator - then the
+passes of the lowest-numbered satellite of the chosen launch, which stands for the train
+while it is compact. A satellite is in CelesTrak's active group only once catalogued,
+usually a day or more after launch, so the first evening of a train is often missing; the
+page says so. The page is worth sharing the day after a launch, not later: that is when
+people search.
+
 ## What is not done, by order of value
 
-1. **Search Console on the new domain.** `nextpass.space` replaced the `*.vercel.app`
-   address before the site earned links. Verify the domain property, submit
-   `https://nextpass.space/sitemap.xml`, and redirect the old address to it in Vercel's
-   domain settings: it still answers 200 with the same pages, which is duplicate content.
+1. **Search Console on the domain.** Verify a Domain property for `nextpass.space` (it
+   covers `www`) and submit `https://www.nextpass.space/sitemap.xml`. The old
+   `*.vercel.app` addresses answer 404 since the move, so there is no duplicate left.
 2. **Pages that answer real searches.** "ISS pass tonight Paris", "voir l'ISS ce soir
    Lyon": a page per city is the long tail, but only with content unique to the city (its
-   next visible passes, its local times). Thousands of near-identical pages are what
-   Google's scaled-content policy penalises.
-3. **More prerendered satellites.** Only the ten featured ones are; Starlink trains, NOAA
-   weather satellites and the CubeSats radio amateurs track are each a page people search
-   for.
-4. **An Open Graph image** (1200×630): links shared on social networks show none today.
-5. **Links from other sites**: astronomy clubs, AMSAT and amateur-radio forums, Show HN
+   next visible passes, its local times). Passes are computed in the browser today, so the
+   HTML of two city pages would differ by the name alone - exactly what Google's
+   scaled-content policy penalises. Such pages need their passes in the HTML, for instance
+   from a daily rebuild (a Vercel deploy hook called on a schedule).
+3. **More prerendered satellites.** Only the ten featured ones are; NOAA weather satellites
+   and the CubeSats radio amateurs track are each a page people search for.
+4. **Links from other sites**: astronomy clubs, AMSAT and amateur-radio forums, Show HN
    for the API - see milestone 17 of the [roadmap](../ROADMAP.md). No setting replaces
    them.
-6. **The page heading.** Every page's `<h1>` is the brand in the header; the page's own
+5. **The page heading.** Every page's `<h1>` is the brand in the header; the page's own
    title is an `<h2>`. A minor signal, changed with the shared styles.

@@ -46,8 +46,8 @@ class CelestrakCatalogSourceTest {
         respondWith(TleFixtures.celestrakThreeLineResponse() + record("0 HST", "20580"));
 
         assertThat(source.fetchAll()).containsExactly(
-                new SatelliteEntry(TleFixtures.issNoradId(), TleFixtures.issName()),
-                new SatelliteEntry(20580, "HST"));
+                new SatelliteEntry(TleFixtures.issNoradId(), TleFixtures.issName(), "1998-067"),
+                new SatelliteEntry(20580, "HST", "1998-067"));
         server.verify();
     }
 
@@ -55,7 +55,16 @@ class CelestrakCatalogSourceTest {
     void skipsAlphaFiveNumbersAndDuplicates() {
         respondWith(record("FIRST", "12345") + record("AGAIN", "12345") + record("FUTURE", "A0001"));
 
-        assertThat(source.fetchAll()).containsExactly(new SatelliteEntry(12345, "FIRST"));
+        assertThat(source.fetchAll()).containsExactly(new SatelliteEntry(12345, "FIRST", "1998-067"));
+    }
+
+    @Test
+    void readsTheLaunchOfTheInternationalDesignator() {
+        assertThat(CelestrakCatalogSource.launch("1 64321U 26045A   26273.50000000")).isEqualTo("2026-045");
+        assertThat(CelestrakCatalogSource.launch("1 00005U 58002B   26273.50000000")).isEqualTo("1958-002");
+        // Analyst objects and truncated lines carry no designator: no launch, not a refusal.
+        assertThat(CelestrakCatalogSource.launch("1 81234U          26273.50000000")).isNull();
+        assertThat(CelestrakCatalogSource.launch("1 81234U 26")).isNull();
     }
 
     @Test

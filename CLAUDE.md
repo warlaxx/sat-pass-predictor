@@ -18,9 +18,13 @@ The frontend is now prerendered at build time and bilingual: English at the root
 under `/fr/` (`@angular/localize`), with canonical, hreflang, sitemap and robots.txt. See
 [search engines and languages](docs/seo.md). Every new text needs `i18n` or `$localize`
 and a French translation (`npm run i18n` in `frontend`); the build refuses a missing one.
-The product is **NextPass**, at `https://nextpass.space` (Vercel); the API stays on
-`https://sat-pass-predictor-api.onrender.com` until `api.nextpass.space` is configured on
-Render. The prerendered output was checked locally, not yet on a Vercel deployment.
+The product is **NextPass**, at `https://www.nextpass.space` (Vercel; the apex
+`nextpass.space` redirects to `www`, and canonical links and the sitemap name `www`); the
+API stays on `https://sat-pass-predictor-api.onrender.com` until `api.nextpass.space` is
+configured on Render. The prerendered pages were checked on the production deployment on
+1 October 2026. `/starlink` lists the newest Starlink launches (`GET
+/api/satellites/launches`) and their train's passes; every page carries a 1200×630
+preview image (`frontend/public/og/`).
 
 The backend is Java 25/Spring Boot, the frontend Angular. Run `backend/mvnw -f
 backend/pom.xml verify` with JDK 25 and a dedicated PostgreSQL `TEST_DATABASE_URL`,

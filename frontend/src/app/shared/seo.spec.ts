@@ -30,6 +30,13 @@ describe('Seo', () => {
     expect(document.head.querySelector('link[hreflang]')).toBeNull();
   });
 
+  it('promises no preview image it cannot address, rather than a relative one', () => {
+    seo.apply('/', { title: 'Home' });
+    const meta = TestBed.inject(Meta);
+    expect(meta.getTag('property="og:image"')).toBeNull();
+    expect(meta.getTag('name="twitter:card"')!.content).toBe('summary');
+  });
+
   it('keeps the not-found page out of search results, and lifts that on the next page', () => {
     const meta = TestBed.inject(Meta);
     seo.apply('/nowhere', { title: 'Page not found', noindex: true });

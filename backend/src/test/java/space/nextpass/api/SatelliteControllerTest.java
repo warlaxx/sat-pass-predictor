@@ -44,6 +44,27 @@ class SatelliteControllerTest {
     }
 
     @Test
+    void servesTheNewestLaunchesWithoutExposingTheDesignatorInSearchResults() throws Exception {
+        when(catalog.latestLaunches("starlink", 3)).thenReturn(new SatelliteCatalog.Launches(
+                List.of(new SatelliteCatalog.Launch("2026-045", 28, 64001, "STARLINK-34001")),
+                Instant.parse("2026-09-30T12:00:00Z")));
+        when(catalog.search("starlink", 10)).thenReturn(new SatelliteCatalog.Result(
+                List.of(new SatelliteEntry(64001, "STARLINK-34001", "2026-045")), Instant.parse("2026-09-30T12:00:00Z")));
+
+        mockMvc.perform(get("/api/satellites/launches?q=starlink"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.launches[0].designator").value("2026-045"))
+                .andExpect(jsonPath("$.launches[0].satellites").value(28))
+                .andExpect(jsonPath("$.launches[0].noradId").value(64001))
+                .andExpect(jsonPath("$.launches[0].name").value("STARLINK-34001"))
+                .andExpect(jsonPath("$.catalogFetchedAt").value("2026-09-30T12:00:00Z"));
+        mockMvc.perform(get("/api/satellites?q=starlink"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.results[0].launch").doesNotExist());
+        mockMvc.perform(get("/api/satellites/launches?q=starlink&limit=11")).andExpect(status().isBadRequest());
+    }
+
+    @Test
     void refusesMissingOrUnboundedQueriesBeforeSearching() throws Exception {
         mockMvc.perform(get("/api/satellites")).andExpect(status().isBadRequest());
         mockMvc.perform(get("/api/satellites?q=" + "x".repeat(65))).andExpect(status().isBadRequest());
