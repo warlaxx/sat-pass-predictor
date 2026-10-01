@@ -102,6 +102,26 @@ export class Seo {
     this.meta.updateTag({ name: 'twitter:image', content: url });
   }
 
+  /**
+   * The path of a page below the home page, as schema.org BreadcrumbList: a search result
+   * can show "NextPass › Satellites › Hubble" instead of the bare address. Undefined
+   * without a known origin, since every item needs an absolute address.
+   */
+  breadcrumbs(trail: readonly { readonly name: string; readonly path: string }[]): object | undefined {
+    if (!SITE_ORIGIN) return undefined;
+    const items = [{ name: SITE_NAME, path: '/' }, ...trail];
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: items.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        item: SITE_ORIGIN + pathIn(this.language, item.path),
+      })),
+    };
+  }
+
   private other(): SiteLanguage {
     return this.language === 'fr' ? 'en' : 'fr';
   }

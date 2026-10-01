@@ -5,7 +5,7 @@
     <a routerLink="/satellites">Satellites</a> ·
     <span class="num">NORAD {{ id() ?? noradId() }}</span>
   </span>
-  <h2 id="sat-title">{{ heading() }}</h2>
+  <h1 id="sat-title">{{ heading() }}</h1>
   @if (featured(); as card) {
     <p class="lede">{{ card.blurb }}</p>
   }
