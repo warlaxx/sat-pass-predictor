@@ -6,7 +6,7 @@ h3 { font-size: 26px; letter-spacing: -0.01em; }
 .hint { color: var(--ink-2); font-size: 14px; line-height: 1.5; margin: 6px 0 0; max-width: 60ch; }
 
 .export {
-  background: transparent; border: 1px solid var(--line-strong); border-radius: 4px; color: var(--ink-2); cursor: pointer;
+  background: transparent; border: 1px solid var(--line-strong); border-radius: var(--r-pill); color: var(--ink-2); cursor: pointer;
   flex-shrink: 0; font: 500 14px var(--font-body); padding: 8px 14px; white-space: nowrap;
 }
 .export:hover:not(:disabled) { border-color: var(--ink-3); color: var(--ink); }

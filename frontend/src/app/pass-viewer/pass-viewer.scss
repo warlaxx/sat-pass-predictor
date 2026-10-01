@@ -112,7 +112,7 @@ svg { display: block; width: 100%; height: 100%; }
 /* --- Tiles --------------------------------------------------------------------------- */
 
 .tiles {
-  background: var(--line); border: 1px solid var(--line); border-radius: var(--r); display: grid; gap: 1px;
+  background: var(--line); border: 1px solid var(--line); border-radius: var(--r-card); display: grid; gap: 1px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); overflow: hidden;
 }
 .tile { background: var(--bg); display: flex; flex-direction: column; gap: 6px; padding: 26px; }

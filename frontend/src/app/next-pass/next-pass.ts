@@ -67,7 +67,7 @@ import { nextPassState } from './next-pass-state';
   styles: `
     :host { display: block; padding-top: 24px; }
     .next {
-      align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
+      align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-card);
       display: flex; flex-wrap: wrap; gap: 12px 20px; padding: 18px 22px;
     }
     .next.live { border-color: rgb(87 211 168 / 45%); }
@@ -83,7 +83,7 @@ import { nextPassState } from './next-pass-state';
     }
     @keyframes pulse { 50% { opacity: 0.35; } }
     button {
-      background: transparent; border: 1px solid var(--line-strong); border-radius: 4px; color: var(--ink-2);
+      background: transparent; border: 1px solid var(--line-strong); border-radius: var(--r-pill); color: var(--ink-2);
       cursor: pointer; font: 500 14px var(--font-body); padding: 8px 14px; white-space: nowrap;
     }
     button:hover { border-color: var(--ink-3); color: var(--ink); }

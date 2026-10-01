@@ -74,7 +74,7 @@ describe('HomePage geolocation', () => {
   async function clickLocate() {
     const fixture = TestBed.createComponent(HomePage);
     await fixture.whenStable();
-    (fixture.nativeElement.querySelector('button.ghost') as HTMLButtonElement).click();
+    (fixture.nativeElement.querySelector('.console-foot button.outline') as HTMLButtonElement).click();
     await fixture.whenStable();
     return fixture;
   }
