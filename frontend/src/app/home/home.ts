@@ -208,17 +208,24 @@ export class HomePage {
    * that can hang. Each of those has a message here rather than a silent no-op, and the
    * two fields stay editable throughout: a refused prompt must not cost the user the
    * page.
+   *
+   * <p>With a result already on screen, the position is computed for at once. The pass
+   * globe draws the observer of the response, and only a new response can put its dot on
+   * the located position without leaving the track and the sight line at the old one.
    */
   protected useMyPosition(): void {
     this.locationError.set(undefined);
     this.locating.set(true);
     requestPosition().then(
-      (position) => this.form.update((query) => ({
-        ...query,
-        lat: position.lat,
-        lon: position.lon,
-        alt: position.alt ?? query.alt,
-      })),
+      (position) => {
+        this.form.update((query) => ({
+          ...query,
+          lat: position.lat,
+          lon: position.lon,
+          alt: position.alt ?? query.alt,
+        }));
+        if (this.searched() && this.satelliteResolved()) this.search();
+      },
       (error: Error) => this.locationError.set(error.message),
     ).finally(() => this.locating.set(false));
   }

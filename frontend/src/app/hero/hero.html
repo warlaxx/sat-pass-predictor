@@ -1,5 +1,5 @@
 <section class="hero" aria-labelledby="hero-title">
-  <app-hero-globe class="globe" [latitude]="observer().lat" [longitude]="observer().lon"
+  <app-hero-globe class="globe" [latitude]="position().lat" [longitude]="position().lon"
                   [visibilityDeg]="visibility()" [primary]="orbit()" />
   <div class="scrim" aria-hidden="true"></div>
 
@@ -60,11 +60,11 @@
       }
     </div>
     <div class="hud observer">
-      <span class="lead"><i></i>Observer · {{ place() }}</span>
+      <span class="lead"><i></i>Observer · {{ positionPlace() }}</span>
       <span>
-        {{ abs(observer().lat) | number: '1.4-4' }}° {{ observer().lat < 0 ? 'S' : 'N' }} ·
-        {{ abs(observer().lon) | number: '1.4-4' }}° {{ observer().lon < 0 ? 'W' : 'E' }} ·
-        {{ observer().alt | number: '1.0-0' }} m
+        {{ abs(position().lat) | number: '1.4-4' }}° {{ position().lat < 0 ? 'S' : 'N' }} ·
+        {{ abs(position().lon) | number: '1.4-4' }}° {{ position().lon < 0 ? 'W' : 'E' }} ·
+        {{ position().alt | number: '1.0-0' }} m
       </span>
     </div>
     <div class="legend">

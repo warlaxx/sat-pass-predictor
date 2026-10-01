@@ -126,6 +126,42 @@ describe('HomePage geolocation', () => {
     expect(inputs[1].disabled).toBe(false);
   });
 
+  it('only fills the form when nothing has been computed yet', async () => {
+    installGeolocation({
+      getCurrentPosition: (onSuccess) =>
+        onSuccess({ coords: { latitude: 48.8566, longitude: 2.3522, altitude: null } } as GeolocationPosition),
+    });
+
+    await clickLocate();
+
+    TestBed.inject(HttpTestingController).expectNone(() => true);
+  });
+
+  it('computes again for the located position when a result is on screen', async () => {
+    installGeolocation({
+      getCurrentPosition: (onSuccess) =>
+        onSuccess({ coords: { latitude: 48.856_61, longitude: 2.352_22, altitude: 35 } } as GeolocationPosition),
+    });
+    const fixture = TestBed.createComponent(HomePage);
+    await fixture.whenStable();
+    (fixture.nativeElement.querySelector('form.query') as HTMLFormElement)
+      .dispatchEvent(new Event('submit', { cancelable: true }));
+    TestBed.tick();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne(request => request.url === '/api/passes' && request.params.get('lat') === '45.7578')
+      .flush(null, { status: 503, statusText: 'Unavailable' });
+    await fixture.whenStable();
+
+    (fixture.nativeElement.querySelector('.console-foot button.outline') as HTMLButtonElement).click();
+    await Promise.resolve();
+    TestBed.tick();
+
+    const located = http.expectOne(request => request.url === '/api/passes');
+    expect(located.request.params.get('lat')).toBe('48.8566');
+    expect(located.request.params.get('lon')).toBe('2.3522');
+    expect(located.request.params.get('alt')).toBe('35');
+  });
+
   it('says so when the browser has no geolocation at all', async () => {
     const fixture = await clickLocate();
 
