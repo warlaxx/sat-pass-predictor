@@ -81,4 +81,19 @@ describe('Hero', () => {
     expect(hud.textContent).toContain('INC 51.64°');
     expect(hud.textContent).toMatch(/ALT 4\d\d km · 7\.6\d km\/s/);
   });
+
+  it('puts the observer where the form is, not where the last result was computed', async () => {
+    const fixture = TestBed.createComponent(Hero);
+    fixture.componentRef.setInput('query', { ...DEFAULT_QUERY, lat: 48.8566, lon: 2.3522, alt: 35 });
+    fixture.componentRef.setInput('response', {
+      satellite: { noradId: 25544, name: 'ISS (ZARYA)' },
+      tle: { epoch: '', ageSeconds: 0, source: 'CelesTrak', fetchedAt: '', line1: '', line2: '' },
+      observer: { latitudeDeg: 12.5, longitudeDeg: -3.25, altitudeM: 200 },
+      minElevationDeg: 10, frequencyMhz: null, computedAt: new Date().toISOString(), passes: [],
+    } satisfies PassesResponse);
+    await fixture.whenStable();
+    const readout = fixture.nativeElement.querySelector('.hud.observer') as HTMLElement;
+    expect(readout.textContent).toContain('48.8566° N · 2.3522° E · 35 m');
+    expect(readout.textContent).toContain('48.86° N, 2.35° E');
+  });
 });

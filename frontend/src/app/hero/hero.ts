@@ -30,6 +30,11 @@ export function shortDuration(seconds: number): string {
 
 type Tone = 'go' | 'quiet' | 'busy';
 
+function placeName({ lat, lon }: { lat: number; lon: number }): string {
+  if (lat === DEFAULT_QUERY.lat && lon === DEFAULT_QUERY.lon) return DEFAULT_PLACE;
+  return `${Math.abs(lat).toFixed(2)}° ${lat < 0 ? 'S' : 'N'}, ${Math.abs(lon).toFixed(2)}° ${lon < 0 ? 'W' : 'E'}`;
+}
+
 /**
  * The first screen of the predictor: what it does, the way in, and a countdown to the next
  * pass over a globe that turns behind it.
@@ -37,8 +42,8 @@ type Tone = 'go' | 'quiet' | 'busy';
  * Every figure on it is either computed or a dash. Before the first search there is no
  * prediction to count down to, and the card says so rather than ticking towards an
  * invented pass: fetching one on every visit would spend the anonymous quota the whole
- * site shares. The globe follows the form as it is typed, so the observer moves when the
- * coordinates do.
+ * site shares. The globe follows the form as it is typed or located, so the observer moves
+ * when the coordinates do, even with an earlier result still on screen.
  */
 @Component({
   selector: 'app-hero',
@@ -82,11 +87,21 @@ export class Hero {
       : { lat: query.lat, lon: query.lon, alt: query.alt };
   });
 
-  protected readonly place = computed(() => {
-    const { lat, lon } = this.observer();
-    if (lat === DEFAULT_QUERY.lat && lon === DEFAULT_QUERY.lon) return DEFAULT_PLACE;
-    return `${Math.abs(lat).toFixed(2)}° ${lat < 0 ? 'S' : 'N'}, ${Math.abs(lon).toFixed(2)}° ${lon < 0 ? 'W' : 'E'}`;
+  /**
+   * Where the observer stands now: the form's position, which the browser's geolocation
+   * fills. The globe's dot and the observer readout follow it, so a located user sees the
+   * dot on their exact position at once, before or without a new computation - the
+   * response's observer would keep it on the previous search's place.
+   */
+  protected readonly position = computed(() => {
+    const { lat, lon, alt } = this.query();
+    return { lat, lon, alt };
   });
+
+  /** The place the computed pass is for, in the heading. */
+  protected readonly place = computed(() => placeName(this.observer()));
+  /** The place the dot stands on, in the observer readout. */
+  protected readonly positionPlace = computed(() => placeName(this.position()));
 
   protected readonly orbit = computed(() => {
     const line2 = this.response()?.tle.line2;
