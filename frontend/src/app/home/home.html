@@ -157,7 +157,7 @@
         </div>
 
         <div class="nights">
-          <h3 i18n>Passes &ge; {{ loaded.minElevationDeg }}&deg; &mdash; {{ loaded.passes.length }} in {{ nightCount() }} nights</h3>
+          <h3 i18n>Passes &ge; {{ loaded.minElevationDeg }}&deg; · {{ loaded.passes.length }} in {{ nightCount() }} nights</h3>
           <app-pass-ribbon
             [passes]="loaded.passes"
             [selected]="pass.aos.instant"

@@ -1,10 +1,9 @@
 <section class="page-hero wrap" appReveal aria-labelledby="dev-title">
   <span class="kicker" i18n>API · <span class="num">/v1</span></span>
-  <h2 id="dev-title" i18n>Satellite passes, as an API</h2>
+  <h1 id="dev-title" i18n>Satellite passes, as an API</h1>
   <p class="lede" i18n>
     One HTTP call returns every pass of a satellite over a point on Earth: rise, peak and
-    set, the sampled track at 10&nbsp;s, range rate and Doppler shift, sunlight and
-    visibility - and the age of the orbital elements behind it, so your users know what the
+    set, the sampled track at 10&nbsp;s, range rate and Doppler shift, sunlight and visibility, and the age of the orbital elements behind it, so your users know what the
     times are worth.
   </p>
   <div class="actions">
@@ -100,7 +99,7 @@
   <div class="prose">
     <p i18n>
       Every point and phase carries <code>rangeRateKmS</code>, from Orekit's velocity rather
-      than differenced ranges - negative while the satellite approaches. With
+      than differenced ranges. Its value is negative while the satellite approaches. With
       <code>frequencyMhz</code>, each one also carries <code>dopplerHz</code>, the first-order
       shift to apply to the receiver, <code>−f · rangeRate / c</code>. For an uplink, apply
       the opposite sign. Asking for several frequencies costs one propagation: the shift is

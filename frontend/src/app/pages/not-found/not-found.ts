@@ -11,7 +11,7 @@ import { Reveal } from '../../motion/reveal';
   template: `
     <section class="page-hero wrap" appReveal aria-labelledby="nf-title">
       <span class="kicker num" i18n>404 · below the horizon</span>
-      <h2 id="nf-title" i18n>This page never rose</h2>
+      <h1 id="nf-title" i18n>This page never rose</h1>
       <p class="lede" i18n>The address does not match any page of this site. It may have been mistyped, or it moved.</p>
       <div class="actions">
         <a class="btn primary" routerLink="/" i18n>Open the predictor</a>

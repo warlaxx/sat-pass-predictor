@@ -34,7 +34,7 @@ const pages: Routes = [
     path: '',
     component: HomePage,
     title: $localize`:Page title:ISS and satellite passes over your location`,
-    data: { description: $localize`:Meta description:When the ISS or any satellite passes over you tonight: rise, peak and set times, visibility, sky chart and 3D globe, computed with Orekit from fresh CelesTrak elements.` },
+    data: { description: $localize`:Meta description:When the ISS or any satellite passes over you tonight: rise, peak and set times, visibility, sky chart and 3D globe, from fresh CelesTrak elements.` },
   },
   {
     path: 'satellites',
@@ -121,7 +121,21 @@ export class SiteTitleStrategy extends TitleStrategy {
       title: this.buildTitle(snapshot),
       description,
       noindex: route.data['noindex'] === true,
-      jsonLd: route.routeConfig?.path === '' && description ? this.seo.application(description) : undefined,
+      jsonLd: this.structuredData(route, snapshot.url, description),
     });
+  }
+
+  /** The application on the home page; the trail from it on the pages below Satellites. */
+  private structuredData(route: ActivatedRouteSnapshot, url: string, description: string | undefined): object | undefined {
+    const path = route.routeConfig?.path;
+    if (path === '') return description ? this.seo.home(description) : undefined;
+    const satellites = { name: $localize`:Breadcrumb:Satellites`, path: '/satellites' };
+    if (path === 'starlink') return this.seo.breadcrumbs([satellites, { name: 'Starlink', path: url }]);
+    if (path === 'satellites/:noradId') {
+      // Only a featured satellite has a name before the API answers; the others go without.
+      const featured = featuredOf(route);
+      return featured ? this.seo.breadcrumbs([satellites, { name: featured.name, path: url }]) : undefined;
+    }
+    return undefined;
   }
 }

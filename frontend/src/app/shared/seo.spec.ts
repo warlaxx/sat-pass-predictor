@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { DOCUMENT, provideZonelessChangeDetection } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { SITE_ORIGIN, Seo, satelliteDescription } from './seo';
+import { FEATURED } from './featured';
 
 describe('Seo', () => {
   let seo: Seo;
@@ -47,7 +48,7 @@ describe('Seo', () => {
 
   it('replaces the structured data of the previous page, and escapes it', () => {
     seo.apply('/', { jsonLd: { name: '</script><b>' } });
-    seo.apply('/', { jsonLd: seo.application('Pass predictions.') });
+    seo.apply('/', { jsonLd: seo.home('Pass predictions.') });
     const scripts = document.head.querySelectorAll('script[type="application/ld+json"]');
     expect(scripts).toHaveLength(1);
     expect(JSON.parse(scripts[0].textContent!)['@type']).toBe('WebApplication');
@@ -55,9 +56,9 @@ describe('Seo', () => {
     expect(document.head.querySelector('script#structured-data')!.textContent).not.toContain('</script>');
   });
 
-  it('keeps a featured satellite description within what a result shows', () => {
-    const description = satelliteDescription('International Space Station',
-      'The brightest satellite in the sky, often brighter than any star. Crewed since 2000.');
-    expect(description.length).toBeLessThanOrEqual(160);
+  it('keeps every featured satellite description within what a result shows', () => {
+    for (const satellite of FEATURED.flatMap((group) => group.satellites)) {
+      expect(satelliteDescription(satellite.name, satellite.blurb).length, satellite.name).toBeLessThanOrEqual(160);
+    }
   });
 });

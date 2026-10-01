@@ -30,6 +30,12 @@ export const FEATURED: readonly FeaturedGroup[] = [
     ],
   },
   {
+    title: $localize`:Group of satellites:Bright to the eye`,
+    satellites: [
+      { noradId: 53807, name: $localize`:Satellite name:BlueWalker 3`, blurb: $localize`A test satellite whose 64 m² antenna array makes it one of the brightest objects at night.` },
+    ],
+  },
+  {
     title: $localize`:Group of satellites:Science`,
     satellites: [
       { noradId: 20580, name: $localize`:Satellite name:Hubble Space Telescope`, blurb: $localize`At 28.5° inclination, visible only from latitudes below about 50°.` },
@@ -39,6 +45,17 @@ export const FEATURED: readonly FeaturedGroup[] = [
     title: $localize`:Group of satellites:Amateur radio`,
     satellites: [
       { noradId: 27607, name: $localize`:Satellite name:SaudiSat-1C (SO-50)`, blurb: $localize`A long-lived FM repeater, a classic first contact through a satellite.` },
+      { noradId: 44909, name: $localize`:Satellite name:RS-44`, blurb: $localize`A linear transponder on its Russian upper stage, higher than most: long passes, long contacts.` },
+      { noradId: 7530, name: $localize`:Satellite name:AMSAT-OSCAR 7 (AO-7)`, blurb: $localize`Launched in 1974, still relaying, but only in sunlight: its batteries failed long ago.` },
+      { noradId: 39444, name: $localize`:Satellite name:FUNcube-1 (AO-73)`, blurb: $localize`Educational CubeSat whose telemetry schools decode, with a linear transponder.` },
+    ],
+  },
+  {
+    title: $localize`:Group of satellites:Weather`,
+    satellites: [
+      { noradId: 57166, name: $localize`:Satellite name:Meteor-M N2-3`, blurb: $localize`Russian weather satellite: its LRPT images are received at 137 MHz with an SDR.` },
+      { noradId: 59051, name: $localize`:Satellite name:Meteor-M N2-4`, blurb: $localize`The newest Meteor-M, launched in 2024, sending the same LRPT images.` },
+      { noradId: 43013, name: $localize`:Satellite name:NOAA 20 (JPSS-1)`, blurb: $localize`US polar weather satellite whose VIIRS images the whole Earth twice a day.` },
     ],
   },
   {
