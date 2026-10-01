@@ -139,11 +139,11 @@ describe('SatellitePage', () => {
   });
 
   it('titles a satellite outside the featured list by its catalogue name once known', async () => {
-    const fixture = await render(SatellitePage, { noradId: '43013' });
+    const fixture = await render(SatellitePage, { noradId: '41866' });
     TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/passes')
-      .flush({ ...prediction(), satellite: { noradId: 43013, name: 'NOAA 20' } });
+      .flush({ ...prediction(), satellite: { noradId: 41866, name: 'GOES 16' } });
     await fixture.whenStable();
-    expect(TestBed.inject(Title).getTitle()).toBe('NOAA 20: next passes and when to see it · NextPass');
+    expect(TestBed.inject(Title).getTitle()).toBe('GOES 16: next passes and when to see it · NextPass');
   });
 
   it('computes no pass while prerendering: they would be stale before anyone read them', async () => {

@@ -69,10 +69,27 @@ export class Seo {
     this.structuredData(page.jsonLd);
   }
 
-  /** The schema.org description of the predictor, for the home page. */
-  application(description: string): object {
+  /**
+   * The home page's structured data: the site itself, whose `name` is what Google shows
+   * above a result instead of the bare domain, and the predictor as an application.
+   * The site needs its absolute address, so without an origin only the application is left.
+   */
+  home(description: string): object {
+    const application = this.application(description);
+    if (!SITE_ORIGIN) return { '@context': 'https://schema.org', ...application };
+    const site = {
+      '@type': 'WebSite',
+      name: SITE_NAME,
+      alternateName: new URL(SITE_ORIGIN).hostname.replace(/^www\./, ''),
+      url: `${SITE_ORIGIN}/`,
+      inLanguage: this.language,
+    };
+    return { '@context': 'https://schema.org', '@graph': [site, application] };
+  }
+
+  /** The schema.org description of the predictor. */
+  private application(description: string): object {
     return {
-      '@context': 'https://schema.org',
       '@type': 'WebApplication',
       name: SITE_NAME,
       description,
@@ -100,6 +117,26 @@ export class Seo {
     this.meta.updateTag({ property: 'og:image:alt', content: alt });
     this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
     this.meta.updateTag({ name: 'twitter:image', content: url });
+  }
+
+  /**
+   * The path of a page below the home page, as schema.org BreadcrumbList: a search result
+   * can show "NextPass › Satellites › Hubble" instead of the bare address. Undefined
+   * without a known origin, since every item needs an absolute address.
+   */
+  breadcrumbs(trail: readonly { readonly name: string; readonly path: string }[]): object | undefined {
+    if (!SITE_ORIGIN) return undefined;
+    const items = [{ name: SITE_NAME, path: '/' }, ...trail];
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: items.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        item: SITE_ORIGIN + pathIn(this.language, item.path),
+      })),
+    };
   }
 
   private other(): SiteLanguage {

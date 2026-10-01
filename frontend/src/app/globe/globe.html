@@ -11,8 +11,7 @@
     @if (!ready()) {
       <p class="fallback" role="status">
         @if (failed()) {
-          <ng-container i18n>The 3D globe could not load three.js. The sky chart and the table remain usable —
-          that is precisely why they depend on no external library.</ng-container>
+          <ng-container i18n>The 3D globe could not load three.js. The sky chart and the table remain usable: that is precisely why they depend on no external library.</ng-container>
         } @else {
           <ng-container i18n>Loading the globe&hellip;</ng-container>
         }

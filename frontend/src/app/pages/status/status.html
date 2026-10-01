@@ -1,13 +1,13 @@
 <section class="page-hero wrap" appReveal aria-labelledby="status-title">
   <span class="kicker" i18n>Service status</span>
-  <h2 id="status-title">
+  <h1 id="status-title">
     @switch (overall()) {
       @case ('checking') { <ng-container i18n>Checking…</ng-container> }
       @case ('ok') { <ng-container i18n>All systems answering</ng-container> }
       @case ('slow') { <ng-container i18n>Answering, with caveats</ng-container> }
       @case ('down') { <ng-container i18n>Something is not answering</ng-container> }
     }
-  </h2>
+  </h1>
   <p class="lede" i18n>
     Measured live, from your browser, when this page opened. Nothing here is cached or
     typed by hand.
