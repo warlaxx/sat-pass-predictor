@@ -653,6 +653,11 @@
     "1559845360468572835": "NextPass : l'heure de passage de l'ISS ce soir chez vous, sur une carte du ciel",
     "2839207508598365909": "Ce site est encore en cours de développement.",
     "5012868167973481129": "Les fonctions et les chiffres peuvent changer, et le service peut être brièvement indisponible.",
-    "1492664397964245265": "Signaler un problème ↗"
+    "1492664397964245265": "Signaler un problème ↗",
+    "7102649289752747375": "Donner mon avis",
+    "5307437515277159548": "Nous écrire",
+    "3948822291664069909": "Avis sur NextPass",
+    "1217118259584129140": "Page : {$address}",
+    "4628684864262742487": "{$START_BOLD_TEXT}Les avis par e-mail{$CLOSE_BOLD_TEXT} sont facultatifs. Un message que vous envoyez - avec l'adresse de la page depuis laquelle il a été écrit, préremplie pour vous - ne sert qu'à vous répondre et à améliorer le site ; il n'est jamais ajouté à une liste de diffusion. {$START_TAG_SPAN}à compléter : durée de conservation des messages{$CLOSE_TAG_SPAN}"
   }
 }

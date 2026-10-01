@@ -3,8 +3,10 @@ import {
 } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
-import { ACCOUNT_URL, REPOSITORY_URL, SWAGGER_URL } from './shared/site';
-import { LANGUAGES, addressIn, currentLanguage } from './shared/locale';
+import { ACCOUNT_URL, OPERATOR, REPOSITORY_URL, SWAGGER_URL } from './shared/site';
+import { LANGUAGES, addressIn, currentLanguage, pathIn } from './shared/locale';
+import { feedbackHref } from './shared/feedback';
+import { SITE_ORIGIN } from './shared/seo';
 import { ServiceStatus } from './shared/service-status';
 import { RouteCurtain } from './motion/route-curtain';
 import { NAV_PAGES } from './motion/route-transition';
@@ -46,6 +48,11 @@ export class App {
     const other = LANGUAGES[this.language === 'fr' ? 'en' : 'fr'];
     return { ...other, href: addressIn(other.code, this.url()) };
   });
+
+  /** True once an operator address is published: the notice then asks for feedback by e-mail. */
+  protected readonly feedbackByMail = Boolean(OPERATOR.email);
+  protected readonly feedbackHref = computed(() =>
+    feedbackHref(OPERATOR.email, REPOSITORY_URL, SITE_ORIGIN + pathIn(this.language, this.url())));
 
   private readonly serviceStatus = inject(ServiceStatus);
   protected readonly status = this.serviceStatus.state;

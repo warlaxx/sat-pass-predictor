@@ -48,7 +48,11 @@
   <i class="dot" aria-hidden="true"></i>
   <b i18n>This site is still under development.</b>
   <span class="more" i18n>Features and figures may change, and the service can be briefly unavailable.</span>
-  <a [href]="repositoryUrl + '/issues'" rel="noopener" i18n>Report a problem ↗</a>
+  @if (feedbackByMail) {
+    <a [href]="feedbackHref()" i18n>Send feedback</a>
+  } @else {
+    <a [href]="feedbackHref()" rel="noopener" i18n>Report a problem ↗</a>
+  }
 </p>
 
 <!--
@@ -122,6 +126,7 @@
         <a routerLink="/legal" fragment="notice" i18n>Legal notice</a>
         <a routerLink="/legal" fragment="terms" i18n>Terms of use</a>
         <a routerLink="/legal" fragment="privacy" i18n>Privacy</a>
+        @if (feedbackByMail) { <a [href]="feedbackHref()" i18n>Write to us</a> }
         <a [href]="repositoryUrl" rel="noopener" i18n>Source code ↗</a>
         <a [href]="otherLanguage().href" [attr.hreflang]="otherLanguage().code"
            [attr.lang]="otherLanguage().code">{{ otherLanguage().label }}</a>
