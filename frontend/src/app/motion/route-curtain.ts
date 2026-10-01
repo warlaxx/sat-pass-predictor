@@ -15,10 +15,19 @@ import { RouteTransition } from './route-transition';
       <div class="glow"></div>
       <div class="content">
         <svg width="64" height="64" viewBox="0 0 32 32">
-          <circle cx="16" cy="16" r="14.5" fill="none" stroke="#fff" stroke-width="1.2" />
-          <circle cx="16" cy="16" r="9.5" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="0.8" stroke-dasharray="2 2.5" />
-          <path d="M5.5 21 Q13 3 26.5 14" fill="none" stroke="var(--signal)" stroke-width="2" stroke-linecap="round" />
-          <circle cx="26.5" cy="14" r="2.2" fill="#fff" />
+          <defs>
+            <radialGradient id="brand-glow-curtain">
+              <stop offset="0" stop-color="#fff" stop-opacity="0.55" />
+              <stop offset="1" stop-color="#fff" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="32" height="32" rx="7" fill="#000" />
+          <circle cx="16" cy="16" r="11" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="1.6" />
+          <circle cx="16" cy="16" r="6" fill="none" stroke="#fff" stroke-opacity="0.22" stroke-width="1.2" />
+          <path d="M16 3.2V6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" />
+          <path d="M8.2 21.5C10.5 13.5 16 9.5 22.6 11.4" fill="none" stroke="var(--signal)" stroke-width="2.8" stroke-linecap="round" />
+          <circle cx="22.6" cy="11.4" r="6" fill="url(#brand-glow-curtain)" />
+          <circle cx="22.6" cy="11.4" r="2.5" fill="#fff" />
         </svg>
         <span class="label" #label></span>
         <div class="track"><div class="bar" #bar></div></div>

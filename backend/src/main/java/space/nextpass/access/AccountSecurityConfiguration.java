@@ -56,6 +56,7 @@ public class AccountSecurityConfiguration {
                 .clientName("GitHub").build();
         http.authorizeHttpRequests(auth -> auth
                         .requestMatchers("/account", "/account/", "/account/index.html", "/account/dashboard.js", "/account/dashboard.css",
+                                "/account/favicon.svg",
                                 "/oauth2/**", "/login/oauth2/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth -> oauth

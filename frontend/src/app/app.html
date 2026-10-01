@@ -3,10 +3,19 @@
 <header class="appbar wrap">
   <a class="brand" routerLink="/" aria-label="NextPass, home" i18n-aria-label>
     <svg class="logo" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="14.5" fill="none" stroke="#fff" stroke-width="1.6" />
-      <circle cx="16" cy="16" r="9.5" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="2 2.5" />
-      <path d="M5.5 21 Q13 3 26.5 14" fill="none" stroke="var(--signal)" stroke-width="2.4" stroke-linecap="round" />
-      <circle cx="26.5" cy="14" r="2.2" fill="#fff" />
+      <defs>
+        <radialGradient id="brand-glow-header">
+          <stop offset="0" stop-color="#fff" stop-opacity="0.55" />
+          <stop offset="1" stop-color="#fff" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="32" height="32" rx="7" fill="#000" />
+      <circle cx="16" cy="16" r="11" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="1.6" />
+      <circle cx="16" cy="16" r="6" fill="none" stroke="#fff" stroke-opacity="0.22" stroke-width="1.2" />
+      <path d="M16 3.2V6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" />
+      <path d="M8.2 21.5C10.5 13.5 16 9.5 22.6 11.4" fill="none" stroke="var(--signal)" stroke-width="2.8" stroke-linecap="round" />
+      <circle cx="22.6" cy="11.4" r="6" fill="url(#brand-glow-header)" />
+      <circle cx="22.6" cy="11.4" r="2.5" fill="#fff" />
     </svg>
     <span class="name">NextPass</span>
   </a>
@@ -96,10 +105,19 @@
 <footer class="wrap">
   <div class="footer-brand">
     <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="14.5" fill="none" stroke="#fff" stroke-width="1.6" />
-      <circle cx="16" cy="16" r="9.5" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="1" stroke-dasharray="2 2.5" />
-      <path d="M5.5 21 Q13 3 26.5 14" fill="none" stroke="var(--signal)" stroke-width="2.4" stroke-linecap="round" />
-      <circle cx="26.5" cy="14" r="2.2" fill="#fff" />
+      <defs>
+        <radialGradient id="brand-glow-footer">
+          <stop offset="0" stop-color="#fff" stop-opacity="0.55" />
+          <stop offset="1" stop-color="#fff" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="32" height="32" rx="7" fill="#000" />
+      <circle cx="16" cy="16" r="11" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="1.6" />
+      <circle cx="16" cy="16" r="6" fill="none" stroke="#fff" stroke-opacity="0.22" stroke-width="1.2" />
+      <path d="M16 3.2V6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" />
+      <path d="M8.2 21.5C10.5 13.5 16 9.5 22.6 11.4" fill="none" stroke="var(--signal)" stroke-width="2.8" stroke-linecap="round" />
+      <circle cx="22.6" cy="11.4" r="6" fill="url(#brand-glow-footer)" />
+      <circle cx="22.6" cy="11.4" r="2.5" fill="#fff" />
     </svg>
     <span>NextPass</span>
   </div>
