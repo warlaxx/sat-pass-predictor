@@ -15,7 +15,8 @@ interface IdentityLine {
  * The data inventory is taken from the code, not from a template: what the migrations
  * store (a GitHub numeric id, a key hash, daily counters, a Stripe customer id), what the
  * predictor sends (the coordinates of a query) and what it does not (no cookie, no
- * third-party font). What the code cannot know - who the operator is, how long logs are
+ * third-party font) - the AdSense script in index.html being the one third party that
+ * may set cookies, after the consent message Google shows in Europe. What the code cannot know - who the operator is, how long logs are
  * kept - is left visibly blank. Milestone 15 is the review that fills it.
  */
 @Component({

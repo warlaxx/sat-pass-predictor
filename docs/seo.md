@@ -95,6 +95,20 @@ and code samples.
   `/sitemap.xml`, and inspect one page per language with the URL inspection tool.
 - Lighthouse's SEO audit on one page of each language.
 
+## Advertising (Google AdSense)
+
+`src/index.html` loads the AdSense script with **Auto ads**: Google decides where ads go,
+so the templates hold no `<ins class="adsbygoogle">` slot. `public/ads.txt` authorises the
+publisher id `pub-7308548223772082` and must answer at `https://nextpass.space/ads.txt`.
+
+The code cannot collect consent. Before the script reaches production, enable the GDPR
+message (EEA, UK, Switzerland) under *Privacy & messaging* in the AdSense console: it is
+Google's certified consent platform, served by the same script. Without it, French
+visitors get advertising cookies without consent, which the privacy page now says they
+will not. Auto ads scans a page when it loads; the router's later navigations do not
+re-run it. The API account page is served by the backend and never loads the script;
+`/legal` and `/fr/legal` are worth excluding in the Auto ads settings.
+
 ## What is not done, by order of value
 
 1. **Search Console on the new domain.** `nextpass.space` replaced the `*.vercel.app`
