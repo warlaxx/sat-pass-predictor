@@ -19,7 +19,7 @@
   <div class="actions">
     @if (id()) {
       <a class="btn primary" routerLink="/" [queryParams]="predictorParams()">Open in the predictor</a>
-      <a class="btn ghost" routerLink="/alerts" [queryParams]="{ norad: id() }">Set up reminders</a>
+      <a class="btn outline" routerLink="/alerts" [queryParams]="{ norad: id() }">Set up reminders</a>
     }
   </div>
 </section>
@@ -36,7 +36,7 @@
   <div class="wrap page-section">
     <div class="note" role="alert">
       <b>{{ failure.title }}.</b> {{ failure.detail }}
-      <div class="actions"><button type="button" class="btn ghost small" (click)="reload()">Try again</button></div>
+      <div class="actions"><button type="button" class="btn outline small" (click)="reload()">Try again</button></div>
     </div>
   </div>
 } @else if (loaded) {
@@ -78,7 +78,7 @@
         <span class="num">{{ observer().lat | number: '1.2-4' }}°, {{ observer().lon | number: '1.2-4' }}°</span>
         {{ isDefaultObserver() ? '(Lyon, the default)' : '(your position)' }}
       </span>
-      <button type="button" class="btn ghost small" [disabled]="locating()" (click)="useMyPosition()">
+      <button type="button" class="btn outline small" [disabled]="locating()" (click)="useMyPosition()">
         {{ locating() ? 'Locating…' : 'Use my position' }}
       </button>
       @if (resource.isLoading()) { <span class="muted" role="status">Updating…</span> }

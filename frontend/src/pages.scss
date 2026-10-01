@@ -141,7 +141,7 @@
   .code {
     background: var(--panel);
     border: 1px solid var(--line);
-    border-radius: var(--r);
+    border-radius: var(--r-card);
     overflow: hidden;
   }
 
@@ -181,7 +181,7 @@
 
   .table {
     border: 1px solid var(--line);
-    border-radius: var(--r);
+    border-radius: var(--r-card);
     overflow-x: auto;
     position: relative;
   }
@@ -266,7 +266,7 @@
   .note {
     background: rgb(232 163 61 / 7%);
     border: 1px solid rgb(232 163 61 / 35%);
-    border-radius: var(--r);
+    border-radius: var(--r-field);
     color: var(--ink-2);
     margin: 0;
     max-width: 90ch;
@@ -301,47 +301,10 @@
 
   @keyframes dot-pulse { 50% { opacity: 0.3; } }
 
-  /* --- Buttons and fields, as the query bar draws them --------------------------------- */
+  /* --- Buttons and fields, as the home console draws them ---------------------------- */
 
-  .btn {
-    align-items: center;
-    border-radius: 4px;
-    cursor: pointer;
-    display: inline-flex;
-    font-family: var(--font-body);
-    font-size: 15px;
-    font-weight: 600;
-    gap: 10px;
-    justify-content: center;
-    padding: 9px 18px;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  .btn.primary {
-    background: var(--signal);
-    border: 1px solid var(--signal);
-    color: #fff;
-  }
-
-  .btn.ghost {
-    background: transparent;
-    border: 1px solid var(--line-strong);
-    color: var(--ink-2);
-    font-weight: 500;
-  }
-
-  .btn.small { font-size: 13px; padding: 5px 12px; }
-  .btn.ghost:hover:not(:disabled) { border-color: var(--ink-3); color: var(--ink); }
-  .btn:disabled { cursor: not-allowed; opacity: 0.55; }
-
-  @media (hover: hover) {
-    .btn.primary:hover:not(:disabled) {
-      box-shadow: 0 4px 20px rgb(252 61 33 / 20%);
-      filter: brightness(1.1);
-      transform: translateY(-2px);
-    }
-  }
+  /* Buttons are the global pills (styles.scss): only the compact size is the pages' own. */
+  .btn.small { font-size: 13px; padding: 7px 14px; }
 
   .form {
     align-items: flex-end;
@@ -371,7 +334,7 @@
     align-items: baseline;
     background: var(--bg);
     border: 1px solid var(--line-strong);
-    border-radius: 4px;
+    border-radius: var(--r-field);
     cursor: text;
     display: inline-flex;
     gap: 6px;
@@ -395,7 +358,7 @@
     color: var(--ink);
     font-size: 15px;
     outline: none;
-    padding: 9px 0;
+    padding: 11px 0;
   }
 
   .field input::-webkit-inner-spin-button,
