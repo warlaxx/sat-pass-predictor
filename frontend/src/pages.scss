@@ -7,7 +7,7 @@
  * scoped under `.page`, the host class of those pages, so nothing here can reach the
  * predictor, whose own styles stay where they are.
  *
- * The vocabulary is the predictor's, not a new one: the same bands on the same 1280 px
+ * The vocabulary is the predictor's, not a new one: the same bands on the same 1360 px
  * column, the same narrow display type, DM Mono for every figure, and --signal for the
  * one thing on a screen that means "act".
  */
@@ -17,18 +17,46 @@
   padding-bottom: 112px;
 
   .wrap {
-    padding-inline: max(var(--gutter), (100% - 1280px) / 2);
+    padding-inline: max(var(--gutter), (100% - var(--column)) / 2);
   }
 
   /* --- Hero band --------------------------------------------------------------------- */
 
+  /*
+   * Two orbits bleed off the top-right corner: the hero of the home page is a globe, and
+   * these are its echo on pages that have no reason to load one.
+   */
   .page-hero {
     border-bottom: 1px solid var(--line);
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    padding-block: 72px 56px;
+    gap: 22px;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: 120px 72px;
+    position: relative;
+
+    &::before,
+    &::after {
+      border-radius: 50%;
+      content: '';
+      pointer-events: none;
+      position: absolute;
+      z-index: -1;
+    }
+
+    &::before { border: 1px solid var(--line); height: 60vw; right: -12vw; top: -18vw; width: 60vw; }
+    &::after { border: 1px dashed var(--line-soft); height: 44vw; right: -4vw; top: -10vw; width: 44vw; }
   }
+
+  .page-hero > .kicker {
+    color: var(--signal);
+    font: 500 12px var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .page-hero > .kicker a { color: inherit; }
 
   .kicker {
     color: var(--ink-2);
@@ -36,11 +64,12 @@
   }
 
   .page-hero h2 {
-    font-size: clamp(44px, 5.3vw, 76px);
+    font-size: clamp(48px, 7vw, 112px);
     font-stretch: 75%;
-    letter-spacing: -0.02em;
-    line-height: 0.95;
-    max-width: 18ch;
+    letter-spacing: -0.03em;
+    line-height: 0.9;
+    max-width: 16ch;
+    text-wrap: balance;
   }
 
   .lede {
@@ -112,7 +141,7 @@
   .code {
     background: var(--panel);
     border: 1px solid var(--line);
-    border-radius: var(--r);
+    border-radius: var(--r-card);
     overflow: hidden;
   }
 
@@ -152,7 +181,7 @@
 
   .table {
     border: 1px solid var(--line);
-    border-radius: var(--r);
+    border-radius: var(--r-card);
     overflow-x: auto;
     position: relative;
   }
@@ -237,7 +266,7 @@
   .note {
     background: rgb(232 163 61 / 7%);
     border: 1px solid rgb(232 163 61 / 35%);
-    border-radius: var(--r);
+    border-radius: var(--r-field);
     color: var(--ink-2);
     margin: 0;
     max-width: 90ch;
@@ -272,47 +301,10 @@
 
   @keyframes dot-pulse { 50% { opacity: 0.3; } }
 
-  /* --- Buttons and fields, as the query bar draws them --------------------------------- */
+  /* --- Buttons and fields, as the home console draws them ---------------------------- */
 
-  .btn {
-    align-items: center;
-    border-radius: 4px;
-    cursor: pointer;
-    display: inline-flex;
-    font-family: var(--font-body);
-    font-size: 15px;
-    font-weight: 600;
-    gap: 10px;
-    justify-content: center;
-    padding: 9px 18px;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  .btn.primary {
-    background: var(--signal);
-    border: 1px solid var(--signal);
-    color: #fff;
-  }
-
-  .btn.ghost {
-    background: transparent;
-    border: 1px solid var(--line-strong);
-    color: var(--ink-2);
-    font-weight: 500;
-  }
-
-  .btn.small { font-size: 13px; padding: 5px 12px; }
-  .btn.ghost:hover:not(:disabled) { border-color: var(--ink-3); color: var(--ink); }
-  .btn:disabled { cursor: not-allowed; opacity: 0.55; }
-
-  @media (hover: hover) {
-    .btn.primary:hover:not(:disabled) {
-      box-shadow: 0 4px 20px rgb(252 61 33 / 20%);
-      filter: brightness(1.1);
-      transform: translateY(-2px);
-    }
-  }
+  /* Buttons are the global pills (styles.scss): only the compact size is the pages' own. */
+  .btn.small { font-size: 13px; padding: 7px 14px; }
 
   .form {
     align-items: flex-end;
@@ -342,7 +334,7 @@
     align-items: baseline;
     background: var(--bg);
     border: 1px solid var(--line-strong);
-    border-radius: 4px;
+    border-radius: var(--r-field);
     cursor: text;
     display: inline-flex;
     gap: 6px;
@@ -366,7 +358,7 @@
     color: var(--ink);
     font-size: 15px;
     outline: none;
-    padding: 9px 0;
+    padding: 11px 0;
   }
 
   .field input::-webkit-inner-spin-button,

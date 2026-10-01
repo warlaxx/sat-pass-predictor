@@ -14,7 +14,7 @@ import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core
     <div class="code">
       <div class="code-bar">
         <span>{{ label() }}</span>
-        <button type="button" class="btn ghost small" (click)="copy()">{{ copied() ? 'Copied' : 'Copy' }}</button>
+        <button type="button" class="btn outline small" (click)="copy()">{{ copied() ? 'Copied' : 'Copy' }}</button>
       </div>
       <pre><code>{{ code() }}</code></pre>
     </div>

@@ -37,7 +37,7 @@
                  [value]="form().lon" (input)="patch('lon', $any($event.target).value)">
           <span class="unit" aria-hidden="true">° lon</span>
         </label>
-        <button type="button" class="btn ghost" [disabled]="locating()" (click)="useMyPosition()">
+        <button type="button" class="btn outline" [disabled]="locating()" (click)="useMyPosition()">
           {{ locating() ? 'Locating…' : 'Use my position' }}
         </button>
       </div>

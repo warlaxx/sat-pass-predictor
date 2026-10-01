@@ -54,7 +54,7 @@ import { aosUncertaintySeconds, expectedDriftKm, formatAge } from '../format';
       background: #120d05;
       border-bottom: 1px solid #3b2a10;
       padding-block: 22px;
-      padding-inline: max(var(--gutter), (100% - 1280px) / 2);
+      padding-inline: max(var(--gutter), (100% - var(--column)) / 2);
     }
 
     .banner.stale {

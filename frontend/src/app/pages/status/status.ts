@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { firstValueFrom, timeout } from 'rxjs';
 import { Reveal } from '../../motion/reveal';
 import { formatAge } from '../../format';
+import { ServiceStatus } from '../../shared/service-status';
 
 export type ProbeState = 'checking' | 'ok' | 'slow' | 'down';
 
@@ -55,6 +56,7 @@ export const CATALOGUE_STALE_S = 2 * 86_400;
 })
 export class StatusPage {
   private readonly http = inject(HttpClient);
+  private readonly serviceStatus = inject(ServiceStatus);
 
   protected readonly backend = signal<ProbeResult>({ state: 'checking', detail: 'Asking the backend…' });
   protected readonly catalogue = signal<ProbeResult>({ state: 'checking', detail: 'Searching the catalogue…' });
@@ -86,6 +88,7 @@ export class StatusPage {
     this.backend.set(await this.probeBackend());
     this.catalogue.set(await this.probeCatalogue());
     this.checkedAt.set(new Date());
+    this.serviceStatus.report(this.overall());
   }
 
   private async probeBackend(): Promise<ProbeResult> {

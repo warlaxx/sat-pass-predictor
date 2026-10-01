@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { RouterStateSnapshot, Routes, TitleStrategy } from '@angular/router';
 import { HomePage } from './home/home';
+import { coverTransition } from './motion/route-transition';
 
 const SITE = 'Sat Pass Predictor';
 
@@ -11,7 +12,7 @@ const SITE = 'Sat Pass Predictor';
  * should not download Three.js's loader, and a reader of the globe should not download
  * the legal notice.
  */
-export const routes: Routes = [
+const pages: Routes = [
   {
     path: '',
     component: HomePage,
@@ -72,6 +73,9 @@ export const routes: Routes = [
     title: 'Page not found',
   },
 ];
+
+/** Every page waits for the curtain before it swaps in (see `RouteTransition`). */
+export const routes: Routes = pages.map(route => ({ ...route, canActivate: [coverTransition] }));
 
 /**
  * "Page · Sat Pass Predictor" in the tab, and the route's sentence in the description.

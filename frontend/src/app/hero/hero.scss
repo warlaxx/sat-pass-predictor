@@ -1,0 +1,195 @@
+:host { display: block; }
+
+/* The whole first screen, over a globe that fills it edge to edge. */
+.hero {
+  align-items: center;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  isolation: isolate;
+  min-height: calc(100vh - var(--header));
+  overflow: hidden;
+  padding-inline: max(var(--gutter), (100% - var(--column)) / 2);
+  position: relative;
+}
+
+.globe { inset: 0; position: absolute; z-index: 0; }
+
+.scrim {
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 78%) 0%, rgb(0 0 0 / 35%) 38%, transparent 60%),
+    linear-gradient(0deg, var(--bg) 0%, transparent 18%);
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-block: 64px;
+  position: relative;
+  z-index: 2;
+}
+
+.eyebrow {
+  align-items: center;
+  color: var(--ink-2);
+  display: flex;
+  font: 500 12px var(--font-mono);
+  gap: 10px;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.eyebrow i {
+  animation: blink 1.4s ease-in-out infinite;
+  background: var(--signal);
+  border-radius: 99px;
+  height: 8px;
+  width: 8px;
+}
+
+h2 {
+  font-size: clamp(46px, 7.4vw, 124px);
+  font-stretch: 75%;
+  letter-spacing: -0.03em;
+  line-height: 0.88;
+  text-wrap: balance;
+}
+
+h2 span { color: var(--signal); }
+
+.lede {
+  color: var(--ink-2);
+  font-size: 18px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 46ch;
+  text-wrap: pretty;
+}
+
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* --- Next-pass card ------------------------------------------------------------------ */
+
+.card {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  background: linear-gradient(180deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 1.5%));
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: var(--r-card);
+  margin-top: 12px;
+  max-width: 520px;
+  overflow: hidden;
+}
+
+.card-head {
+  align-items: baseline;
+  color: var(--ink-3);
+  display: flex;
+  font-size: 13px;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 16px 20px 0;
+}
+
+.tag { font: 12px var(--font-mono); white-space: nowrap; }
+.tag[data-tone='go'] { color: var(--observer); }
+.tag[data-tone='quiet'] { color: var(--ink-3); }
+.tag[data-tone='busy'] { animation: blink 1.4s ease-in-out infinite; color: var(--lit); }
+
+.countdown {
+  font-size: 44px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  padding: 6px 20px 16px;
+}
+
+.countdown.idle { color: var(--ink-4); }
+
+.facts {
+  border-top: 1px solid rgb(255 255 255 / 7%);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  margin: 0;
+}
+
+.facts div {
+  border-right: 1px solid rgb(255 255 255 / 7%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 20px;
+}
+
+.facts div:last-child { border-right: 0; }
+dt { color: var(--ink-3); font-size: 12px; }
+dd { font-size: 15px; margin: 0; }
+
+/* --- Labels over the globe ----------------------------------------------------------- */
+
+.stage {
+  height: min(86vh, 860px);
+  min-height: 420px;
+  pointer-events: none;
+  position: relative;
+  z-index: 2;
+}
+
+.hud,
+.legend {
+  color: var(--ink-3);
+  display: flex;
+  font: 12px var(--font-mono);
+  gap: 6px;
+  position: absolute;
+}
+
+.hud { flex-direction: column; }
+.hud.top { left: 6%; top: 16%; }
+.hud.observer { align-items: flex-end; bottom: 14%; right: 12%; }
+.lead { align-items: center; color: var(--ink); display: flex; gap: 8px; }
+
+.hud i,
+.legend i { border-radius: 99px; display: inline-block; height: 8px; width: 8px; }
+.hud i { background: var(--observer); }
+
+.legend {
+  bottom: 6%;
+  color: var(--ink-2);
+  flex-wrap: wrap;
+  font-family: var(--font-body);
+  gap: 18px;
+  left: 6%;
+}
+
+.legend span { align-items: center; display: inline-flex; gap: 8px; }
+
+/* Stacked: the text first on black, the globe below it and fading in at its top edge. */
+@media (width < 1100px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+
+  .globe {
+    height: max(420px, 64vh);
+    inset: auto 0 0;
+    mask-image: linear-gradient(to bottom, transparent, #000 30%);
+  }
+
+  .scrim { background: linear-gradient(0deg, var(--bg) 0%, transparent 18%); }
+  .copy { padding-bottom: 0; }
+  .stage { height: max(420px, 64vh); }
+  .hud.top { left: 0; top: 12%; }
+  .hud.observer { right: 0; }
+  .legend { left: 0; }
+}
+
+@media (width < 640px) {
+  .copy { gap: 22px; padding-top: 44px; }
+  .lede { font-size: 16px; }
+  .countdown { font-size: 36px; }
+  .hud.top { display: none; }
+}
