@@ -57,7 +57,7 @@ export const OPERATOR = {
   legalForm: '',
   siren: '',
   address: '',
-  email: '',
+  email: 'contact@nextpass.space',
   publicationDirector: '',
   vatNumber: '',
 } as const;

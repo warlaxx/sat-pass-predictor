@@ -11,6 +11,7 @@ import { StatusPage } from './status/status';
 import { AlertsPage } from './alerts/alerts';
 import { LegalPage } from './legal/legal';
 import { StarlinkPage } from './starlink/starlink';
+import { OPERATOR } from '../shared/site';
 
 const ISS_LINE_1 = '1 25544U 98067A   21035.14486477  .00001026  00000-0  26816-4 0  9998';
 const ISS_LINE_2 = '2 25544  51.6455 280.7636 0002243 335.6496 186.1723 15.48938788267977';
@@ -243,7 +244,9 @@ describe('LegalPage', () => {
     await fixture.whenStable();
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelector('.note')!.textContent).toContain('Draft');
-    expect(page.querySelectorAll('#notice dd .todo').length).toBe(7);
+    // One marker per blank field of OPERATOR, whichever of them have been filled in.
+    const blank = Object.values(OPERATOR).filter((value) => !value).length;
+    expect(page.querySelectorAll('#notice dd .todo').length).toBe(blank);
     expect(page.querySelector('#privacy')).not.toBeNull();
     expect(page.querySelector('#terms')).not.toBeNull();
   });
