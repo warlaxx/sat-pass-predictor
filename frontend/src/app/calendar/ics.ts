@@ -91,7 +91,7 @@ function event(response: PassesResponse, pass: PassDto, window: VisibleWindow): 
     `DTSTAMP:${basic(response.computedAt)}`,
     `DTSTART:${basic(window.start)}`,
     `DTEND:${basic(end)}`,
-    `SUMMARY:${text($localize`${satellite.name}:satellite: - max ${elevation}:elevation:° ${compassPoint(peak.azimuthDeg)}:direction:`)}`,
+    `SUMMARY:${text($localize`${satellite.name}:satellite: · max ${elevation}:elevation:° ${compassPoint(peak.azimuthDeg)}:direction:`)}`,
     `DESCRIPTION:${text(description)}`,
     `GEO:${observer.latitudeDeg};${observer.longitudeDeg}`,
     'TRANSP:TRANSPARENT',

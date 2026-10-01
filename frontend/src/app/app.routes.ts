@@ -128,7 +128,7 @@ export class SiteTitleStrategy extends TitleStrategy {
   /** The application on the home page; the trail from it on the pages below Satellites. */
   private structuredData(route: ActivatedRouteSnapshot, url: string, description: string | undefined): object | undefined {
     const path = route.routeConfig?.path;
-    if (path === '') return description ? this.seo.application(description) : undefined;
+    if (path === '') return description ? this.seo.home(description) : undefined;
     const satellites = { name: $localize`:Breadcrumb:Satellites`, path: '/satellites' };
     if (path === 'starlink') return this.seo.breadcrumbs([satellites, { name: 'Starlink', path: url }]);
     if (path === 'satellites/:noradId') {

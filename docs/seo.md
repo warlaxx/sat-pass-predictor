@@ -38,7 +38,8 @@ the prerendered HTML:
 | Open Graph, `twitter:card` | Title, description, URL, locale and alternate locale |
 | `og:image`, `twitter:image` | `public/og/en.png` or `fr.png`, 1200×630, with `summary_large_image`; left out without a known origin, since the address must be absolute |
 | `robots: noindex` | The not-found page only, which a static host answers with 200 |
-| JSON-LD | `WebApplication` on the home page; `BreadcrumbList` (NextPass › Satellites › …) on `/starlink` and the featured satellites' pages, which need an absolute origin |
+| JSON-LD | `WebSite` (`name: NextPass`, the name Google shows above a result instead of the domain) and `WebApplication` on the home page; `BreadcrumbList` (NextPass › Satellites › …) on `/starlink` and the featured satellites' pages, which need an absolute origin |
+| Icons | `favicon-48/96/192.png` first: Google shows a favicon only if it is square and a multiple of 48 px. Then the SVG, a 16/32/48 `.ico`, the Apple icon and `site.webmanifest`. Absolute paths, since the French build's base is `/fr/` |
 | Headings | One `<h1>` per page: its own title. The brand in the header is not a heading |
 
 **robots.txt and sitemap.xml** are written after the build by
@@ -103,6 +104,10 @@ and code samples.
 - Declare the domain in Google Search Console and Bing Webmaster Tools, submit
   `/sitemap.xml`, and inspect one page per language with the URL inspection tool.
 - Lighthouse's SEO audit on one page of each language.
+- In Search Console, inspect `https://www.nextpass.space/` and request indexing. A result
+  still showing `http://nextpass.space`, the domain instead of "NextPass", or a blank globe
+  for an icon is an old crawl: the name and the favicon are refreshed by Google on its own
+  schedule, usually within days to a few weeks.
 
 ## Advertising (Google AdSense)
 
