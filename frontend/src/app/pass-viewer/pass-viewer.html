@@ -1,16 +1,16 @@
-<section class="selected" aria-label="Selected pass">
+<section class="selected" aria-label="Selected pass" i18n-aria-label>
   <div class="views">
     <!-- The globe is projected in, so the two pictures of one pass share a row and one clock. -->
     <ng-content />
 
     <article id="sky" class="card view">
       <header>
-        <h3>Where to look</h3>
-        <span class="num meta">local time ({{ zone() }})</span>
+        <h3 i18n>Where to look</h3>
+        <span class="num meta" i18n>local time ({{ zone() }})</span>
       </header>
-      <p class="hint">Sky chart: the edge of the disc is the horizon, the centre the zenith, north at the top and east on the right. A mark every minute.</p>
+      <p class="hint" i18n>Sky chart: the edge of the disc is the horizon, the centre the zenith, north at the top and east on the right. A mark every minute.</p>
       <div class="stage">
-        <svg viewBox="0 0 360 360" role="img" aria-label="Sky trajectory of the selected pass; exact phase times and directions follow below">
+        <svg viewBox="0 0 360 360" role="img" aria-label="Sky trajectory of the selected pass; exact phase times and directions follow below" i18n-aria-label>
           <circle class="disc" cx="180" cy="180" r="144" />
           @for (elevation of [30, 60]; track elevation) {
             <circle class="grid" cx="180" cy="180" [attr.r]="(90 - elevation) / 90 * 144" />
@@ -21,8 +21,8 @@
             <line class="rim" [attr.x1]="180 + 144 * sin(bearing)" [attr.y1]="180 - 144 * cos(bearing)"
                   [attr.x2]="180 + 137.6 * sin(bearing)" [attr.y2]="180 - 137.6 * cos(bearing)" />
           }
-          <text class="cardinal north" x="180" y="24">N</text><text class="cardinal" x="340" y="184">E</text>
-          <text class="cardinal" x="180" y="344">S</text><text class="cardinal" x="20" y="184">W</text>
+          <text class="cardinal north" x="180" y="24" i18n="Compass, short">N</text><text class="cardinal" x="340" y="184" i18n="Compass, short">E</text>
+          <text class="cardinal" x="180" y="344" i18n="Compass, short">S</text><text class="cardinal" x="20" y="184" i18n="Compass, short">W</text>
           <circle class="zenith" cx="180" cy="180" r="1.6" />
 
           @for (run of runs(); track $index) {
@@ -33,13 +33,13 @@
             <text class="time" [attr.x]="tick.x - 8" [attr.y]="tick.y - 7" text-anchor="end">{{ tick.instant | date: 'HH:mm' }}</text>
           }
           <circle class="phase-dot" [attr.cx]="project(pass().aos).x" [attr.cy]="project(pass().aos).y" r="4.2">
-            <title>Rise · {{ pass().aos.instant | date: 'HH:mm:ss' }}</title>
+            <title>{{ phases()[0].name }} · {{ pass().aos.instant | date: 'HH:mm:ss' }}</title>
           </circle>
           <circle class="phase-dot end" [attr.cx]="project(pass().los).x" [attr.cy]="project(pass().los).y" r="4.2">
-            <title>Set · {{ pass().los.instant | date: 'HH:mm:ss' }}</title>
+            <title>{{ phases()[2].name }} · {{ pass().los.instant | date: 'HH:mm:ss' }}</title>
           </circle>
           <circle class="peak-dot" [attr.cx]="project(pass().culmination).x" [attr.cy]="project(pass().culmination).y" r="5.5">
-            <title>Culmination · {{ pass().culmination.instant | date: 'HH:mm:ss' }}</title>
+            <title>{{ phases()[1].name }} · {{ pass().culmination.instant | date: 'HH:mm:ss' }}</title>
           </circle>
           <text class="peak-label" [attr.x]="project(pass().culmination).x + 11" [attr.y]="project(pass().culmination).y + 4">
             {{ pass().culmination.elevationDeg | number: '1.0-0' }}°
@@ -48,25 +48,25 @@
           <circle class="satellite" [attr.cx]="project(current()).x" [attr.cy]="project(current()).y" r="4.2" />
         </svg>
       </div>
-      <p role="status">{{ potentiallyVisible() ? 'Potentially visible during part of this pass.' : 'No favourable visibility sample during this pass.' }}</p>
+      <p role="status">@if (potentiallyVisible()) {<ng-container i18n>Potentially visible during part of this pass.</ng-container>} @else {<ng-container i18n>No favourable visibility sample during this pass.</ng-container>}</p>
       <p class="legend">
         @if (illumination()) {
-          <span><i class="stroke lit"></i>satellite fully sunlit</span>
-          <span><i class="stroke shade"></i>eclipse / partial eclipse</span>
+          <span i18n><i class="stroke lit"></i>satellite fully sunlit</span>
+          <span i18n><i class="stroke shade"></i>eclipse / partial eclipse</span>
         } @else {
-          <span><i class="stroke neutral"></i>trajectory</span>
+          <span i18n><i class="stroke neutral"></i>trajectory</span>
         }
-        <span><i class="stroke threshold-key"></i>{{ threshold() }}° threshold</span>
+        <span i18n><i class="stroke threshold-key"></i>{{ threshold() }}° threshold</span>
         @if (!illumination()) {
-          <span class="note">No illumination samples available.</span>
+          <span class="note" i18n>No illumination samples available.</span>
         }
-        <span class="note">Potential visibility requires sunlight on the satellite and the Sun at least 6° below your horizon. Weather and brightness are not modelled; transitions are sampled every 10 s.</span>
+        <span class="note" i18n>Potential visibility requires sunlight on the satellite and the Sun at least 6° below your horizon. Weather and brightness are not modelled; transitions are sampled every 10 s.</span>
       </p>
     </article>
   </div>
 
-  <div class="card transport" role="group" aria-label="Pass playback">
-    <button type="button" class="play" (click)="clock.toggle()" [attr.aria-label]="clock.playing() ? 'Pause animation' : 'Play animation'">
+  <div class="card transport" role="group" aria-label="Pass playback" i18n-aria-label>
+    <button type="button" class="play" (click)="clock.toggle()" [attr.aria-label]="clock.playing() ? pauseLabel : playLabel">
       @if (clock.playing()) {
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="3" y="2" width="4" height="14" /><rect x="11" y="2" width="4" height="14" /></svg>
       } @else {
@@ -77,22 +77,22 @@
     <div class="scrubber">
       <div class="rail" [style.--progress]="progress()" [style.--peak]="peakAt()">
         <input type="range" [min]="start()" [max]="end()" step="100" [value]="clock.instant()" (input)="scrub($event)"
-          aria-label="Time within the pass" [attr.aria-valuetext]="(clock.instant() | date: 'HH:mm:ss') + ' local time'">
+          aria-label="Time within the pass" i18n-aria-label [attr.aria-valuetext]="(clock.instant() | date: 'HH:mm:ss') + localTimeSuffix">
         <span class="peak-mark" aria-hidden="true"></span>
       </div>
       <div class="scale num" aria-hidden="true">
         <span>{{ start() | date: 'HH:mm' }}</span>
-        <span>peak {{ pass().culmination.instant | date: 'HH:mm' }} · 20×</span>
+        <span i18n>peak {{ pass().culmination.instant | date: 'HH:mm' }} · 20×</span>
         <span>{{ end() | date: 'HH:mm' }}</span>
       </div>
     </div>
 
     <div class="readout num">
-      <span><b>{{ current().instant | date: 'HH:mm:ss' }}</b> <small>local time</small></span>
-      <span><b>{{ current().azimuthDeg | number: '1.1-1' }}° {{ compass(current().azimuthDeg) }}</b> <small>azimuth</small></span>
-      <span><b>{{ current().elevationDeg | number: '1.1-1' }}°</b> <small>elevation</small></span>
-      <span><b>{{ current().rangeKm | number: '1.0-0' }} km</b> <small>distance</small></span>
-      <span><b>{{ current().rangeRateKmS | number: '1.2-2' }} km/s</b> <small>{{ current().rangeRateKmS < 0 ? 'approaching' : 'receding' }}</small></span>
+      <span><b>{{ current().instant | date: 'HH:mm:ss' }}</b> <small i18n>local time</small></span>
+      <span><b>{{ current().azimuthDeg | number: '1.1-1' }}° {{ compass(current().azimuthDeg) }}</b> <small i18n>azimuth</small></span>
+      <span><b>{{ current().elevationDeg | number: '1.1-1' }}°</b> <small i18n>elevation</small></span>
+      <span><b>{{ current().rangeKm | number: '1.0-0' }} km</b> <small i18n>distance</small></span>
+      <span><b>{{ current().rangeRateKmS | number: '1.2-2' }} km/s</b> <small>@if (current().rangeRateKmS < 0) {<ng-container i18n>approaching</ng-container>} @else {<ng-container i18n>receding</ng-container>}</small></span>
       @if (current().dopplerHz !== null) {
         <span><b>{{ doppler(current().dopplerHz!) }}</b> <small>Doppler</small></span>
       }
@@ -105,30 +105,30 @@
         <div class="marker" aria-hidden="true"><span class="dot"></span><span class="rule"></span></div>
         <h3>{{ phase.name }}</h3>
         <p class="num time">{{ phase.point.instant | date: 'HH:mm:ss' }} <small>{{ phase.point.instant | date: 'HH:mm:ss': 'UTC' }} UTC</small></p>
-        <span class="num where">{{ compass(phase.point.azimuthDeg) }} · {{ phase.point.azimuthDeg | number: '1.1-1' }}° · elev. {{ phase.point.elevationDeg | number: '1.1-1' }}°</span>
+        <span class="num where" i18n>{{ compass(phase.point.azimuthDeg) }} · {{ phase.point.azimuthDeg | number: '1.1-1' }}° · elev. {{ phase.point.elevationDeg | number: '1.1-1' }}°</span>
       </div>
     }
   </div>
 
   <div class="tiles">
     <div class="tile">
-      <span class="label">Duration</span>
+      <span class="label" i18n>Duration</span>
       <strong class="num">{{ minutes() }}</strong>
-      <span class="num sub">above {{ threshold() }}°</span>
+      <span class="num sub" i18n>above {{ threshold() }}°</span>
     </div>
     <div class="tile">
-      <span class="label">Maximum elevation</span>
+      <span class="label" i18n>Maximum elevation</span>
       <strong class="num" [style.color]="peakColour()">{{ pass().culmination.elevationDeg | number: '1.1-1' }}°</strong>
       <span class="num sub">{{ peakWords() }}</span>
     </div>
     <div class="tile">
-      <span class="label">Distance at peak</span>
+      <span class="label" i18n>Distance at peak</span>
       <strong class="num">{{ pass().culmination.rangeKm | number: '1.0-0' }} km</strong>
-      <span class="num sub">slant range to the observer</span>
+      <span class="num sub" i18n>slant range to the observer</span>
     </div>
     @if (elementsAge(); as age) {
       <div class="tile">
-        <span class="label">Elements age at rise</span>
+        <span class="label" i18n>Elements age at rise</span>
         <strong class="num">{{ ageLabel(age) }}</strong>
         <span class="num sub">{{ timing(age) }}</span>
       </div>

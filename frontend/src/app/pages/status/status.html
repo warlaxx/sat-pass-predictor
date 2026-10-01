@@ -1,38 +1,38 @@
 <section class="page-hero wrap" appReveal aria-labelledby="status-title">
-  <span class="kicker">Service status</span>
+  <span class="kicker" i18n>Service status</span>
   <h2 id="status-title">
     @switch (overall()) {
-      @case ('checking') { Checking… }
-      @case ('ok') { All systems answering }
-      @case ('slow') { Answering, with caveats }
-      @case ('down') { Something is not answering }
+      @case ('checking') { <ng-container i18n>Checking…</ng-container> }
+      @case ('ok') { <ng-container i18n>All systems answering</ng-container> }
+      @case ('slow') { <ng-container i18n>Answering, with caveats</ng-container> }
+      @case ('down') { <ng-container i18n>Something is not answering</ng-container> }
     }
   </h2>
-  <p class="lede">
+  <p class="lede" i18n>
     Measured live, from your browser, when this page opened. Nothing here is cached or
     typed by hand.
   </p>
   <div class="actions">
     <button type="button" class="btn outline" [disabled]="checking()" (click)="check()">
-      {{ checking() ? 'Checking…' : 'Check again' }}
+      @if (checking()) {<ng-container i18n>Checking…</ng-container>} @else {<ng-container i18n>Check again</ng-container>}
     </button>
   </div>
 </section>
 
 <section class="page-section wrap" appReveal aria-labelledby="components">
   <div class="section-head">
-    <h2 id="components">Components</h2>
+    <h2 id="components" i18n>Components</h2>
     @if (checkedAt(); as at) {
-      <span>Checked at <span class="num">{{ at | date: 'HH:mm:ss' }}</span> local time</span>
+      <span i18n>Checked at <span class="num">{{ at | date: 'HH:mm:ss' }}</span> local time</span>
     }
   </div>
 
   <div class="card probes" role="status" aria-live="polite">
     <div class="probe">
       <span class="dot ok" aria-hidden="true"></span>
-      <h3>Website</h3>
+      <h3 i18n>Website</h3>
       <span class="num">-</span>
-      <p>Up: you are reading it. Served as static files from a CDN.</p>
+      <p i18n>Up: you are reading it. Served as static files from a CDN.</p>
     </div>
     @for (probe of probes(); track probe.name) {
       <div class="probe">
@@ -41,7 +41,7 @@
               [class.down]="probe.result.state === 'down'" [class.wait]="probe.result.state === 'checking'"></span>
         <h3>{{ probe.name }}</h3>
         <span class="num">{{ probe.result.millis !== undefined ? probe.result.millis + ' ms' : '…' }}</span>
-        <p><span class="visually-hidden">{{ probe.result.state }}: </span>{{ probe.result.detail }}</p>
+        <p><span class="visually-hidden">{{ stateLabels[probe.result.state] }}: </span>{{ probe.result.detail }}</p>
       </div>
     }
   </div>
@@ -49,14 +49,14 @@
 
 <section class="page-section wrap" appReveal aria-labelledby="expect">
   <div class="section-head">
-    <h2 id="expect">What to expect</h2>
+    <h2 id="expect" i18n>What to expect</h2>
   </div>
   <div class="prose">
     <ul>
-      <li><b>Cold starts.</b> The backend runs on an instance that sleeps after a quiet period; the first call then takes up to about thirty seconds. Every call after it is fast.</li>
-      <li><b>Orbital elements.</b> If CelesTrak cannot be reached, predictions keep using the last elements fetched, with their real age shown on every result, for up to seven days. After that a satellite is refused rather than predicted badly.</li>
-      <li><b>Shared demo budget.</b> The predictor on this site shares one anonymous quota across all visitors; on a busy day it can run out before midnight UTC. <a routerLink="/pricing">API keys have their own.</a></li>
-      <li><b>No uptime history yet.</b> There is no external monitor behind this page, so it shows the present only, and no availability commitment is made.</li>
+      <li i18n><b>Cold starts.</b> The backend runs on an instance that sleeps after a quiet period; the first call then takes up to about thirty seconds. Every call after it is fast.</li>
+      <li i18n><b>Orbital elements.</b> If CelesTrak cannot be reached, predictions keep using the last elements fetched, with their real age shown on every result, for up to seven days. After that a satellite is refused rather than predicted badly.</li>
+      <li i18n><b>Shared demo budget.</b> The predictor on this site shares one anonymous quota across all visitors; on a busy day it can run out before midnight UTC. <a routerLink="/pricing">API keys have their own.</a></li>
+      <li i18n><b>No uptime history yet.</b> There is no external monitor behind this page, so it shows the present only, and no availability commitment is made.</li>
     </ul>
   </div>
 </section>

@@ -1,7 +1,7 @@
 <section class="page-hero wrap" appReveal aria-labelledby="method-title">
-  <span class="kicker">Methodology</span>
-  <h2 id="method-title">A curve is not a prediction until it has been checked</h2>
-  <p class="lede">
+  <span class="kicker" i18n>Methodology</span>
+  <h2 id="method-title" i18n>A curve is not a prediction until it has been checked</h2>
+  <p class="lede" i18n>
     Every tracker draws a curve. What follows says how this one is computed, what it was
     compared with, and what its times are worth by the evening you go outside.
   </p>
@@ -9,40 +9,40 @@
 
 <section class="page-section wrap" appReveal aria-labelledby="pipeline">
   <div class="section-head">
-    <h2 id="pipeline">From elements to a pass</h2>
-    <span>The browser computes nothing: every point it draws comes from the server</span>
+    <h2 id="pipeline" i18n>From elements to a pass</h2>
+    <span i18n>The browser computes nothing: every point it draws comes from the server</span>
   </div>
   <div class="cards steps">
     <article class="card">
-      <h3>Fresh elements</h3>
-      <p>A two-line element set (TLE) from CelesTrak, refreshed every two hours, validated by Orekit on arrival. If CelesTrak is unreachable, the last good set is kept with its real age.</p>
+      <h3 i18n>Fresh elements</h3>
+      <p i18n>A two-line element set (TLE) from CelesTrak, refreshed every two hours, validated by Orekit on arrival. If CelesTrak is unreachable, the last good set is kept with its real age.</p>
     </article>
     <article class="card">
-      <h3>SGP4 propagation</h3>
-      <p>Orekit's SGP4 turns the elements into positions. A TLE is only meaningful to SGP4: it is never fed to another propagator.</p>
+      <h3 i18n>SGP4 propagation</h3>
+      <p i18n>Orekit's SGP4 turns the elements into positions. A TLE is only meaningful to SGP4: it is never fed to another propagator.</p>
     </article>
     <article class="card">
-      <h3>Frame by frame</h3>
-      <p>SGP4 speaks TEME. Each date is converted to ITRF - precession-nutation, Earth rotation, polar motion, full IERS 2010 EOP - then read from the observer's horizon.</p>
+      <h3 i18n>Frame by frame</h3>
+      <p i18n>SGP4 speaks TEME. Each date is converted to ITRF - precession-nutation, Earth rotation, polar motion, full IERS 2010 EOP - then read from the observer's horizon.</p>
     </article>
     <article class="card">
-      <h3>Event detection</h3>
-      <p>An elevation detector finds rise and set to the millisecond by root finding; the culmination is found the same way, not interpolated.</p>
+      <h3 i18n>Event detection</h3>
+      <p i18n>An elevation detector finds rise and set to the millisecond by root finding; the culmination is found the same way, not interpolated.</p>
     </article>
     <article class="card">
-      <h3>Sampled track</h3>
-      <p>A second propagation per pass samples the track every 10 s, with range, range rate, sub-satellite point and sunlight at each point.</p>
+      <h3 i18n>Sampled track</h3>
+      <p i18n>A second propagation per pass samples the track every 10 s, with range, range rate, sub-satellite point and sunlight at each point.</p>
     </article>
   </div>
 </section>
 
 <section class="page-section wrap" appReveal aria-labelledby="validation">
   <div class="section-head">
-    <h2 id="validation">Validated against Skyfield</h2>
-    <span>An independent SGP4 implementation, sharing no code with Orekit</span>
+    <h2 id="validation" i18n>Validated against Skyfield</h2>
+    <span i18n>An independent SGP4 implementation, sharing no code with Orekit</span>
   </div>
   <div class="prose">
-    <p>
+    <p i18n>
       Comparing two lists of pass times would show discrepancies of up to a second without
       saying which side is wrong. The check works the other way round: it takes the instants
       Orekit produces and asks Skyfield <b>what elevation and azimuth it computes at those
@@ -53,28 +53,28 @@
   <div class="table">
     <table>
       <thead>
-        <tr><th scope="col">Quantity</th><th scope="col">Measured discrepancy</th><th scope="col">Tolerance</th><th scope="col">Margin</th></tr>
+        <tr><th scope="col" i18n>Quantity</th><th scope="col" i18n>Measured discrepancy</th><th scope="col" i18n>Tolerance</th><th scope="col" i18n>Margin</th></tr>
       </thead>
       <tbody>
-        <tr><td>Elevation, Orekit vs Skyfield</td><td class="num">0.53 millidegree</td><td class="num">10 millidegrees</td><td class="num">×19</td></tr>
-        <tr><td>Azimuth, Orekit vs Skyfield</td><td class="num">2.0 millidegrees</td><td class="num">20 millidegrees</td><td class="num">×10</td></tr>
-        <tr><td>Dates, regression suite</td><td class="num">0</td><td class="num">1 s</td><td class="num">-</td></tr>
-        <tr><td>Angles, regression suite</td><td class="num">0</td><td class="num">0.1°</td><td class="num">-</td></tr>
+        <tr><td i18n>Elevation, Orekit vs Skyfield</td><td class="num" i18n>0.53 millidegree</td><td class="num" i18n>10 millidegrees</td><td class="num">×19</td></tr>
+        <tr><td i18n>Azimuth, Orekit vs Skyfield</td><td class="num" i18n>2.0 millidegrees</td><td class="num" i18n>20 millidegrees</td><td class="num">×10</td></tr>
+        <tr><td i18n>Dates, regression suite</td><td class="num">0</td><td class="num">1 s</td><td class="num">-</td></tr>
+        <tr><td i18n>Angles, regression suite</td><td class="num">0</td><td class="num">0.1°</td><td class="num">-</td></tr>
       </tbody>
     </table>
   </div>
   <div class="split">
     <div class="prose">
-      <h3>What it proves</h3>
-      <p>
+      <h3 i18n>What it proves</h3>
+      <p i18n>
         That the implementation and the chain of reference frames are correct. A regression
         test in continuous integration then watches the same reference file for drift: a
         library upgrade, a refresh of the Earth orientation data, a rewrite of the service.
       </p>
     </div>
     <div class="prose">
-      <h3>What it does not</h3>
-      <p>
+      <h3 i18n>What it does not</h3>
+      <p i18n>
         Skyfield and Orekit implement the same model. Their agreement says nothing about the
         gap to the real sky, which is dominated by the age of the elements. That gap is the
         subject of the next section - and the reason every result shows it.
@@ -85,45 +85,45 @@
 
 <section class="page-section wrap" appReveal aria-labelledby="worth">
   <div class="section-head">
-    <h2 id="worth">What the times are worth</h2>
-    <span>The age of the elements dominates every other error</span>
+    <h2 id="worth" i18n>What the times are worth</h2>
+    <span i18n>The age of the elements dominates every other error</span>
   </div>
   <div class="table">
     <table>
       <thead>
-        <tr><th scope="col">Source of error</th><th scope="col">Order of magnitude</th><th scope="col">How it is handled</th></tr>
+        <tr><th scope="col" i18n>Source of error</th><th scope="col" i18n>Order of magnitude</th><th scope="col" i18n>How it is handled</th></tr>
       </thead>
       <tbody>
         <tr>
-          <td>Age of the TLE</td>
-          <td class="num">~1 km at epoch, then 1–3 km/day in low orbit</td>
-          <td>Shown on every result as a drift and a timing range. Elements older than 7 days are refused; windows are capped at 10 days.</td>
+          <td i18n>Age of the TLE</td>
+          <td class="num" i18n>~1 km at epoch, then 1–3 km/day in low orbit</td>
+          <td i18n>Shown on every result as a drift and a timing range. Elements older than 7 days are refused; windows are capped at 10 days.</td>
         </tr>
         <tr>
-          <td>Manoeuvres</td>
-          <td>Unbounded until new elements</td>
-          <td>Invisible to SGP4. An ISS reboost makes the previous elements wrong until CelesTrak publishes new ones.</td>
+          <td i18n>Manoeuvres</td>
+          <td i18n>Unbounded until new elements</td>
+          <td i18n>Invisible to SGP4. An ISS reboost makes the previous elements wrong until CelesTrak publishes new ones.</td>
         </tr>
         <tr>
-          <td>Atmospheric refraction</td>
-          <td class="num">~0.1° near 5° elevation</td>
-          <td>Not modelled: positions are geometric. Keep a threshold above a few degrees.</td>
+          <td i18n>Atmospheric refraction</td>
+          <td class="num" i18n>~0.1° near 5° elevation</td>
+          <td i18n>Not modelled: positions are geometric. Keep a threshold above a few degrees.</td>
         </tr>
         <tr>
-          <td>Earth orientation (UT1, polar motion)</td>
+          <td i18n>Earth orientation (UT1, polar motion)</td>
           <td class="num">&lt; 500 m</td>
-          <td>Modelled anyway with predicted IERS Bulletin A values: a correct frame chain costs nothing.</td>
+          <td i18n>Modelled anyway with predicted IERS Bulletin A values: a correct frame chain costs nothing.</td>
         </tr>
         <tr>
-          <td>Light time</td>
-          <td class="num">a few ms</td>
-          <td>Not modelled.</td>
+          <td i18n>Light time</td>
+          <td class="num" i18n>a few ms</td>
+          <td i18n>Not modelled.</td>
         </tr>
       </tbody>
     </table>
   </div>
   <div class="prose">
-    <p>
+    <p i18n>
       Two days of age mean 2 to 6&nbsp;km, which the ISS covers in under a second at
       7.7&nbsp;km/s: invisible to the naked eye, but a thousand times the Earth-orientation
       effects. Times are shown to the second; treat the banner above every result as their
@@ -134,20 +134,20 @@
 
 <section class="page-section wrap" appReveal aria-labelledby="visibility">
   <div class="section-head">
-    <h2 id="visibility">"Potentially visible", precisely</h2>
+    <h2 id="visibility" i18n>"Potentially visible", precisely</h2>
   </div>
   <div class="split">
     <div class="prose">
-      <h3>Sunlit</h3>
-      <p>
+      <h3 i18n>Sunlit</h3>
+      <p i18n>
         A point is <code>illuminated</code> when the entire solar disc is clear of the Earth
         - penumbra counts as shadow. A satellite that enters the shadow mid-pass disappears
         mid-sky, and the sky chart shows where.
       </p>
     </div>
     <div class="prose">
-      <h3>Visible</h3>
-      <p>
+      <h3 i18n>Visible</h3>
+      <p i18n>
         A point is <code>visible</code> when the satellite is sunlit <b>and</b> the Sun is at
         least 6° below the observer's horizon (civil twilight). It is a geometric condition,
         not a promise: brightness, clouds and light pollution are not modelled.
@@ -158,16 +158,16 @@
 
 <section class="page-section wrap" appReveal aria-labelledby="sources">
   <div class="section-head">
-    <h2 id="sources">Sources and credits</h2>
+    <h2 id="sources" i18n>Sources and credits</h2>
   </div>
   <div class="prose">
     <ul>
-      <li>Orbital elements: <a href="https://celestrak.org" rel="noopener">CelesTrak</a>, reached directly or through a relay; Space-Track only as an availability fallback when configured.</li>
-      <li>Astrodynamics: <a href="https://www.orekit.org/" rel="noopener">Orekit</a> 13, with its IERS data (leap seconds, Earth orientation parameters).</li>
-      <li>Independent check: <a href="https://rhodesmill.org/skyfield/" rel="noopener">Skyfield</a>.</li>
-      <li>Coastlines: Natural Earth, 1:110m.</li>
+      <li i18n>Orbital elements: <a href="https://celestrak.org" rel="noopener">CelesTrak</a>, reached directly or through a relay; Space-Track only as an availability fallback when configured.</li>
+      <li i18n>Astrodynamics: <a href="https://www.orekit.org/" rel="noopener">Orekit</a> 13, with its IERS data (leap seconds, Earth orientation parameters).</li>
+      <li i18n>Independent check: <a href="https://rhodesmill.org/skyfield/" rel="noopener">Skyfield</a>.</li>
+      <li i18n>Coastlines: Natural Earth, 1:110m.</li>
     </ul>
-    <p>
+    <p i18n>
       The code, the validation script and the reference file are public:
       <a [href]="repositoryUrl" rel="noopener">read them on GitHub ↗</a>. Integrating the
       predictions? <a routerLink="/developers">See the API guide.</a>

@@ -51,8 +51,8 @@ export function orbitFromTle(line2: string): OrbitSummary | undefined {
 /** The usual name of the regime, from the mean altitude. */
 export function orbitRegime(orbit: OrbitSummary): string {
   const mean = (orbit.perigeeKm + orbit.apogeeKm) / 2;
-  if (orbit.eccentricity > 0.25) return 'Highly elliptical orbit';
-  if (mean < 2000) return 'Low Earth orbit';
-  if (Math.abs(mean - 35_786) < 500) return 'Geosynchronous orbit';
-  return 'Medium Earth orbit';
+  if (orbit.eccentricity > 0.25) return $localize`Highly elliptical orbit`;
+  if (mean < 2000) return $localize`Low Earth orbit`;
+  if (Math.abs(mean - 35_786) < 500) return $localize`Geosynchronous orbit`;
+  return $localize`Medium Earth orbit`;
 }

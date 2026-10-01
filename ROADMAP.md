@@ -631,7 +631,7 @@ a thousand times, on a container sized for a free plan.
   deleted only when the catalogue says the object is gone. Follows `api-access.enabled`;
   the default demo is unchanged.
 - [x] Measured before and after, with `scripts/measure-passes.sh` and the two meters it
-  reads (`satpass.predictions`, `satpass.prediction.duration`).
+  reads (`nextpass.predictions`, `nextpass.prediction.duration`).
 
 **The measurement.** 200 sequential calls, ISS over Lyon, 48 h window, JDK 25 on an
 Apple M-series laptop — an order of magnitude, not a datacenter benchmark:
@@ -881,6 +881,40 @@ is no `/api` alias: the anonymous demo's shared budget is not to be spent in bul
 oversized-batch refusal on real PostgreSQL; `PassQueryServiceTest` that several sites
 share one TLE read and match their single calls. Checked by hand against a running
 instance with live CelesTrak elements.
+
+---
+
+## Search engines and a French edition (done; production check pending)
+
+A single-page app answers a crawler with an empty `<app-root>`, which is what the frontend
+did until now; the SEO line of milestone 17 could not start on top of that. Details and
+the remaining work, by order of value: [search engines and languages](docs/seo.md).
+
+**Decision: prerendered static files, not server rendering.** Vercel serves the site as
+static files, and every page but the passes is the same for every visitor. `outputMode:
+"static"` writes the pages to HTML at build time and needs no server runtime; a per-request
+server would cost a function invocation per page view to render text that never changes.
+Passes are never prerendered: stale before anyone reads them.
+
+**Decision: hydration.** The browser adopts the prerendered DOM instead of redrawing it,
+which also means no flash between the static page and the app. Accepted cost: the initial
+bundle grows by about 65 kB raw, 19 kB transferred (483 → 549 kB raw), past the 500 kB
+warning budget, which moves to 600 kB. The error budget stays at 1 MB.
+
+**Decision: one build per language, English at the root.** `@angular/localize` compiles the
+translations in, so the French build ships no dictionary and no English. English stays at
+the root so that no published address changes; French lives under `/fr/`. No automatic
+redirect by browser language: it would hide the French pages from a crawler that sends
+none.
+
+**Decision: the public origin comes from the build environment** (`SITE_URL`, else
+Vercel's `VERCEL_PROJECT_PRODUCTION_URL`), never from the code. Without one, canonical
+links and the sitemap are omitted rather than wrong.
+
+Not done here: a domain of the project's own, an Open Graph image, more prerendered
+satellites, per-city pages. Verified: 165 frontend tests, the generators of robots.txt and
+sitemap.xml, both builds rendered and hydrated in Chromium behind a local server that
+mimics Vercel's routing. Not verified: the same on a real Vercel deployment.
 
 ---
 

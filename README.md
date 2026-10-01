@@ -1,8 +1,9 @@
-# Sat Pass Predictor
+# NextPass
 
 [![CI](https://github.com/warlaxx/sat-pass-predictor/actions/workflows/ci.yml/badge.svg)](https://github.com/warlaxx/sat-pass-predictor/actions/workflows/ci.yml)
 
-Computing and visualising satellite passes over a given point on Earth.
+Computing and visualising satellite passes over a given point on Earth, live at
+<https://nextpass.space>.
 Java / Spring Boot backend with [Orekit](https://www.orekit.org/), Angular frontend.
 
 > A learning project aimed at the space ecosystem: SGP4 propagation from TLEs, reference
@@ -105,6 +106,7 @@ cd backend && ./mvnw spring-boot:run
 
 # 3. Frontend (http://localhost:4200, /api proxied to 8080)
 cd frontend && npm install && npm start
+# French instead of English: npx ng serve --configuration fr
 ```
 
 ## Tests
@@ -146,7 +148,7 @@ Orbital elements come from a **chain of sources, tried in order**, configured by
 `tle.base-urls` and overridable in one go with `TLE_BASE_URLS` (comma-separated):
 
 1. `https://celestrak.org` — the origin.
-2. `https://sat-pass-predictor-nine.vercel.app/tle-upstream` — the same CelesTrak, reached
+2. `https://nextpass.space/tle-upstream` — the same CelesTrak, reached
    through a rewrite on the frontend's host. It exists because CelesTrak silently drops
    packets coming from the shared outbound IPs of the platform the API is deployed on: a
    connect timeout, no refusal, no DNS error, on a host that answers other datacenters in
@@ -170,7 +172,7 @@ Connection establishment has a 5 s timeout and each source has its own 15 s requ
 budget. Render logs showed connection timeouts on both endpoints; response timings alone
 cannot establish whether a connection or a response timed out. `render.yaml` prefers the
 Vercel relay on Render. For a manually configured service, set `TLE_BASE_URLS` to
-`https://sat-pass-predictor-nine.vercel.app/tle-upstream,https://celestrak.org` in its dashboard.
+`https://nextpass.space/tle-upstream,https://celestrak.org` in its dashboard.
 A Blueprint setting does not automatically update a manually created service.
 
 Failed sources remain available but move to the end for ten minutes. When nothing has
@@ -216,8 +218,8 @@ Measured rather than asserted, with `scripts/measure-passes.sh` against a local 
 | 200 distinct observers, cache on | 113.4 ms | 120.8 ms | 112 s |
 
 The third row is the point of the table: on a workload the cache cannot help, it costs
-nothing measurable. The two meters behind those numbers, `satpass.predictions` and
-`satpass.prediction.duration`, are on `/actuator/metrics`. The last column is **elapsed
+nothing measurable. The two meters behind those numbers, `nextpass.predictions` and
+`nextpass.prediction.duration`, are on `/actuator/metrics`. The last column is **elapsed
 time inside the propagation, not CPU time** — a Micrometer timer measures a duration, and
 nothing here samples a thread's CPU clock. On this single-threaded run the two are close;
 they are not the same quantity.
@@ -315,9 +317,14 @@ shared and reopened. The other pages are lazy-loaded routes sharing one styleshe
 | `/legal` | Legal notice, terms, privacy — a **draft**: operator identity, retention and hosting addresses are marked *to be completed* in `frontend/src/app/shared/site.ts` and the page |
 
 Figures quoted by several pages (quotas, batch bounds, URLs) live in
-`frontend/src/app/shared/site.ts`, each mirroring its source of truth. Deep links need a
-single-page fallback: `vercel.json` rewrites unknown paths to `index.html` and nginx
-already did. The status page reads the backend's `/actuator/health` through a
+`frontend/src/app/shared/site.ts`, each mirroring its source of truth.
+
+Every page exists in English at the root and in French under `/fr/` (two builds of
+`@angular/localize`), and is prerendered to HTML at build time, with its title,
+description, canonical and hreflang links - see [search engines and languages](docs/seo.md).
+Paths that are not prerendered (a satellite outside the featured list, an unknown
+address) need a single-page fallback: `vercel.json` and nginx rewrite them to
+`index.csr.html`, or `fr/index.csr.html`, the shell that renders in the browser. The status page reads the backend's `/actuator/health` through a
 `/status-probe/health` rewrite (Vercel, nginx and the dev proxy); no other actuator path
 is exposed through the frontend origin.
 

@@ -1,5 +1,5 @@
 # Build context is the REPOSITORY ROOT, not backend/:
-#   docker build -f backend/Dockerfile -t sat-pass-api .
+#   docker build -f backend/Dockerfile -t nextpass-api .
 #
 # Two stages. The JDK, Maven and the 100 MB of downloaded archives never reach the
 # deployed image, and orekit-data is baked in at build time instead of being fetched

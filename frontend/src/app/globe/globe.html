@@ -1,34 +1,34 @@
-<article id="globe" class="view" aria-label="Global view of the selected pass">
+<article id="globe" class="view" aria-label="Global view of the selected pass" i18n-aria-label>
   <header>
-    <h3>Where the satellite is</h3>
-    <span class="meta">{{ pass().culmination.instant | date: 'HH:mm:ss' : 'UTC' }} UTC at peak</span>
+    <h3 i18n>Where the satellite is</h3>
+    <span class="meta" i18n>{{ pass().culmination.instant | date: 'HH:mm:ss' : 'UTC' }} UTC at peak</span>
   </header>
-  <p class="hint">
+  <p class="hint" i18n>
     Ground track coloured by sunlight on the satellite. Drag to rotate; the pass list is the text equivalent.
   </p>
   <div class="stage">
-    <canvas #canvas aria-label="Globe: ground track, imaging swath when known, visibility circle and observer position for the selected pass"></canvas>
+    <canvas #canvas aria-label="Globe: ground track, imaging swath when known, visibility circle and observer position for the selected pass" i18n-aria-label></canvas>
     @if (!ready()) {
       <p class="fallback" role="status">
         @if (failed()) {
-          The 3D globe could not load three.js. The sky chart and the table remain usable —
-          that is precisely why they depend on no external library.
+          <ng-container i18n>The 3D globe could not load three.js. The sky chart and the table remain usable —
+          that is precisely why they depend on no external library.</ng-container>
         } @else {
-          Loading the globe&hellip;
+          <ng-container i18n>Loading the globe&hellip;</ng-container>
         }
       </p>
     }
   </div>
   <p class="legend">
-    <span><i class="dot day"></i>satellite fully sunlit</span>
-    <span><i class="dot night"></i>eclipse / partial eclipse</span>
-    <span><i class="stroke footprint"></i>visibility circle at {{ threshold() }}&deg;</span>
+    <span i18n><i class="dot day"></i>satellite fully sunlit</span>
+    <span i18n><i class="dot night"></i>eclipse / partial eclipse</span>
+    <span i18n><i class="stroke footprint"></i>visibility circle at {{ threshold() }}&deg;</span>
     @if (swath(); as swath) {
-      <span title="Nominal swath of the imager, drawn from AOS to LOS: roughly what a decoded image covers. The real image is shorter where the signal is too weak to decode.">
+      <span title="Nominal swath of the imager, drawn from AOS to LOS: roughly what a decoded image covers. The real image is shorter where the signal is too weak to decode." i18n-title i18n>
         <i class="band swath"></i>image swath ~{{ swath.widthKm | number }} km ({{ swath.instrument }}, {{ swath.downlink }})
       </span>
     }
-    <span><i class="dot observer"></i>observer</span>
-    <span><i class="dot satellite"></i>satellite</span>
+    <span i18n><i class="dot observer"></i>observer</span>
+    <span i18n><i class="dot satellite"></i>satellite</span>
   </p>
 </article>

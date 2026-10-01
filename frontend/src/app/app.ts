@@ -1,18 +1,19 @@
 import {
-  ChangeDetectionStrategy, Component, DestroyRef, ElementRef, Injector, afterNextRender, computed, effect, inject, signal, viewChild,
+  ChangeDetectionStrategy, Component, DOCUMENT, DestroyRef, ElementRef, Injector, afterNextRender, computed, effect, inject, signal, viewChild,
 } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { ACCOUNT_URL, REPOSITORY_URL, SWAGGER_URL } from './shared/site';
+import { LANGUAGES, addressIn, currentLanguage } from './shared/locale';
 import { ServiceStatus } from './shared/service-status';
 import { RouteCurtain } from './motion/route-curtain';
 import { NAV_PAGES } from './motion/route-transition';
 
 const STATUS_LABELS = {
-  checking: 'Checking status…',
-  ok: 'All systems nominal',
-  slow: 'Answering, slowly',
-  down: 'Service unavailable',
+  checking: $localize`Checking status…`,
+  ok: $localize`All systems nominal`,
+  slow: $localize`Answering, slowly`,
+  down: $localize`Service unavailable`,
 } as const;
 
 /**
@@ -36,6 +37,15 @@ export class App {
   protected readonly links = NAV_PAGES.map((page, index) => ({
     ...page, exact: page.path === '/', number: String(index + 1).padStart(2, '0'),
   }));
+
+  private readonly router = inject(Router);
+  private readonly url = signal(this.router.url);
+  private readonly language = currentLanguage();
+  /** The same page in the other language: a full load of the other build. */
+  protected readonly otherLanguage = computed(() => {
+    const other = LANGUAGES[this.language === 'fr' ? 'en' : 'fr'];
+    return { ...other, href: addressIn(other.code, this.url()) };
+  });
 
   private readonly serviceStatus = inject(ServiceStatus);
   protected readonly status = this.serviceStatus.state;
@@ -68,6 +78,7 @@ export class App {
 
   constructor() {
     const destroyRef = inject(DestroyRef);
+    const document = inject(DOCUMENT);
     // The page behind a full-screen sheet must not scroll under the reader's thumb.
     effect(() => document.documentElement.classList.toggle('menu-locked', this.menuOpen()));
     afterNextRender(() => {
@@ -78,9 +89,12 @@ export class App {
       destroyRef.onDestroy(() => wide?.removeEventListener('change', onChange));
     });
 
-    const subscription = inject(Router).events
+    const subscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe(() => this.menuOpen.set(false));
+      .subscribe((event) => {
+        this.menuOpen.set(false);
+        this.url.set(event.urlAfterRedirects);
+      });
     // Once the first page is drawn, not before: the probe must not compete with it.
     let timer: ReturnType<typeof setTimeout> | undefined;
     afterNextRender(() => { timer = setTimeout(() => this.serviceStatus.probe(), 1200); });

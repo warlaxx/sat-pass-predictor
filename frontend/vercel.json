@@ -18,13 +18,27 @@
       "destination": "https://sat-pass-predictor-api.onrender.com/actuator/health"
     },
     {
-      "source": "/((?!api/|tle-upstream/|status-probe/).*)",
-      "destination": "/index.html"
+      "source": "/fr",
+      "destination": "/fr/index.csr.html"
+    },
+    {
+      "source": "/fr/:path*",
+      "destination": "/fr/index.csr.html"
+    },
+    {
+      "source": "/((?!api/|tle-upstream/|status-probe/|fr/).*)",
+      "destination": "/index.csr.html"
     }
   ],
   "headers": [
     {
       "source": "/media/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/fr/media/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]

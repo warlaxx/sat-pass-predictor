@@ -1,17 +1,17 @@
 <section class="page-hero wrap" appReveal aria-labelledby="legal-title">
-  <span class="kicker">Legal</span>
-  <h2 id="legal-title">Notice, terms and privacy</h2>
-  <p class="lede">
+  <span class="kicker" i18n>Legal</span>
+  <h2 id="legal-title" i18n>Notice, terms and privacy</h2>
+  <p class="lede" i18n>
     Who runs this site, the rules for using it and its API, and exactly what data passes
     through it - which is very little.
   </p>
-  <nav class="toc" aria-label="On this page">
-    <a class="btn outline small" routerLink="." fragment="notice">Legal notice</a>
-    <a class="btn outline small" routerLink="." fragment="terms">Terms of use</a>
-    <a class="btn outline small" routerLink="." fragment="privacy">Privacy</a>
+  <nav class="toc" aria-label="On this page" i18n-aria-label>
+    <a class="btn outline small" routerLink="." fragment="notice" i18n>Legal notice</a>
+    <a class="btn outline small" routerLink="." fragment="terms" i18n>Terms of use</a>
+    <a class="btn outline small" routerLink="." fragment="privacy" i18n>Privacy</a>
   </nav>
   @if (incomplete) {
-    <p class="note">
+    <p class="note" i18n>
       <b>Draft.</b> These texts have not been reviewed yet, and the fields marked
       <span class="todo">to be completed</span> must be filled before any commercial use.
     </p>
@@ -20,27 +20,27 @@
 
 <section class="page-section wrap" appReveal id="notice" aria-labelledby="notice-title">
   <div class="section-head">
-    <h2 id="notice-title">Legal notice</h2>
-    <span>Mentions légales - LCEN, article 6</span>
+    <h2 id="notice-title" i18n>Legal notice</h2>
+    <span i18n>Mentions légales - LCEN, article 6</span>
   </div>
   <dl>
     @for (line of identity; track line.label) {
       <dt>{{ line.label }}</dt>
       <dd>
-        @if (line.value) { {{ line.value }} } @else { <span class="todo">to be completed</span> }
+        @if (line.value) { {{ line.value }} } @else { <span class="todo" i18n>to be completed</span> }
       </dd>
     }
   </dl>
   <div class="prose">
-    <h3>Hosting</h3>
-    <p>
+    <h3 i18n>Hosting</h3>
+    <p i18n>
       The website is served by <a href="https://vercel.com/legal" rel="noopener">Vercel Inc.</a>
       The prediction API runs on <a href="https://render.com/legal" rel="noopener">Render Services, Inc.</a>
       Both are established in the United States. Their postal addresses and telephone numbers
       are published on those pages. <span class="todo">to be completed: copy them here</span>
     </p>
-    <h3>Intellectual property</h3>
-    <p>
+    <h3 i18n>Intellectual property</h3>
+    <p i18n>
       The source code is published on <a [href]="repositoryUrl" rel="noopener">GitHub</a> under
       the terms stated there. Orbital elements come from CelesTrak; coastlines from Natural
       Earth, in the public domain.
@@ -50,17 +50,17 @@
 
 <section class="page-section wrap" appReveal id="terms" aria-labelledby="terms-title">
   <div class="section-head">
-    <h2 id="terms-title">Terms of use</h2>
+    <h2 id="terms-title" i18n>Terms of use</h2>
   </div>
   <div class="prose">
-    <h3>The service</h3>
-    <p>
-      Sat Pass Predictor computes when satellites pass over a place on Earth, from public
+    <h3 i18n>The service</h3>
+    <p i18n>
+      NextPass computes when satellites pass over a place on Earth, from public
       orbital elements and the SGP4 model. The website is free to use. The API is available
       with a key, under the quotas of the <a routerLink="/pricing">chosen plan</a>.
     </p>
-    <h3>Predictions are estimates</h3>
-    <p>
+    <h3 i18n>Predictions are estimates</h3>
+    <p i18n>
       Times and positions come from a model fed with elements published hours or days
       earlier, and their accuracy degrades with that age - the
       <a routerLink="/methodology">methodology</a> gives the orders of magnitude. They are
@@ -68,29 +68,29 @@
       used for any purpose where an error could endanger people or property</b>, such as
       collision avoidance, navigation or safety of flight.
     </p>
-    <h3>Fair use</h3>
+    <h3 i18n>Fair use</h3>
     <ul>
-      <li>The website shares one anonymous budget of {{ demo.daily }} predictions a day among all visitors. Automated use of it is not permitted; integrations use the API with their own key.</li>
-      <li>An API key is personal to its account. Keep it secret, keep it on a server, and do not share or resell access.</li>
-      <li>Do not try to bypass quotas, rate limits or authentication, or to disrupt the service.</li>
+      <li i18n>The website shares one anonymous budget of {{ demo.daily }} predictions a day among all visitors. Automated use of it is not permitted; integrations use the API with their own key.</li>
+      <li i18n>An API key is personal to its account. Keep it secret, keep it on a server, and do not share or resell access.</li>
+      <li i18n>Do not try to bypass quotas, rate limits or authentication, or to disrupt the service.</li>
     </ul>
-    <p>A key used against these rules may be revoked.</p>
-    <h3>Paid plans</h3>
-    <p>
+    <p i18n>A key used against these rules may be revoked.</p>
+    <h3 i18n>Paid plans</h3>
+    <p i18n>
       Paid plans are not on sale yet. When they open, payment will be handled by Stripe;
       prices and taxes will be shown before confirmation, subscriptions will renew monthly
       and can be cancelled at any time from the account page, with access kept until the end
       of the paid period. Quotas reset at 00:00 UTC on the first of each month.
     </p>
-    <h3>Availability and liability</h3>
-    <p>
+    <h3 i18n>Availability and liability</h3>
+    <p i18n>
       The service is provided as is, without a guaranteed level of availability. The live
       state is on the <a routerLink="/status">status page</a>. To the extent permitted by law,
       the operator is not liable for indirect losses resulting from the use of the
       predictions or from an interruption of the service.
     </p>
-    <h3>Changes and applicable law</h3>
-    <p>
+    <h3 i18n>Changes and applicable law</h3>
+    <p i18n>
       These terms may change; the date of the current version is shown below. They are
       governed by French law. <span class="todo">to be completed: version date, competent court</span>
     </p>
@@ -99,37 +99,37 @@
 
 <section class="page-section wrap" appReveal id="privacy" aria-labelledby="privacy-title">
   <div class="section-head">
-    <h2 id="privacy-title">Privacy</h2>
-    <span>GDPR</span>
+    <h2 id="privacy-title" i18n>Privacy</h2>
+    <span i18n>GDPR</span>
   </div>
   <div class="prose">
-    <h3>Using the predictor</h3>
+    <h3 i18n>Using the predictor</h3>
     <ul>
-      <li><b>No account, no cookie.</b> The predictor sets no cookie and stores nothing in your browser.</li>
-      <li><b>The coordinates you enter</b> are sent to the prediction API to compute the passes, and appear in the page address so a result can be shared. They are not written to any database; an identical query may be answered from memory for up to five minutes.</li>
-      <li><b>"Use my position"</b> asks your browser, only when you press it. The position is rounded to about ten metres and used only to fill the form.</li>
-      <li><b>Fonts are served by this site</b>, not by a third party, so loading the page does not send your address to a font provider.</li>
-      <li><b>Audience measurement</b> uses Vercel Web Analytics, which counts page views without cookies and without identifying visitors.</li>
+      <li i18n><b>No account, no cookie.</b> The predictor sets no cookie and stores nothing in your browser.</li>
+      <li i18n><b>The coordinates you enter</b> are sent to the prediction API to compute the passes, and appear in the page address so a result can be shared. They are not written to any database; an identical query may be answered from memory for up to five minutes.</li>
+      <li i18n><b>"Use my position"</b> asks your browser, only when you press it. The position is rounded to about ten metres and used only to fill the form.</li>
+      <li i18n><b>Fonts are served by this site</b>, not by a third party, so loading the page does not send your address to a font provider.</li>
+      <li i18n><b>Audience measurement</b> uses Vercel Web Analytics, which counts page views without cookies and without identifying visitors.</li>
     </ul>
 
-    <h3>API accounts</h3>
+    <h3 i18n>API accounts</h3>
     <ul>
-      <li><b>Sign-in is through GitHub.</b> The account keeps your GitHub numeric identifier - not your name, email address or repositories.</li>
-      <li><b>API keys</b> are stored only as a SHA-256 hash: nobody, including the operator, can read a key back.</li>
-      <li><b>Usage counters</b> record how many requests each key made per UTC day, to enforce quotas.</li>
-      <li><b>Payments</b>, when open, are handled by Stripe. The account keeps a Stripe customer identifier; card details never reach this service.</li>
-      <li><b>Cookies</b> on the account page are limited to the sign-in session and its CSRF protection, which the page cannot work without.</li>
+      <li i18n><b>Sign-in is through GitHub.</b> The account keeps your GitHub numeric identifier - not your name, email address or repositories.</li>
+      <li i18n><b>API keys</b> are stored only as a SHA-256 hash: nobody, including the operator, can read a key back.</li>
+      <li i18n><b>Usage counters</b> record how many requests each key made per UTC day, to enforce quotas.</li>
+      <li i18n><b>Payments</b>, when open, are handled by Stripe. The account keeps a Stripe customer identifier; card details never reach this service.</li>
+      <li i18n><b>Cookies</b> on the account page are limited to the sign-in session and its CSRF protection, which the page cannot work without.</li>
     </ul>
 
-    <h3>Hosting logs</h3>
-    <p>
+    <h3 i18n>Hosting logs</h3>
+    <p i18n>
       Like any website, the hosting providers receive technical data with each request -
       notably the IP address - to deliver pages and protect against abuse.
       <span class="todo">to be completed: retention period of these logs</span>
     </p>
 
-    <h3>Legal basis, recipients and transfers</h3>
-    <p>
+    <h3 i18n>Legal basis, recipients and transfers</h3>
+    <p i18n>
       Account data is processed to provide the service you asked for (performance of a
       contract); logs and audience measurement under the operator's legitimate interest in
       running a secure, working service. Data is processed by Vercel, Render, GitHub and,
@@ -137,20 +137,20 @@
       transfers outside the European Union. <span class="todo">to be completed: transfer safeguards, database host</span>
     </p>
 
-    <h3>Retention</h3>
-    <p>
+    <h3 i18n>Retention</h3>
+    <p i18n>
       Account data is kept while the account exists. <span class="todo">to be completed: retention after closure, and of usage counters and invoices</span>
     </p>
 
-    <h3>Your rights</h3>
+    <h3 i18n>Your rights</h3>
     <p>
-      You can access, correct, delete or export your data, object to its processing, or
+      <ng-container i18n>You can access, correct, delete or export your data, object to its processing, or
       restrict it. You can revoke your API key yourself from the
       <a [href]="accountUrl">account page</a>. To close an account or exercise any other
-      right, write to
+      right, write to</ng-container>
       @if (operatorEmail) { <a [href]="'mailto:' + operatorEmail">{{ operatorEmail }}</a>. }
-      @else { <span class="todo">to be completed: contact address</span>. }
-      You can also lodge a complaint with the <a href="https://www.cnil.fr" rel="noopener">CNIL</a>.
+      @else { <span class="todo" i18n>to be completed: contact address</span>. }
+      <ng-container i18n>You can also lodge a complaint with the <a href="https://www.cnil.fr" rel="noopener">CNIL</a>.</ng-container>
     </p>
   </div>
 </section>

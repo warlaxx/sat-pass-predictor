@@ -1,7 +1,7 @@
 <section class="page-hero wrap" appReveal aria-labelledby="pricing-title">
-  <span class="kicker">Plans and quotas</span>
-  <h2 id="pricing-title">Pay for calls, not for orbital mechanics</h2>
-  <p class="lede">
+  <span class="kicker" i18n>Plans and quotas</span>
+  <h2 id="pricing-title" i18n>Pay for calls, not for orbital mechanics</h2>
+  <p class="lede" i18n>
     Every plan gets the same predictions: the same propagation, the same validation, the
     same freshness of elements. Plans differ only by how many calls they allow.
   </p>
@@ -9,11 +9,11 @@
 
 <section class="page-section wrap" appReveal aria-labelledby="plans">
   <div class="section-head">
-    <h2 id="plans">Plans</h2>
-    <span>One key per plan · quotas in UTC</span>
+    <h2 id="plans" i18n>Plans</h2>
+    <span i18n>One key per plan · quotas in UTC</span>
   </div>
 
-  <p class="note">
+  <p class="note" i18n>
     <b>Paid plans are not open yet.</b> The quotas below are the ones the API enforces; the
     prices will be shown here, and again by Stripe with taxes before any confirmation, when
     payments open. Until then, the free preview is the way in.
@@ -22,24 +22,24 @@
   <div class="cards">
     @for (plan of plans; track plan.id; let first = $first) {
       <article class="card plan" [class.open]="first" [class.featured]="plan.id === 'hobby'">
-        <span class="badge">{{ first ? 'Free' : 'Opening soon' }}</span>
+        <span class="badge">@if (first) {<ng-container i18n>Free</ng-container>} @else {<ng-container i18n>Opening soon</ng-container>}</span>
         <h3>{{ plan.name }}</h3>
         <p>{{ plan.summary }}</p>
         <div>
           <span class="num quota">{{ plan.requests | number }}</span>
-          <span class="per"> requests / {{ plan.period }}</span>
+          <span class="per"> @if (plan.period === 'UTC day') {<ng-container i18n>requests / UTC day</ng-container>} @else {<ng-container i18n>requests / UTC calendar month</ng-container>}</span>
         </div>
         <ul>
-          <li><span><span class="num">{{ plan.perMinute }}</span> requests per minute</span></li>
-          <li><span><span class="num">{{ plan.keys }}</span> API key, rotatable</span></li>
-          <li><span>Passes, tracks, Doppler, visibility</span></li>
-          <li><span>Batch up to <span class="num">{{ batch.predictions }}</span> predictions{{ plan.perMinute < batch.predictions ? ' (' + plan.perMinute + ' per call on this plan)' : '' }}</span></li>
+          <li i18n><span><span class="num">{{ plan.perMinute }}</span> requests per minute</span></li>
+          <li i18n><span><span class="num">{{ plan.keys }}</span> API key, rotatable</span></li>
+          <li i18n><span>Passes, tracks, Doppler, visibility</span></li>
+          <li><span><ng-container i18n>Batch up to <span class="num">{{ batch.predictions }}</span> predictions</ng-container>@if (plan.perMinute < batch.predictions) { <ng-container i18n>({{ plan.perMinute }} per call on this plan)</ng-container>}</span></li>
         </ul>
         <footer>
           @if (first) {
-            <a class="btn primary" [href]="accountUrl">Get a free key</a>
+            <a class="btn primary" [href]="accountUrl" i18n>Get a free key</a>
           } @else {
-            <button type="button" class="btn outline" disabled>Not on sale yet</button>
+            <button type="button" class="btn outline" disabled i18n>Not on sale yet</button>
           }
         </footer>
       </article>
@@ -48,28 +48,28 @@
 
   <div class="table">
     <table>
-      <caption class="visually-hidden">The three plans compared</caption>
+      <caption class="visually-hidden" i18n>The three plans compared</caption>
       <thead>
         <tr>
-          <th scope="col">Limit</th>
+          <th scope="col" i18n>Limit</th>
           @for (plan of plans; track plan.id) { <th scope="col">{{ plan.name }}</th> }
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th scope="row">Requests</th>
-          @for (plan of plans; track plan.id) { <td class="num">{{ plan.requests | number }} / {{ plan.period === 'UTC day' ? 'day' : 'month' }}</td> }
+          <th scope="row" i18n>Requests</th>
+          @for (plan of plans; track plan.id) { <td class="num">{{ plan.requests | number }} / @if (plan.period === 'UTC day') {<ng-container i18n>day</ng-container>} @else {<ng-container i18n>month</ng-container>}</td> }
         </tr>
         <tr>
-          <th scope="row">Per minute</th>
+          <th scope="row" i18n>Per minute</th>
           @for (plan of plans; track plan.id) { <td class="num">{{ plan.perMinute }}</td> }
         </tr>
         <tr>
-          <th scope="row">Resets</th>
-          @for (plan of plans; track plan.id) { <td>{{ plan.period === 'UTC day' ? '00:00 UTC every day' : '00:00 UTC on the 1st' }}</td> }
+          <th scope="row" i18n>Resets</th>
+          @for (plan of plans; track plan.id) { <td>@if (plan.period === 'UTC day') {<ng-container i18n>00:00 UTC every day</ng-container>} @else {<ng-container i18n>00:00 UTC on the 1st</ng-container>}</td> }
         </tr>
         <tr>
-          <th scope="row">Keys</th>
+          <th scope="row" i18n>Keys</th>
           @for (plan of plans; track plan.id) { <td class="num">{{ plan.keys }}</td> }
         </tr>
       </tbody>
@@ -79,11 +79,11 @@
 
 <section class="page-section wrap" appReveal aria-labelledby="demo">
   <div class="section-head">
-    <h2 id="demo">This website</h2>
-    <span>No key, no account</span>
+    <h2 id="demo" i18n>This website</h2>
+    <span i18n>No key, no account</span>
   </div>
   <div class="prose">
-    <p>
+    <p i18n>
       The predictor on this site calls the same engine without a key. Every visitor shares one
       anonymous budget of <b class="num">{{ demo.daily }}</b> requests a day and
       <b class="num">{{ demo.perMinute }}</b> a minute, so on a busy day it can run out before
@@ -95,32 +95,32 @@
 
 <section class="page-section wrap" appReveal aria-labelledby="faq">
   <div class="section-head">
-    <h2 id="faq">How quotas count</h2>
+    <h2 id="faq" i18n>How quotas count</h2>
   </div>
   <dl>
     <div>
-      <dt>When does a monthly quota reset?</dt>
-      <dd>At 00:00 UTC on the first day of each calendar month - not on your subscription anniversary. The first, partial month has the full quota.</dd>
+      <dt i18n>When does a monthly quota reset?</dt>
+      <dd i18n>At 00:00 UTC on the first day of each calendar month - not on your subscription anniversary. The first, partial month has the full quota.</dd>
     </div>
     <div>
-      <dt>Does a cached answer count?</dt>
-      <dd>Yes. A call is a call, whether it was propagated or served from the prediction cache.</dd>
+      <dt i18n>Does a cached answer count?</dt>
+      <dd i18n>Yes. A call is a call, whether it was propagated or served from the prediction cache.</dd>
     </div>
     <div>
-      <dt>How does a batch count?</dt>
-      <dd>One request per prediction (satellites × sites), failed entries included, against every limit. A batch that does not fit the remaining quota is refused whole and consumes nothing.</dd>
+      <dt i18n>How does a batch count?</dt>
+      <dd i18n>One request per prediction (satellites × sites), failed entries included, against every limit. A batch that does not fit the remaining quota is refused whole and consumes nothing.</dd>
     </div>
     <div>
-      <dt>What happens at the limit?</dt>
-      <dd>A 429 with <code>Retry-After</code>, <code>resetsAt</code> and which <code>limit</code> was reached. There is no overage billing: nothing is ever charged beyond the plan.</dd>
+      <dt i18n>What happens at the limit?</dt>
+      <dd i18n>A 429 with <code>Retry-After</code>, <code>resetsAt</code> and which <code>limit</code> was reached. There is no overage billing: nothing is ever charged beyond the plan.</dd>
     </div>
     <div>
-      <dt>Do upgrades or key rotation reset usage?</dt>
-      <dd>No. Usage belongs to the account's month; changing plan, rotating or revoking a key never resets it.</dd>
+      <dt i18n>Do upgrades or key rotation reset usage?</dt>
+      <dd i18n>No. Usage belongs to the account's month; changing plan, rotating or revoking a key never resets it.</dd>
     </div>
     <div>
-      <dt>Is there an SLA?</dt>
-      <dd>Not yet. The service runs on an instance that can sleep, and an SLA would be a sentence rather than a commitment until it does not. <a routerLink="/status">See the live status.</a></dd>
+      <dt i18n>Is there an SLA?</dt>
+      <dd i18n>Not yet. The service runs on an instance that can sleep, and an SLA would be a sentence rather than a commitment until it does not. <a routerLink="/status">See the live status.</a></dd>
     </div>
   </dl>
 </section>

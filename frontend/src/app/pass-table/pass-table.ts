@@ -23,23 +23,23 @@ import { compassPoint, elevationColour, formatDuration, isRemarkable, shadowEntr
   template: `
     <div class="scroller">
     <table>
-      <caption class="visually-hidden">
+      <caption class="visually-hidden" i18n>
         Every pass of the window, in words. This is the text equivalent of the sky chart
         and the globe: local times, maximum elevation, duration, and the direction to look
         at each phase.
       </caption>
       <thead>
         <tr>
-          <th scope="col">Night</th>
-          <th scope="col">Rise <span class="zone">{{ zone() }}</span></th>
-          <th scope="col">Az<span class="visually-hidden">imuth at rise</span></th>
-          <th scope="col">Peak</th>
-          <th scope="col">Elev.<span class="visually-hidden"> maximum</span></th>
-          <th scope="col">Az<span class="visually-hidden">imuth at peak</span></th>
-          <th scope="col">Set</th>
-          <th scope="col">Az<span class="visually-hidden">imuth at set</span></th>
-          <th scope="col">Duration</th>
-          <th scope="col"><span class="visually-hidden">Remarks</span></th>
+          <th scope="col" i18n>Night</th>
+          <th scope="col" i18n>Rise <span class="zone">{{ zone() }}</span></th>
+          <th scope="col" i18n>Az<span class="visually-hidden">imuth at rise</span></th>
+          <th scope="col" i18n>Peak</th>
+          <th scope="col" i18n>Elev.<span class="visually-hidden"> maximum</span></th>
+          <th scope="col" i18n>Az<span class="visually-hidden">imuth at peak</span></th>
+          <th scope="col" i18n>Set</th>
+          <th scope="col" i18n>Az<span class="visually-hidden">imuth at set</span></th>
+          <th scope="col" i18n>Duration</th>
+          <th scope="col"><span class="visually-hidden" i18n>Remarks</span></th>
         </tr>
       </thead>
       <tbody>
@@ -65,18 +65,18 @@ import { compassPoint, elevationColour, formatDuration, isRemarkable, shadowEntr
             <td class="num">{{ duration(pass) }}</td>
             <td class="remarks">
               @if (potentiallyVisible(pass)) {
-                <span class="chip lit" title="At least one sample is sunlit with the Sun 6° below your horizon; weather and brightness are not modelled">potentially visible</span>
+                <span class="chip lit" title="At least one sample is sunlit with the Sun 6° below your horizon; weather and brightness are not modelled" i18n-title i18n>potentially visible</span>
               } @else {
-                <span class="chip quiet">no favourable sample</span>
+                <span class="chip quiet" i18n>no favourable sample</span>
               }
               @if (shadow(pass); as instant) {
-                <span class="chip num lit">shadow ~{{ instant | date: 'HH:mm' }}</span>
+                <span class="chip num lit" i18n>shadow ~{{ instant | date: 'HH:mm' }}</span>
               }
               @if (remarkable(pass)) {
-                <span class="chip num hot">remarkable</span>
+                <span class="chip num hot" i18n>remarkable</span>
               }
               @if (pass.durationSeconds < 60) {
-                <span class="chip num quiet">grazing &lt; 60 s</span>
+                <span class="chip num quiet" i18n>grazing &lt; 60 s</span>
               }
             </td>
           </tr>

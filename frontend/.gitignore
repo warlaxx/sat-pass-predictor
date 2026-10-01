@@ -42,3 +42,6 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Extracted by `npm run i18n` from the templates; the translation is messages.fr.json.
+/src/locale/messages.json

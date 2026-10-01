@@ -39,13 +39,13 @@ export class LegalPage {
   protected readonly operatorEmail = OPERATOR.email;
 
   protected readonly identity: readonly IdentityLine[] = [
-    { label: 'Publisher', value: OPERATOR.name },
-    { label: 'Legal form', value: OPERATOR.legalForm },
+    { label: $localize`Publisher`, value: OPERATOR.name },
+    { label: $localize`Legal form`, value: OPERATOR.legalForm },
     { label: 'SIREN', value: OPERATOR.siren },
-    { label: 'VAT number', value: OPERATOR.vatNumber },
-    { label: 'Address', value: OPERATOR.address },
-    { label: 'Contact', value: OPERATOR.email },
-    { label: 'Publication director', value: OPERATOR.publicationDirector },
+    { label: $localize`VAT number`, value: OPERATOR.vatNumber },
+    { label: $localize`Address`, value: OPERATOR.address },
+    { label: $localize`Contact`, value: OPERATOR.email },
+    { label: $localize`Publication director`, value: OPERATOR.publicationDirector },
   ];
 
   /** True while any mandatory fact is blank: the page then says it is a draft. */

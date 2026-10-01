@@ -4,9 +4,9 @@
   <div class="scrim" aria-hidden="true"></div>
 
   <div class="copy">
-    <p class="eyebrow"><i aria-hidden="true"></i>Live · SGP4 · Orekit · CelesTrak elements</p>
-    <h2 id="hero-title">Know the second it crosses <span>your sky.</span></h2>
-    <p class="lede">
+    <p class="eyebrow" i18n><i aria-hidden="true"></i>Live · SGP4 · Orekit · CelesTrak elements</p>
+    <h2 id="hero-title" i18n>Know the second it crosses <span>your sky.</span></h2>
+    <p class="lede" i18n>
       Pass predictions for any satellite in the catalogue, from any point on Earth. Rise, peak
       and set — with sunlight, Doppler and a sky chart built for eyes adapting to the dark.
     </p>
@@ -17,13 +17,13 @@
           <circle cx="19" cy="8" r="2.5" fill="currentColor" />
           <circle cx="12" cy="12" r="2" fill="currentColor" />
         </svg>
-        Compute passes
+        <ng-container i18n>Compute passes</ng-container>
       </a>
-      <a class="btn outline" routerLink="/developers">Read the API guide</a>
+      <a class="btn outline" routerLink="/developers" i18n>Read the API guide</a>
     </div>
 
     <!-- Not a live region: a reader announcing every second would drown the page. -->
-    <section class="card" aria-label="Next pass">
+    <section class="card" aria-label="Next pass" i18n-aria-label>
       <div class="card-head">
         <span>{{ heading() }}</span>
         <span class="tag" [attr.data-tone]="tag().tone">{{ tag().text }}</span>
@@ -31,17 +31,17 @@
       <div class="countdown num" [class.idle]="!state()">{{ countdown() }}</div>
       @if (pass(); as p) {
         <dl class="facts">
-          <div><dt>Rise</dt><dd class="num">{{ p.aos.instant | date: 'HH:mm' }} {{ compass(p.aos.azimuthDeg) }}</dd></div>
-          <div><dt>Peak</dt><dd class="num">{{ p.culmination.elevationDeg | number: '1.1-1' }}°</dd></div>
-          <div><dt>Set</dt><dd class="num">{{ p.los.instant | date: 'HH:mm' }} {{ compass(p.los.azimuthDeg) }}</dd></div>
-          <div><dt>Duration</dt><dd class="num">{{ duration(p.durationSeconds) }}</dd></div>
+          <div><dt i18n>Rise</dt><dd class="num">{{ p.aos.instant | date: 'HH:mm' }} {{ compass(p.aos.azimuthDeg) }}</dd></div>
+          <div><dt i18n>Peak</dt><dd class="num">{{ p.culmination.elevationDeg | number: '1.1-1' }}°</dd></div>
+          <div><dt i18n>Set</dt><dd class="num">{{ p.los.instant | date: 'HH:mm' }} {{ compass(p.los.azimuthDeg) }}</dd></div>
+          <div><dt i18n>Duration</dt><dd class="num">{{ duration(p.durationSeconds) }}</dd></div>
         </dl>
       } @else {
         <dl class="facts">
-          <div><dt>Rise</dt><dd class="num">—</dd></div>
-          <div><dt>Peak</dt><dd class="num">—</dd></div>
-          <div><dt>Set</dt><dd class="num">—</dd></div>
-          <div><dt>Duration</dt><dd class="num">—</dd></div>
+          <div><dt i18n>Rise</dt><dd class="num">—</dd></div>
+          <div><dt i18n>Peak</dt><dd class="num">—</dd></div>
+          <div><dt i18n>Set</dt><dd class="num">—</dd></div>
+          <div><dt i18n>Duration</dt><dd class="num">—</dd></div>
         </dl>
       }
     </section>
@@ -60,10 +60,10 @@
       }
     </div>
     <div class="hud observer">
-      <span class="lead"><i></i>Observer · {{ positionPlace() }}</span>
+      <span class="lead" i18n><i></i>Observer · {{ positionPlace() }}</span>
       <span>
-        {{ abs(position().lat) | number: '1.4-4' }}° {{ position().lat < 0 ? 'S' : 'N' }} ·
-        {{ abs(position().lon) | number: '1.4-4' }}° {{ position().lon < 0 ? 'W' : 'E' }} ·
+        {{ abs(position().lat) | number: '1.4-4' }}° {{ position().lat < 0 ? south : north }} ·
+        {{ abs(position().lon) | number: '1.4-4' }}° {{ position().lon < 0 ? west : east }} ·
         {{ position().alt | number: '1.0-0' }} m
       </span>
     </div>

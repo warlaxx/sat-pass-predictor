@@ -32,7 +32,9 @@ type Tone = 'go' | 'quiet' | 'busy';
 
 function placeName({ lat, lon }: { lat: number; lon: number }): string {
   if (lat === DEFAULT_QUERY.lat && lon === DEFAULT_QUERY.lon) return DEFAULT_PLACE;
-  return `${Math.abs(lat).toFixed(2)}° ${lat < 0 ? 'S' : 'N'}, ${Math.abs(lon).toFixed(2)}° ${lon < 0 ? 'W' : 'E'}`;
+  const ns = lat < 0 ? $localize`:Compass, short:S` : $localize`:Compass, short:N`;
+  const ew = lon < 0 ? $localize`:Compass, short:W` : $localize`:Compass, short:E`;
+  return `${Math.abs(lat).toFixed(2)}° ${ns}, ${Math.abs(lon).toFixed(2)}° ${ew}`;
 }
 
 /**
@@ -120,8 +122,11 @@ export class Hero {
     visibilityRadiusDeg(this.orbit()?.altitudeKm ?? 420, this.response()?.minElevationDeg ?? this.query().minElevation));
 
   protected readonly heading = computed(() => {
-    const where = `${this.satellite().name} over ${this.place()}`;
-    return this.state()?.kind === 'now' ? `Passing now · ${where}` : `Next pass · ${where}`;
+    const name = this.satellite().name;
+    const place = this.place();
+    return this.state()?.kind === 'now'
+      ? $localize`Passing now · ${name}:satellite: over ${place}:place:`
+      : $localize`Next pass · ${name}:satellite: over ${place}:place:`;
   });
 
   protected readonly countdown = computed(() => {
@@ -133,14 +138,14 @@ export class Hero {
   });
 
   protected readonly tag = computed<{ text: string; tone: Tone }>(() => {
-    if (this.loading()) return { text: 'COMPUTING', tone: 'busy' };
+    if (this.loading()) return { text: $localize`COMPUTING`, tone: 'busy' };
     const response = this.response();
-    if (!response) return { text: 'NOT YET COMPUTED', tone: 'quiet' };
+    if (!response) return { text: $localize`NOT YET COMPUTED`, tone: 'quiet' };
     const state = this.state();
-    if (!state) return { text: 'NO PASS', tone: 'quiet' };
-    if (state.kind === 'now') return { text: 'ABOVE HORIZON', tone: 'go' };
-    if (state.kind === 'over') return { text: 'WINDOW OVER', tone: 'quiet' };
-    return state.visibleFrom ? { text: 'VISIBLE', tone: 'go' } : { text: 'NOT VISIBLE', tone: 'quiet' };
+    if (!state) return { text: $localize`NO PASS`, tone: 'quiet' };
+    if (state.kind === 'now') return { text: $localize`ABOVE HORIZON`, tone: 'go' };
+    if (state.kind === 'over') return { text: $localize`WINDOW OVER`, tone: 'quiet' };
+    return state.visibleFrom ? { text: $localize`VISIBLE`, tone: 'go' } : { text: $localize`NOT VISIBLE`, tone: 'quiet' };
   });
 
   protected readonly legend = computed(() => [
@@ -153,6 +158,10 @@ export class Hero {
   protected readonly compass = compassPoint;
   protected readonly duration = shortDuration;
   protected readonly abs = Math.abs;
+  protected readonly north = $localize`:Compass, short:N`;
+  protected readonly south = $localize`:Compass, short:S`;
+  protected readonly east = $localize`:Compass, short:E`;
+  protected readonly west = $localize`:Compass, short:W`;
 
   constructor() {
     const destroyRef = inject(DestroyRef);

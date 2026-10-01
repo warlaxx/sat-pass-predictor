@@ -78,7 +78,7 @@ metric() { # metric <path> <statistic>
 }
 
 counter() { # counter <result tag>
-  metric "satpass.predictions?tag=result:$1" COUNT
+  metric "nextpass.predictions?tag=result:$1" COUNT
 }
 
 echo "Warming up (JIT, Orekit frame tables, the first TLE fetch) ..."
@@ -86,7 +86,7 @@ curl -fsS -o /dev/null "$URL/api/passes?noradId=$NORAD&lat=$LAT&lon=$LON&hours=$
   || { echo "the API did not answer at $URL" >&2; exit 1; }
 
 BEFORE_HIT="$(counter hit)"; BEFORE_MISS="$(counter miss)"
-BEFORE_TOTAL="$(metric satpass.prediction.duration TOTAL_TIME)"
+BEFORE_TOTAL="$(metric nextpass.prediction.duration TOTAL_TIME)"
 
 echo "Measuring $CALLS calls over $DISTINCT distinct observer(s) ..."
 for ((i = 0; i < CALLS; i++)); do
@@ -99,7 +99,7 @@ for ((i = 0; i < CALLS; i++)); do
 done
 
 AFTER_HIT="$(counter hit)"; AFTER_MISS="$(counter miss)"
-AFTER_TOTAL="$(metric satpass.prediction.duration TOTAL_TIME)"
+AFTER_TOTAL="$(metric nextpass.prediction.duration TOTAL_TIME)"
 
 sort -g "$TIMINGS" | awk -v calls="$CALLS" '
   { t[NR] = $1 * 1000; sum += $1 * 1000 }

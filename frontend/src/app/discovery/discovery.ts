@@ -20,10 +20,10 @@ interface Result { noradId: number; response?: PassesResponse; error?: string }
 export function parseSatellites(text: string): number[] {
   const tokens = text.trim().split(/[\s,]+/);
   if (tokens.some(token => !/^\d{1,5}$/.test(token) || Number(token) < 1)) {
-    throw new Error('Enter NORAD numbers from 1 to 99999, separated by commas.');
+    throw new Error($localize`Enter NORAD numbers from 1 to 99999, separated by commas.`);
   }
   const ids = [...new Set(tokens.map(Number))];
-  if (ids.length > 5) throw new Error('Search up to five distinct satellites at a time.');
+  if (ids.length > 5) throw new Error($localize`Search up to five distinct satellites at a time.`);
   return ids;
 }
 
@@ -60,7 +60,7 @@ export class Discovery {
         map(response => ({ noradId, response } as Result)),
         catchError((error: HttpErrorResponse) => of<Result>({ noradId,
           error: typeof error.error?.detail === 'string' ? error.error.detail :
-            'Could not retrieve a prediction. Try this satellite again.',
+            $localize`Could not retrieve a prediction. Try this satellite again.`,
         })),
       ),
     )),
@@ -87,7 +87,7 @@ export class Discovery {
         [query.lat, -90, 90], [query.lon, -180, 180], [query.alt, -500, 9000], [query.minElevation, 0, 89],
       ];
       if (bounds.some(([value, min, max]) => !Number.isFinite(value) || value < min || value > max)) {
-        throw new Error('Correct the observer position and elevation threshold above before searching.');
+        throw new Error($localize`Correct the observer position and elevation threshold above before searching.`);
       }
       this.search.set({ query, ids });
     } catch (error) {

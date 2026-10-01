@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, afterNextRender, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -58,8 +58,8 @@ export class StatusPage {
   private readonly http = inject(HttpClient);
   private readonly serviceStatus = inject(ServiceStatus);
 
-  protected readonly backend = signal<ProbeResult>({ state: 'checking', detail: 'Asking the backend…' });
-  protected readonly catalogue = signal<ProbeResult>({ state: 'checking', detail: 'Searching the catalogue…' });
+  protected readonly backend = signal<ProbeResult>({ state: 'checking', detail: $localize`Asking the backend…` });
+  protected readonly catalogue = signal<ProbeResult>({ state: 'checking', detail: $localize`Searching the catalogue…` });
   protected readonly checkedAt = signal<Date | undefined>(undefined);
 
   protected readonly overall = computed<ProbeState>(() => {
@@ -70,19 +70,29 @@ export class StatusPage {
   });
 
   protected readonly probes = computed(() => [
-    { name: 'Prediction backend', result: this.backend() },
-    { name: 'Satellite catalogue', result: this.catalogue() },
+    { name: $localize`Prediction backend`, result: this.backend() },
+    { name: $localize`Satellite catalogue`, result: this.catalogue() },
   ]);
 
   protected readonly checking = computed(() => this.overall() === 'checking');
 
+  /** The state of a probe, read out before its detail. */
+  protected readonly stateLabels: Record<ProbeState, string> = {
+    checking: $localize`checking`,
+    ok: $localize`up`,
+    slow: $localize`slow`,
+    down: $localize`down`,
+  };
+
   constructor() {
-    void this.check();
+    // In the browser only: a page prerendered at build time must not freeze the build
+    // machine's view of the backend into its HTML.
+    afterNextRender(() => void this.check());
   }
 
   protected async check(): Promise<void> {
-    this.backend.set({ state: 'checking', detail: 'Asking the backend…' });
-    this.catalogue.set({ state: 'checking', detail: 'Searching the catalogue…' });
+    this.backend.set({ state: 'checking', detail: $localize`Asking the backend…` });
+    this.catalogue.set({ state: 'checking', detail: $localize`Searching the catalogue…` });
     // One after the other: the first wakes a sleeping instance, so the second measures
     // the catalogue rather than the same cold start twice.
     this.backend.set(await this.probeBackend());
@@ -99,13 +109,13 @@ export class StatusPage {
       );
       const millis = Math.round(performance.now() - start);
       if (body?.status !== 'UP') {
-        return { state: 'down', millis, detail: `The backend answered, but reports itself ${body?.status ?? 'unknown'}.` };
+        return { state: 'down', millis, detail: $localize`The backend answered, but reports itself ${body?.status ?? 'unknown'}:status:.` };
       }
       return millis > SLOW_MS
-        ? { state: 'slow', millis, detail: 'Up, after a cold start: the instance was asleep. Calls are fast again now.' }
-        : { state: 'ok', millis, detail: 'Up and answering.' };
+        ? { state: 'slow', millis, detail: $localize`Up, after a cold start: the instance was asleep. Calls are fast again now.` }
+        : { state: 'ok', millis, detail: $localize`Up and answering.` };
     } catch {
-      return { state: 'down', millis: Math.round(performance.now() - start), detail: 'No answer from the backend within 60 s.' };
+      return { state: 'down', millis: Math.round(performance.now() - start), detail: $localize`No answer from the backend within 60 s.` };
     }
   }
 
@@ -118,15 +128,15 @@ export class StatusPage {
       );
       const millis = Math.round(performance.now() - start);
       const ageSeconds = (Date.now() - Date.parse(body.catalogFetchedAt)) / 1000;
-      if (!Number.isFinite(ageSeconds)) return { state: 'slow', millis, detail: 'Searchable, but the catalogue does not say when it was fetched.' };
+      if (!Number.isFinite(ageSeconds)) return { state: 'slow', millis, detail: $localize`Searchable, but the catalogue does not say when it was fetched.` };
       const age = ageSeconds < 3600 ? 'less than an hour' : formatAge(ageSeconds);
       return ageSeconds > CATALOGUE_STALE_S
-        ? { state: 'slow', millis, detail: `Searchable, but the catalogue was fetched ${age} ago: new launches may be missing.` }
-        : { state: 'ok', millis, detail: `Searchable. Catalogue fetched ${age} ago from CelesTrak.` };
+        ? { state: 'slow', millis, detail: $localize`Searchable, but the catalogue was fetched ${age}:age: ago: new launches may be missing.` }
+        : { state: 'ok', millis, detail: $localize`Searchable. Catalogue fetched ${age}:age: ago from CelesTrak.` };
     } catch {
       return {
         state: 'down', millis: Math.round(performance.now() - start),
-        detail: 'Name search unavailable. NORAD numbers still work in the predictor.',
+        detail: $localize`Name search unavailable. NORAD numbers still work in the predictor.`,
       };
     }
   }

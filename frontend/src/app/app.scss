@@ -133,6 +133,20 @@ nav#site-nav a.current { background: rgb(255 255 255 / 9%); color: var(--ink); }
 
 .account:hover { color: var(--ink); }
 
+/* The other language: the same page, as a full load of the other build. */
+.lang {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  font: 500 12px var(--font-mono);
+  letter-spacing: 0.08em;
+  padding: 4px 9px;
+  text-decoration: none;
+}
+
+.lang:hover { color: var(--ink); }
+.sheet-foot .lang { border: 0; font-size: 12px; letter-spacing: 0; padding: 0; }
+
 .menu-toggle {
   align-items: center;
   background: transparent;

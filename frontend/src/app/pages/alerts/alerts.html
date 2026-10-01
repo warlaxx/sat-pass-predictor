@@ -1,7 +1,7 @@
 <section class="page-hero wrap" appReveal aria-labelledby="alerts-title">
-  <span class="kicker">Pass reminders</span>
-  <h2 id="alerts-title">Never miss the next bright pass</h2>
-  <p class="lede">
+  <span class="kicker" i18n>Pass reminders</span>
+  <h2 id="alerts-title" i18n>Never miss the next bright pass</h2>
+  <p class="lede" i18n>
     Choose a satellite and a place. You get a calendar file with one event per pass you can
     actually see - sunlit satellite, dark sky - and a reminder ten minutes before it comes
     into view. It works in any calendar, with no account, even with this page closed.
@@ -10,53 +10,53 @@
 
 <section class="page-section wrap" appReveal aria-labelledby="alerts-form-title">
   <div class="section-head">
-    <h2 id="alerts-form-title">Your reminders</h2>
+    <h2 id="alerts-form-title" i18n>Your reminders</h2>
   </div>
 
   <form class="form" (submit)="$event.preventDefault(); search()">
     <div class="group">
-      <span class="caption" id="a-satellite">Satellite</span>
+      <span class="caption" id="a-satellite" i18n>Satellite</span>
       <div class="field">
-        <app-satellite-picker label="Satellite name or NORAD catalogue number" describedBy="a-satellite"
+        <app-satellite-picker label="Satellite name or NORAD catalogue number" i18n-label describedBy="a-satellite"
                               [initial]="'' + form().noradId" (changed)="setSatellite($event)" />
       </div>
     </div>
 
     <div class="group">
-      <span class="caption" id="a-observer">Observer</span>
+      <span class="caption" id="a-observer" i18n>Observer</span>
       <div class="row">
         <label class="field">
-          <span class="visually-hidden">Latitude, degrees</span>
+          <span class="visually-hidden" i18n>Latitude, degrees</span>
           <input class="w-coord" type="number" step="0.0001" min="-90" max="90" required aria-describedby="a-observer"
                  [value]="form().lat" (input)="patch('lat', $any($event.target).value)">
-          <span class="unit" aria-hidden="true">° lat</span>
+          <span class="unit" aria-hidden="true" i18n>° lat</span>
         </label>
         <label class="field">
-          <span class="visually-hidden">Longitude, degrees</span>
+          <span class="visually-hidden" i18n>Longitude, degrees</span>
           <input class="w-coord" type="number" step="0.0001" min="-180" max="180" required aria-describedby="a-observer"
                  [value]="form().lon" (input)="patch('lon', $any($event.target).value)">
-          <span class="unit" aria-hidden="true">° lon</span>
+          <span class="unit" aria-hidden="true" i18n>° lon</span>
         </label>
         <button type="button" class="btn outline" [disabled]="locating()" (click)="useMyPosition()">
-          {{ locating() ? 'Locating…' : 'Use my position' }}
+          @if (locating()) {<ng-container i18n>Locating…</ng-container>} @else {<ng-container i18n>Use my position</ng-container>}
         </button>
       </div>
     </div>
 
     <div class="group">
-      <span class="caption" id="a-days">Ahead</span>
+      <span class="caption" id="a-days" i18n>Ahead</span>
       <label class="field">
-        <span class="visually-hidden">Days ahead</span>
+        <span class="visually-hidden" i18n>Days ahead</span>
         <input class="w-small" type="number" min="1" [max]="maxDays" required aria-describedby="a-days"
                [value]="form().days" (input)="patch('days', $any($event.target).value)">
-        <span class="unit" aria-hidden="true">days</span>
+        <span class="unit" aria-hidden="true" i18n>days</span>
       </label>
     </div>
 
     <div class="group">
-      <span class="caption" id="a-threshold">Threshold</span>
+      <span class="caption" id="a-threshold" i18n>Threshold</span>
       <label class="field">
-        <span class="visually-hidden">Minimum elevation, degrees</span>
+        <span class="visually-hidden" i18n>Minimum elevation, degrees</span>
         <input class="w-small" type="number" step="0.5" min="0" max="89" required aria-describedby="a-threshold"
                [value]="form().minElevation" (input)="patch('minElevation', $any($event.target).value)">
         <span class="unit" aria-hidden="true">°</span>
@@ -64,7 +64,7 @@
     </div>
 
     <button type="submit" class="btn primary" [disabled]="resource.isLoading()">
-      {{ resource.isLoading() ? 'Computing…' : 'Find visible passes' }}
+      @if (resource.isLoading()) {<ng-container i18n>Computing…</ng-container>} @else {<ng-container i18n>Find visible passes</ng-container>}
     </button>
   </form>
 
@@ -72,36 +72,36 @@
   @if (locationError(); as failure) { <p class="error" role="status">{{ failure }}</p> }
 
   @if (resource.isLoading()) {
-    <p class="state" role="status"><span class="dot wait" aria-hidden="true"></span>Computing every pass of the window…</p>
+    <p class="state" role="status" i18n><span class="dot wait" aria-hidden="true"></span>Computing every pass of the window…</p>
   } @else if (problem(); as failure) {
     <p class="note" role="alert"><b>{{ failure.title }}.</b> {{ failure.detail }}</p>
   } @else if (response(); as loaded) {
     @if (windows().length === 0) {
-      <p class="state" role="status">
+      <p class="state" role="status" i18n>
         {{ loaded.satellite.name }} has {{ loaded.passes.length }} passes above {{ loaded.minElevationDeg }}° in this
         window, but none in a dark sky while sunlit. Try more days, or another satellite.
       </p>
     } @else {
       <div class="section-head">
-        <span>
-          {{ windows().length }} potentially visible {{ windows().length === 1 ? 'pass' : 'passes' }} of
+        <span i18n>
+          {windows().length, plural, =1 {1 potentially visible pass} other {{{ windows().length }} potentially visible passes}} of
           {{ loaded.satellite.name }}, out of {{ loaded.passes.length }} above {{ loaded.minElevationDeg }}°
         </span>
-        <button type="button" class="btn primary" (click)="download()">Download reminders (.ics)</button>
+        <button type="button" class="btn primary" (click)="download()" i18n>Download reminders (.ics)</button>
       </div>
       <div class="card windows">
         @for (window of windows(); track window.start) {
           <div class="window">
             <span class="num when">{{ window.start | date: 'EEE d MMM, HH:mm' }}</span>
-            <span class="how">
+            <span class="how" i18n>
               Visible until <span class="num">{{ window.end | date: 'HH:mm' }}</span>,
               highest in the {{ window.direction }}
             </span>
-            <span class="num peak">peak {{ window.pass.culmination.elevationDeg | number: '1.0-0' }}°</span>
+            <span class="num peak" i18n>peak {{ window.pass.culmination.elevationDeg | number: '1.0-0' }}°</span>
           </div>
         }
       </div>
-      <p class="muted">
+      <p class="muted" i18n>
         Local times. Predictions further ahead rest on older elements: re-download the file
         in a few days for the best timings.
       </p>
@@ -111,11 +111,11 @@
 
 <section class="page-section wrap" appReveal aria-labelledby="webhooks-title">
   <div class="section-head">
-    <h2 id="webhooks-title">For integrations: webhooks</h2>
-    <span>Planned, not available</span>
+    <h2 id="webhooks-title" i18n>For integrations: webhooks</h2>
+    <span i18n>Planned, not available</span>
   </div>
   <div class="prose">
-    <p>
+    <p i18n>
       "Call my endpoint twenty minutes before the next pass" is on the roadmap for API
       customers - a ground station that should wake up, a bot that should post. It will be
       built when someone needs it. Until then, the
