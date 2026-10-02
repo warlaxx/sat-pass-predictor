@@ -996,11 +996,13 @@ phase 3.2 says someone wants it.
 - `satcat.tsv` (19 MB, 70 000 rows) stops at catalogue number 69999. Objects catalogued
   since July 2026 carry six-digit numbers and live in **`satcat100k.tsv`** (≈ 960 rows).
   An import that reads only `satcat.tsv` silently stops at 11 July 2026.
-- It is fresh: the Falcon Heavy launched at 04:02 UTC that morning was listed by 13:52.
+- It is fresh: the Falcon Heavy that lifted off at 03:54 UTC that morning was listed by 13:52.
   The files carry an `ETag` and a `Last-Modified`.
-- `Parent` is another GCAT object; its prefix names the catalogue it lives in: `S` the
-  satellite catalogue, `A` the auxiliary one (objects never given a NORAD number, such as
-  most Starlink upper stages), `R` and `L` catalogues of launch-vehicle stages. Most rows
+- `Parent` is the object this one was attached to — or, when it leaves a body's sphere of
+  influence, that body's name. An object's prefix names its catalogue: `S` the standard
+  catalogue (the US satellite catalogue), `A` the auxiliary one (objects the US catalogue
+  omits, such as most Starlink upper stages), `L` low-altitude objects (apogee below
+  80 km) and `R` suborbital ones (80 km or more), such as spent first stages. Most rows
   simply point at the stage that carried them. **Working definition: a separation is a
   row whose parent is an `S…` object and whose `SDate` is not its launch day** — 106 so
   far in 2026 across both files, from a Shenzhou orbital module to debris shed by a
