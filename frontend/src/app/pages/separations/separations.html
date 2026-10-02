@@ -65,7 +65,7 @@
       @for (bar of bars(); track bar.month) { <span>{{ bar.label }}</span> }
     </div>
     <p class="muted hover" aria-live="polite">{{ hoverText() ?? '' }}</p>
-    <details class="table-view">
+    <details class="table-view" #table (toggle)="countTable(table)">
       <summary i18n>Show as a table</summary>
       <table>
         <thead>
@@ -98,7 +98,7 @@
       <ul class="events">
         @for (event of month.events; track event.id) {
           <li>
-            <a class="event" [routerLink]="['/separations', event.id]">
+            <a class="event" [routerLink]="['/separations', event.id]" (click)="countOpen()">
               <span class="when">
                 <span class="num">{{ event.date }}</span>
                 <span class="muted">{{ event.precision }}</span>

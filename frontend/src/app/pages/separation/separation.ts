@@ -12,6 +12,7 @@ import { NextPass } from '../../next-pass/next-pass';
 import { PassTable } from '../../pass-table/pass-table';
 import { requestPosition } from '../../shared/geolocation';
 import { Seo } from '../../shared/seo';
+import { countUsage } from '../../shared/usage';
 import {
   isGeostationary, orbitLabel, precisionLabel, recordedDateLabel, roleLabel, timeSinceLaunch,
 } from '../separations/separation-format';
@@ -168,6 +169,7 @@ export class SeparationPage {
   }
 
   protected useMyPosition(): void {
+    countUsage('event-use-position');
     this.locationError.set(undefined);
     this.locating.set(true);
     requestPosition().then(
@@ -182,11 +184,14 @@ export class SeparationPage {
   protected inspect(instant: string): void {
     const noradId = this.predictable();
     if (noradId === undefined) return;
+    countUsage('event-open-pass');
     const { lat, lon, alt } = this.observer();
     void this.router.navigate(['/'], {
       queryParams: { norad: noradId, lat, lon, alt, hours: SEPARATION_WINDOW_HOURS, minEl: DEFAULT_QUERY.minElevation, pass: instant },
     });
   }
+
+  protected readonly countFragment = () => countUsage('event-open-fragment');
 
   protected reload(): void {
     if (this.resource.error()) this.resource.reload();
