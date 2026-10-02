@@ -1,8 +1,11 @@
 package space.nextpass.ingest;
 
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import io.swagger.v3.oas.annotations.Hidden;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.Clock;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -13,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+import space.nextpass.delays.DelayMeasurement;
 import space.nextpass.gcat.GcatImportException;
 import space.nextpass.gcat.GcatImporter;
 
@@ -29,6 +33,11 @@ import space.nextpass.gcat.GcatImporter;
  *
  * <p>Synchronous on purpose: the open request keeps Render from putting the service to
  * sleep mid-import, and the workflow's verdict is the import's.
+ *
+ * <p>After GCAT, the same request measures catalogue delays (phase 3.2,
+ * {@link DelayMeasurement}). The report keeps GCAT's fields at the top level and adds
+ * {@code delays}; whatever happens to the measurement, the GCAT import stands and the
+ * answer stays 200.
  */
 @Hidden
 @RestController
@@ -36,12 +45,22 @@ public class IngestController {
 
     private static final Logger log = LoggerFactory.getLogger(IngestController.class);
 
+    /** GCAT's report, unchanged at the top level, and the delay measurement beside it. */
+    public record Report(@JsonUnwrapped GcatImporter.Report gcat, DelayMeasurement.Report delays) {}
+
     private final byte[] token;
     private final ObjectProvider<GcatImporter> gcat;
+    private final ObjectProvider<DelayMeasurement> delays;
+    private final Clock clock;
 
-    public IngestController(@Value("${ingest.token:}") String token, ObjectProvider<GcatImporter> gcat) {
+    public IngestController(@Value("${ingest.token:}") String token,
+                            ObjectProvider<GcatImporter> gcat,
+                            ObjectProvider<DelayMeasurement> delays,
+                            Clock clock) {
         this.token = token.getBytes(StandardCharsets.UTF_8);
         this.gcat = gcat;
+        this.delays = delays;
+        this.clock = clock;
     }
 
     @PostMapping("/internal/import")
@@ -59,13 +78,31 @@ public class IngestController {
             return problem(HttpStatus.SERVICE_UNAVAILABLE,
                     "The import needs the database, and this instance has none (api-access.enabled).");
         }
+        DelayMeasurement measurement = delays.getIfAvailable();
+        Instant started = measurement == null ? null : clock.instant();
+        GcatImporter.Report report;
         try {
-            return ResponseEntity.ok().header("Cache-Control", "no-store").body(importer.run());
+            report = importer.run();
         } catch (GcatImporter.AlreadyRunningException e) {
             return problem(HttpStatus.CONFLICT, e.getMessage());
         } catch (GcatImportException e) {
             log.warn("GCAT import failed", e);
             return problem(HttpStatus.BAD_GATEWAY, e.getMessage());
+        }
+        return ResponseEntity.ok().header("Cache-Control", "no-store")
+                .body(new Report(report, measure(measurement, started)));
+    }
+
+    private static DelayMeasurement.Report measure(DelayMeasurement measurement, Instant started) {
+        if (measurement == null) {
+            return null;
+        }
+        try {
+            return measurement.run(started);
+        } catch (RuntimeException e) {
+            // Space-Track failures are already absorbed inside; this is the database.
+            log.warn("Delay measurement failed, GCAT import kept", e);
+            return DelayMeasurement.Report.failed(e.getMessage());
         }
     }
 

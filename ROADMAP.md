@@ -1107,6 +1107,35 @@ so a counter can be inflated; a day's counter stops at 10 000, which makes such 
 obvious outlier. The threshold for "it interests someone" is written in ABD-8 before the
 first reading.
 
+**Measuring GCAT's delay** (ABD-9, four weeks from the deployment). The nightly
+`/internal/import`, after GCAT, asks Space-Track's `satcat_debut` class which objects
+entered the public catalogue over the last seven days (`DEBUT/>now-7`, after 17:00 UTC as
+its documentation asks; a week so that missed nights lose nothing) and keeps each debut in
+`spacetrack_debuts` (`space.nextpass.delays`, `V7__catalogue_delays.sql`). The view
+`catalogue_delays` joins them to GCAT's `first_seen_at`, for every object GCAT listed
+after its first import of 2 October 2026, and gives three delays in hours: GCAT after
+Space-Track, and both after the separation when its date is known to the day. They are
+bounds: GCAT is sampled once a night, so its delay is overstated by up to 24 h (and is
+negative when GCAT is first), as is a delay counted from a day-precise separation. The TLE
+chain and this query share one Space-Track session and one budget (20/min, 200/h, under
+the published 30 and 300). Space-Track unreachable is reported as `"unavailable"` and the
+GCAT import stands. The report's `delays` field gives the medians and 90th percentiles,
+for separations and for all objects, the objects measured that night, and `awaitingGcat`
+— objects Space-Track catalogued that GCAT does not list yet, the tail the percentiles
+cannot see. The reading at four weeks, on the production database:
+
+```sql
+SELECT is_separation, count(*),
+       percentile_cont(0.5) WITHIN GROUP (ORDER BY gcat_after_spacetrack_hours) AS median_h,
+       percentile_cont(0.9) WITHIN GROUP (ORDER BY gcat_after_spacetrack_hours) AS p90_h
+FROM catalogue_delays GROUP BY is_separation;
+```
+
+Only `S…` objects with a NORAD number can be compared: the auxiliary catalogue has no
+Space-Track debut, which is itself a point for GCAT. A competitor found on the way,
+KeepTrack's KTOC notices (releases and fragmentations, free, RSS), published one release
+five weeks after it happened; it is noted in ABD-10.
+
 ## Phase 3.3 — A home-made detector, only if it buys speed
 
 Detecting separations from element sets is only worth the effort if it is faster than
