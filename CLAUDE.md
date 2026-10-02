@@ -68,6 +68,11 @@ without being asked. When the Linear tools are available:
   that changes the plan (a bug found, a number measured, a decision taken).
 - **New work discovered on the way** becomes its own issue, linked to the current one
   (`relatedTo` / `blockedBy`), not a silent addition to the current change.
+- **"What should I do next?"** — whenever the owner asks what to work on (« quoi faire »,
+  « on fait quoi », « la suite »), the answer starts from Linear, not from memory or the
+  roadmap alone: list the project's open issues, skip the blocked ones, and propose the
+  next by status (In Progress / In Review first), then priority, then dependencies. Say
+  which issue, why it is next, and what finishing it takes.
 - **ABD-20** is the reminder: when every other issue of the batch is done or canceled,
   tell the owner it is time to ask for the next batch.
 
