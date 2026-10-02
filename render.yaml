@@ -48,3 +48,7 @@ services:
         sync: false
       - key: SPACETRACK_PASSWORD
         sync: false
+      # Shared secret for the daily import trigger. Same value as the IMPORT_TOKEN
+      # secret of the GitHub repository (see .github/workflows/daily-import.yml).
+      - key: IMPORT_TOKEN
+        sync: false
