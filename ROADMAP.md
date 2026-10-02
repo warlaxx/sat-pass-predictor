@@ -1100,8 +1100,9 @@ the visitor (`space.nextpass.usage`, `V6__usage_counts.sql`). The actions, by au
 | "Use my position" on an event page | `event-use-position` | observers |
 | A pass opened in the predictor | `event-open-pass` | observers |
 
-The weekly reading: `SELECT event, sum(count) FROM usage_counts WHERE day >= current_date
-- 7 GROUP BY event ORDER BY event;` on the production database. The endpoint is open,
+The weekly reading, over the seven completed UTC days: `SELECT event, sum(count) FROM
+usage_counts WHERE day >= current_date - 7 AND day < current_date GROUP BY event ORDER BY
+event;` on the production database. The endpoint is open,
 so a counter can be inflated; a day's counter stops at 10 000, which makes such a run an
 obvious outlier. The threshold for "it interests someone" is written in ABD-8 before the
 first reading.
