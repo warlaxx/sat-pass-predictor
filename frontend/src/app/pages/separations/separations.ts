@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { ProblemDetail } from '../../api/passes.model';
 import { SeparationKind, SeparationSummary, SeparationsResponse } from '../../api/separations.model';
 import { Reveal } from '../../motion/reveal';
+import { countUsage } from '../../shared/usage';
 import { isGeostationary, orbitLabel, precisionLabel, recordedDateShort } from './separation-format';
 
 /** Enough for several months of events; the list is grouped by month below. */
@@ -103,6 +104,15 @@ export class SeparationsPage {
 
   protected reload(): void {
     this.resource.reload();
+  }
+
+  protected countOpen(): void {
+    countUsage('list-open-event');
+  }
+
+  /** Counted when the table opens, not when it closes again. */
+  protected countTable(details: HTMLDetailsElement): void {
+    if (details.open) countUsage('list-show-table');
   }
 
   private row(event: SeparationSummary) {
