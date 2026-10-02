@@ -20,6 +20,24 @@ prerendered HTML holds the name, the description and the links, and the browser 
 the passes. A catalogue number that is not featured (`/satellites/43013`) is not
 prerendered: it gets `index.csr.html`, the shell that renders in the browser.
 
+**Separation pages.** The newest 50 events (`/separations/:id`, in both languages) are
+prerendered too, so a search for "USA 667 separation" can find the page with its title,
+description, heading and record in the HTML. `npm run build` fetches them once, before
+`ng build` (`frontend/scripts/separations-snapshot.mjs`): the list, then each event, from
+`PRERENDER_API` - by default the production API on Render, which may be asleep, so the
+list is asked for three times with a one-minute timeout. The file goes to `tmp/` and is
+named to the prerender in `NG_SEPARATIONS_SNAPSHOT`; on the server,
+`SeparationSnapshotBackend` (`frontend/src/app/separations-snapshot.server.ts`) answers
+`GET /api/separations/{id}` from it, with no network. The answer travels in the page's
+transfer state, so the browser adopts the HTML without asking the API again; the passes
+are still computed in the browser.
+
+The build never fails for this: an unreachable API, or `PRERENDER_API=none`, means an empty
+snapshot and every event page rendered in the browser, as before. An older event, or one
+imported after the build, gets the CSR shell. The nightly import redeploys the site when the
+`VERCEL_DEPLOY_HOOK` secret is set (`.github/workflows/daily-import.yml`), which keeps the
+prerendered events and the sitemap current.
+
 **Two languages, two builds.** `@angular/localize` builds English at the root - every
 address published before the translation still works - and French under `/fr/`
 (`angular.json`, `i18n`). The language switch in the header and the footer is a plain link
@@ -99,6 +117,10 @@ and code samples.
   source: the title and the text must be there. If Vercel answers the CSR shell instead,
   its directory-index resolution differs from the local check, and the rewrites in
   `vercel.json` need the explicit page paths.
+- View the source of `/separations/S100685` and `/fr/separations/S100685`: the title
+  "USA 396 released USA 667" (in French, "USA 396 a libéré USA 667") must be in the HTML,
+  as long as that event is among the newest 50. The build log says how many events it
+  prerendered.
 - `curl -s https://<domain>/robots.txt` and `/sitemap.xml`: the sitemap must name the
   production domain, not a preview one.
 - Declare the domain in Google Search Console and Bing Webmaster Tools, submit
