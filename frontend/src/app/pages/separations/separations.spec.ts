@@ -228,7 +228,10 @@ describe('SeparationPage', () => {
     http.expectOne('/api/separations/S400000').flush(recent);
     await fixture.whenStable();
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Passes not available yet');
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.textContent).toContain('Passes not available yet');
+    expect(page.textContent).toContain('catalogue numbers above 339999');
+    expect(page.textContent).not.toContain('99999,');
     http.expectNone((r) => r.url === '/api/passes');
   });
 
