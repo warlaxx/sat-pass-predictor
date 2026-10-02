@@ -49,6 +49,33 @@ then `node --test scripts/seo-files.test.mjs` there and
 `node --test scripts/account-dashboard.test.mjs` at the repository root.
 Do not put `.env` secrets in documentation or commits.
 
+## Linear: keep the issues in step with the work, always
+
+The backlog lives in Linear: workspace "Abdallah Abdallaoui-maane", team key `ABD`,
+project **nextpass.space**. The owner wants every action reflected there automatically,
+without being asked. When the Linear tools are available:
+
+- **Before starting**, find the issue the task belongs to (`ABD-…`). None fits? Create one
+  in the project (French, user story with acceptance criteria, label Feature / Bug /
+  Improvement / Research / Chore) before writing code. Set it **In Progress**.
+- **Branch** with the issue's `gitBranchName`, or put the identifier in the branch name;
+  write `ABD-12` in commit messages and **`Fixes ABD-12`** in the PR description, so the
+  GitHub integration can move the issue on its own once it is connected.
+- **PR opened** → issue **In Review**, PR link attached. **Merged and verified** → **Done**,
+  with a one-line comment saying what shipped and how it was checked. Abandoned →
+  **Canceled** with the reason.
+- **Tick the acceptance criteria** in the issue as they are met; comment anything learned
+  that changes the plan (a bug found, a number measured, a decision taken).
+- **New work discovered on the way** becomes its own issue, linked to the current one
+  (`relatedTo` / `blockedBy`), not a silent addition to the current change.
+- **"What should I do next?"** — whenever the owner asks what to work on (« quoi faire »,
+  « on fait quoi », « la suite »), the answer starts from Linear, not from memory or the
+  roadmap alone: list the project's open issues, skip the blocked ones, and propose the
+  next by status (In Progress / In Review first), then priority, then dependencies. Say
+  which issue, why it is next, and what finishing it takes.
+- **ABD-20** is the reminder: when every other issue of the batch is done or canceled,
+  tell the owner it is time to ask for the next batch.
+
 ## Tooling
 
 The TypeSafe AI plugin (`typesafe-ai`, System One models including **Jev**) is
