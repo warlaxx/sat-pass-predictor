@@ -138,7 +138,7 @@
               <th scope="row">{{ child.name }} <span class="num muted">{{ child.piece }}</span></th>
               <td class="num">
                 @if (linkable(child)) {
-                  <a [routerLink]="['/satellites', child.noradId]">{{ child.noradId }}</a>
+                  <a [routerLink]="['/satellites', child.noradId]" (click)="countFragment()">{{ child.noradId }}</a>
                 } @else { {{ child.noradId ?? '—' }} }
               </td>
               <td class="num">{{ orbit(child.orbit) }}</td>

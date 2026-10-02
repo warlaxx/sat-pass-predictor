@@ -21,8 +21,8 @@ demonstrates, a product on whether anyone pays. Phase 2 starts below milestone 1
 > gates remain. Milestone 15, commercial/legal readiness, is still open.
 >
 > **Active work since 2 October 2026: [phase 3](#phase-3--show-what-is-new-in-orbit),
-> on-orbit separations.** Phase 3.0 (the GCAT import) runs in production; phase 3.1
-> (the separation pages) is implemented, its deployment pending.
+> on-orbit separations.** Phase 3.0 (the GCAT import) and phase 3.1 (the separation
+> pages) run in production; phase 3.2 measures whether anyone uses them.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
 milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
@@ -1051,7 +1051,7 @@ partial changes, `first_seen_at` and a download cut halfway. **In production on
 2 October 2026:** the first run imported 70 961 objects in 53 s on the free Render instance
 and Neon; the second answered `"status": "unchanged"` in 0.3 s.
 
-## Phase 3.1 — Event pages from GCAT (implemented; deployment pending)
+## Phase 3.1 — Event pages from GCAT (done)
 
 One page per separation: parent, child, date with its precision, orbit, what GCAT says and
 where it says it — and a link to the child's next passes. A list of the latest ones.
@@ -1070,23 +1070,41 @@ kind) and `/separations/:id` (rendered in the browser).
   month · uncertain", never the first of September; times are UTC and say so.
 - **The page says why it shows no passes** rather than leaving a gap: no longer in orbit
   (a decay date), no catalogue number, no published elements (the passes endpoint answers
-  `unknown-satellite`, as for USA 396 and USA 667), or a six-digit number the predictor
-  does not accept yet. A breakup lists its fragments, each linked to its own page.
+  `unknown-satellite`, as for USA 396 and USA 667), or a catalogue number beyond what the
+  predictor accepts (339999). A breakup lists its fragments, each linked to its own page.
 - **The source is credited once, at the foot of the page** (CC BY 4.0), not in the copy.
-
-**Known gap, its own change:** the pass endpoint and the satellite pages accept NORAD
-numbers up to 99999 only, so objects catalogued since July 2026 — most recent
-separations — show no passes yet.
 
 *Verified:* `SeparationRepositoryPostgresTest` (grouping, kinds, monthly counts, lineage,
 evidence, a missing parent) on real GCAT rows; `SeparationControllerTest`; page tests for
 both pages; the list and three event pages checked by hand against the live import.
+**In production on 2 October 2026**, with six-digit catalogue numbers: the 62 fragments
+of Yaogan 50 link to their own pages, which show their passes.
 
 ## Phase 3.2 — Measure GCAT's delay, meet real users (the decision point)
 
 How long between a separation and its appearance in GCAT, compared with Space-Track's
 first publication? And do analysts, journalists and observers use the pages? The answers
 decide whether phase 3.3 exists.
+
+**Measuring use** (ABD-8, four weeks from the deployment). Vercel Web Analytics gives
+page views and where they come from (Reddit, search, direct); its free plan records no
+custom events, so five actions are counted by the backend instead: `POST
+/api/usage/{event}`, one counter per UTC day and action in `usage_counts`, nothing about
+the visitor (`space.nextpass.usage`, `V6__usage_counts.sql`). The actions, by audience:
+
+| Action | Event | Audience |
+| --- | --- | --- |
+| An event opened from the list | `list-open-event` | both |
+| The month chart opened as a table | `list-show-table` | analysts |
+| A fragment's page opened from a breakup | `event-open-fragment` | analysts |
+| "Use my position" on an event page | `event-use-position` | observers |
+| A pass opened in the predictor | `event-open-pass` | observers |
+
+The weekly reading: `SELECT event, sum(count) FROM usage_counts WHERE day >= current_date
+- 7 GROUP BY event ORDER BY event;` on the production database. The endpoint is open,
+so a counter can be inflated; a day's counter stops at 10 000, which makes such a run an
+obvious outlier. The threshold for "it interests someone" is written in ABD-8 before the
+first reading.
 
 ## Phase 3.3 — A home-made detector, only if it buys speed
 

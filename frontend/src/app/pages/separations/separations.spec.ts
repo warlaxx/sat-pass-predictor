@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, Type } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
@@ -149,6 +149,31 @@ describe('SeparationsPage', () => {
     expect(page.querySelectorAll('.table-view tbody tr')).toHaveLength(4);
     expect(page.querySelector('.facts')!.textContent).toContain('28,364');
   });
+
+  describe('counts what readers do, for the phase 3.2 decision', () => {
+    const sendBeacon = vi.fn(() => true);
+    beforeEach(() => { sendBeacon.mockClear(); vi.stubGlobal('navigator', { ...navigator, sendBeacon }); });
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('an event opened from the list', async () => {
+      const { page } = await loaded();
+      // Ctrl-click: counted like any click, without the router leaving the page under test;
+      // jsdom's own navigation is cancelled once the page's handlers have run.
+      page.addEventListener('click', (e) => e.preventDefault());
+      page.querySelector('a.event')!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true }));
+      expect(sendBeacon).toHaveBeenCalledExactlyOnceWith('/api/usage/list-open-event');
+    });
+
+    it('the table opened, not closed again', async () => {
+      const { page } = await loaded();
+      const details = page.querySelector<HTMLDetailsElement>('.table-view')!;
+      details.dispatchEvent(new Event('toggle'));
+      expect(sendBeacon).not.toHaveBeenCalled();
+      details.open = true;
+      details.dispatchEvent(new Event('toggle'));
+      expect(sendBeacon).toHaveBeenCalledWith('/api/usage/list-show-table');
+    });
+  });
 });
 
 describe('SeparationPage', () => {
@@ -223,6 +248,13 @@ describe('SeparationPage', () => {
     expect(page.querySelector('h1')!.textContent).toBe('3 fragments separated from S40340');
     expect(page.querySelectorAll('.objects tbody tr')).toHaveLength(3);
     expect(page.querySelector('.objects a')!.getAttribute('href')).toBe('/satellites/69731');
+
+    const sendBeacon = vi.fn(() => true);
+    vi.stubGlobal('navigator', { ...navigator, sendBeacon });
+    page.addEventListener('click', (e) => e.preventDefault());
+    page.querySelector('.objects a')!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true }));
+    vi.unstubAllGlobals();
+    expect(sendBeacon).toHaveBeenCalledExactlyOnceWith('/api/usage/event-open-fragment');
     expect(page.querySelector('.facts')!.textContent).toContain('May 2026');
     http.expectNone((r) => r.url === '/api/passes');
   });

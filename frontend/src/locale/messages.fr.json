@@ -769,6 +769,7 @@
     "5600603025768266023": "{$count} objets",
     "8241545206751418688": "Un objet non catalogué",
     "3155105621433884357": "Occupe un point fixe dans le ciel",
-    "2592078266756224266": "Passe au-dessus de vous"
+    "2592078266756224266": "Passe au-dessus de vous",
+    "7146350517948690721": "{$START_BOLD_TEXT}Sur les pages séparations{$CLOSE_BOLD_TEXT}, quelques actions (ouvrir un événement, un tableau ou la page d'un fragment, utiliser votre position, ouvrir un passage) ajoutent chacune un à un compteur du jour. Rien d'autre n'est envoyé ni conservé : ni cookie, ni identifiant, ni adresse, ni votre position."
   }
 }
