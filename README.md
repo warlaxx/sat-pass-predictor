@@ -113,11 +113,14 @@ cd frontend && npm install && npm start
 
 `main` is production: Vercel and Render deploy it. `dev` is the integration branch.
 Work happens on a feature branch opened from `dev`, merged into `dev` by pull request,
-and `dev` reaches `main` by another pull request once it has been checked.
+and `dev` reaches `main` by another pull request once it has been checked. The CI job
+`source-branch` fails any pull request into `main` that does not come from `dev`, so
+production never holds a change `dev` lacks. Merge `dev` into `main` with a merge
+commit, the only method `main` allows.
 
 Both branches are protected by repository rulesets: no direct push, no force-push, no
 deletion, and a pull request merges only once the CI jobs `backend` and `frontend` pass.
-`main` also requires the branch to be up to date with it and every review thread resolved.
+`main` also requires `source-branch` and every review thread resolved.
 
 ## Tests
 
