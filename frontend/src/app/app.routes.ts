@@ -5,6 +5,7 @@ import { HomePage } from './home/home';
 import { coverTransition } from './motion/route-transition';
 import { featuredSatellite } from './shared/featured';
 import { Seo, satelliteDescription, satelliteTitle } from './shared/seo';
+import { PRICING_ENABLED } from './shared/site';
 
 /** A route's meta description: a sentence, or one built from the route's parameters. */
 type Description = string | ((route: ActivatedRouteSnapshot) => string);
@@ -66,12 +67,13 @@ const pages: Routes = [
     title: $localize`:Page title:Satellite pass prediction API`,
     data: { description: $localize`:Meta description:A REST API for satellite passes: SGP4 via Orekit, Doppler shift, batch predictions over many sites, RFC 9457 errors.` },
   },
-  {
+  // Unpublished while nothing is for sale: /pricing falls through to the 404 (see PRICING_ENABLED).
+  ...(PRICING_ENABLED ? [{
     path: 'pricing',
     loadComponent: () => import('./pages/pricing/pricing').then((m) => m.PricingPage),
     title: $localize`:Page title:Plans and quotas`,
     data: { description: $localize`:Meta description:Free preview, Hobby and Pro quotas of the satellite pass prediction API.` },
-  },
+  }] : []),
   {
     path: 'methodology',
     loadComponent: () => import('./pages/methodology/methodology').then((m) => m.MethodologyPage),

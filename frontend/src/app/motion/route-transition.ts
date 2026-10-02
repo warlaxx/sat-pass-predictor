@@ -2,6 +2,7 @@ import { DOCUMENT, DestroyRef, Injectable, inject } from '@angular/core';
 import {
   CanActivateFn, NavigationCancel, NavigationEnd, NavigationError, NavigationSkipped, Router,
 } from '@angular/router';
+import { PRICING_ENABLED } from '../shared/site';
 
 /** The pages of the header, in its order: the curtain numbers them the same way. */
 export const NAV_PAGES = [
@@ -12,7 +13,7 @@ export const NAV_PAGES = [
   { path: '/pricing', label: $localize`:Header link:Pricing` },
   { path: '/methodology', label: $localize`:Header link:Methodology` },
   { path: '/status', label: $localize`:Header link:Status` },
-] as const;
+].filter(page => PRICING_ENABLED || page.path !== '/pricing');
 
 /** Pages that are reachable but not in the header: named, not numbered. */
 const OTHER_PAGES: Record<string, string> = { legal: $localize`Legal`, satellite: $localize`Satellite`, starlink: $localize`Starlink` };

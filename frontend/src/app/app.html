@@ -134,7 +134,7 @@
       <nav aria-label="Developers" i18n-aria-label>
         <h2 i18n>Developers</h2>
         <a routerLink="/developers" i18n>API guide</a>
-        <a routerLink="/pricing" i18n>Plans and quotas</a>
+        @if (pricingEnabled) { <a routerLink="/pricing" i18n>Plans and quotas</a> }
         <a routerLink="/status" i18n>Service status</a>
         <a [href]="swaggerUrl" rel="noopener" i18n>OpenAPI reference ↗</a>
       </nav>

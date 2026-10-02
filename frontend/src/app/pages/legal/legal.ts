@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Reveal } from '../../motion/reveal';
-import { ACCOUNT_URL, DEMO_LIMITS, OPERATOR, REPOSITORY_URL } from '../../shared/site';
+import { ACCOUNT_URL, DEMO_LIMITS, OPERATOR, PLANS_LINK, REPOSITORY_URL } from '../../shared/site';
 
 /** A published fact about the operator, or the marker that it is still missing. */
 interface IdentityLine {
@@ -35,6 +35,7 @@ interface IdentityLine {
 })
 export class LegalPage {
   protected readonly accountUrl = ACCOUNT_URL;
+  protected readonly plans = PLANS_LINK;
   protected readonly repositoryUrl = REPOSITORY_URL;
   protected readonly demo = DEMO_LIMITS;
   protected readonly operatorEmail = OPERATOR.email;
