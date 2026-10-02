@@ -932,6 +932,16 @@ idea is on the record with its justification, and so that it is not mistaken for
 
 ---
 
+## Under evaluation — manoeuvre detection (not scheduled)
+
+Outside feedback: prediction is a commodity, the value is in what one learns from orbits. The
+candidate is detecting manoeuvres from TLE history (Space-Track `gp_history`), validated
+first on the ISS's public reboosts. It is a different product from the pass API, so it waits
+for an explicit choice between "capped portfolio piece" and "replacement for phase 2". Notes,
+risks and validation criteria: [manoeuvre detection](docs/maneuver-detection.md).
+
+---
+
 ## What would make this fail
 
 Written down for the same reason as the accepted limitations below: to be defended, not
