@@ -56,7 +56,7 @@
     <p i18n>
       NextPass computes when satellites pass over a place on Earth, from public
       orbital elements and the SGP4 model. The website is free to use. The API is available
-      with a key, under the quotas of the <a routerLink="/pricing">chosen plan</a>.
+      with a key, under the quotas of the <a [routerLink]="plans.path" [fragment]="plans.fragment">chosen plan</a>.
     </p>
     <h3 i18n>Predictions are estimates</h3>
     <p i18n>

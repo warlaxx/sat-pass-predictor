@@ -6,6 +6,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideRouter, Router } from '@angular/router';
 import { App } from './app';
 import { routes } from './app.routes';
+import { PRICING_ENABLED } from './shared/site';
 
 /**
  * The shell: the header, the footer and the outlet. Pages are drawn by the real routes,
@@ -27,10 +28,10 @@ describe('App shell', () => {
   }
 
   it('gives every page one h1, its own title, and keeps the brand out of the headings', async () => {
-    const fixture = await at('/pricing');
+    const fixture = await at('/developers');
     const headings = fixture.nativeElement.querySelectorAll('h1') as NodeListOf<HTMLElement>;
     expect(headings).toHaveLength(1);
-    expect(headings[0].id).toBe('pricing-title');
+    expect(headings[0].id).toBe('dev-title');
     expect(fixture.nativeElement.querySelector('header .brand').textContent).toContain('NextPass');
   });
 
@@ -76,6 +77,13 @@ describe('App shell', () => {
       expect(link.getAttribute('href')).toBe('/fr/legal#privacy');
       expect(link.getAttribute('routerlink')).toBeNull();
     }
+  });
+
+  it.skipIf(PRICING_ENABLED)('keeps the plans page unpublished while nothing is for sale', async () => {
+    const fixture = await at('/pricing');
+    expect(fixture.nativeElement.querySelector('app-not-found')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-pricing')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('a[href^="/pricing"]')).toHaveLength(0);
   });
 
   it('answers an unknown address with the not-found page', async () => {

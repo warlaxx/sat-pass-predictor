@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CodeBlock } from '../../shared/code-block';
 import { Reveal } from '../../motion/reveal';
-import { ACCOUNT_URL, API_ORIGIN, BATCH_LIMITS, PLANS, SWAGGER_URL } from '../../shared/site';
+import { ACCOUNT_URL, API_ORIGIN, BATCH_LIMITS, PLANS, PRICING_ENABLED, SWAGGER_URL } from '../../shared/site';
 
 /**
  * The developer guide, written as the landing page of the API (roadmap, milestone 17):
@@ -21,6 +21,7 @@ import { ACCOUNT_URL, API_ORIGIN, BATCH_LIMITS, PLANS, SWAGGER_URL } from '../..
 })
 export class DevelopersPage {
   protected readonly accountUrl = ACCOUNT_URL;
+  protected readonly pricingEnabled = PRICING_ENABLED;
   protected readonly swaggerUrl = SWAGGER_URL;
   protected readonly apiOrigin = API_ORIGIN;
   protected readonly batch = BATCH_LIMITS;

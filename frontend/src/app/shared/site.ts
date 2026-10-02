@@ -39,6 +39,20 @@ export const PLANS: readonly Plan[] = [
   },
 ];
 
+/**
+ * Whether the plans page is published: its route, its header and footer links.
+ *
+ * Off while nothing is for sale (backend `BILLING_ENABLED` is off too, docs/billing.md):
+ * `/pricing` then answers as an unknown page, leaves the sitemap, and the links that
+ * cite plans point to the developer guide's limits instead. The page itself is kept;
+ * turning this on, with billing, publishes it again.
+ */
+export const PRICING_ENABLED = false;
+
+/** Where a sentence about plans and quotas links to. */
+export const PLANS_LINK: { readonly path: string; readonly fragment?: string } =
+  PRICING_ENABLED ? { path: '/pricing' } : { path: '/developers', fragment: 'limits' };
+
 /** The anonymous budget this web page shares with every visitor (docs/api-access.md). */
 export const DEMO_LIMITS = { daily: 200, perMinute: 20 } as const;
 

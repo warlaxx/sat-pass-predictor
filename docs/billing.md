@@ -29,6 +29,10 @@ multi-key offer; Business and the proposed 1,000/month free offer are not implem
 ## Configure a sandbox first
 
 Keep `BILLING_ENABLED=false` on the public deployment until the release gates pass.
+The website's plans page is unpublished for the same reason: `PRICING_ENABLED` in
+`frontend/src/app/shared/site.ts` is `false`, so `/pricing` answers as an unknown page and
+leaves the header, footer and sitemap. Set it to `true` in the same release that turns
+billing on; the page and its translations are kept.
 In a dedicated test environment, enable accounts per [the account runbook](self-serve-accounts.md), then set:
 
 ```text

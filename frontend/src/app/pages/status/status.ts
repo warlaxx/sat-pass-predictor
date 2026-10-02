@@ -6,6 +6,7 @@ import { firstValueFrom, timeout } from 'rxjs';
 import { Reveal } from '../../motion/reveal';
 import { formatAge } from '../../format';
 import { ServiceStatus } from '../../shared/service-status';
+import { PLANS_LINK } from '../../shared/site';
 
 export type ProbeState = 'checking' | 'ok' | 'slow' | 'down';
 
@@ -57,6 +58,7 @@ export const CATALOGUE_STALE_S = 2 * 86_400;
 export class StatusPage {
   private readonly http = inject(HttpClient);
   private readonly serviceStatus = inject(ServiceStatus);
+  protected readonly plans = PLANS_LINK;
 
   protected readonly backend = signal<ProbeResult>({ state: 'checking', detail: $localize`Asking the backend…` });
   protected readonly catalogue = signal<ProbeResult>({ state: 'checking', detail: $localize`Searching the catalogue…` });

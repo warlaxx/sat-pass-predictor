@@ -3,7 +3,7 @@ import {
 } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
-import { ACCOUNT_URL, OPERATOR, REPOSITORY_URL, SWAGGER_URL } from './shared/site';
+import { ACCOUNT_URL, OPERATOR, PRICING_ENABLED, REPOSITORY_URL, SWAGGER_URL } from './shared/site';
 import { LANGUAGES, addressIn, currentLanguage, pathIn } from './shared/locale';
 import { feedbackHref } from './shared/feedback';
 import { SITE_ORIGIN } from './shared/seo';
@@ -33,6 +33,7 @@ const STATUS_LABELS = {
 })
 export class App {
   protected readonly accountUrl = ACCOUNT_URL;
+  protected readonly pricingEnabled = PRICING_ENABLED;
   protected readonly repositoryUrl = REPOSITORY_URL;
   protected readonly swaggerUrl = SWAGGER_URL;
 

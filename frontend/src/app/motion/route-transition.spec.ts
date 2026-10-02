@@ -3,12 +3,13 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { describe, it, expect } from 'vitest';
 import { RouteTransition, pageLabel } from './route-transition';
+import { PRICING_ENABLED } from '../shared/site';
 
 describe('pageLabel', () => {
   it('numbers the header pages in their order', () => {
     expect(pageLabel('/')).toBe('01 — Predictor');
     expect(pageLabel('/developers#quotas')).toBe('04 — Developers');
-    expect(pageLabel('/status?x=1')).toBe('07 — Status');
+    expect(pageLabel('/status?x=1')).toBe(PRICING_ENABLED ? '07 — Status' : '06 — Status');
   });
 
   it('names the pages outside the header without a number', () => {
@@ -21,6 +22,6 @@ describe('pageLabel', () => {
 describe('RouteTransition', () => {
   it('lets a navigation through at once when there is no curtain to draw', async () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), provideRouter([])] });
-    await expect(TestBed.inject(RouteTransition).cover('/pricing')).resolves.toBe(true);
+    await expect(TestBed.inject(RouteTransition).cover('/methodology')).resolves.toBe(true);
   });
 });
