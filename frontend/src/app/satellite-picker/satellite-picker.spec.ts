@@ -11,7 +11,10 @@ const OBJECT: SatelliteMatch = { noradId: 49044, name: 'ISS OBJECT XK' };
 describe('asNoradId', () => {
   it('accepts what the pass endpoint accepts, and nothing else', () => {
     expect(asNoradId(' 25544 ')).toBe(25544);
-    for (const text of ['', '0', '100000', 'iss', '25544a', '1.5']) expect(asNoradId(text)).toBeUndefined();
+    // Six digits since July 2026, up to Z9999 in Alpha-5.
+    expect(asNoradId('100685')).toBe(100685);
+    expect(asNoradId('339999')).toBe(339999);
+    for (const text of ['', '0', '340000', '1000000', 'iss', '25544a', '1.5']) expect(asNoradId(text)).toBeUndefined();
   });
 });
 

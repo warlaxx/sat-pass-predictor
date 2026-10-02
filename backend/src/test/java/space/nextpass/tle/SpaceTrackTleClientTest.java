@@ -209,4 +209,26 @@ class SpaceTrackTleClientTest {
 
         server.verify();
     }
+
+    /**
+     * Space-Track writes six-digit numbers in Alpha-5 in its 3LE output; Orekit decodes
+     * them, so the number check compares 100534 with 100534 and not with "A0534".
+     */
+    @Test
+    void readsAlphaFiveLinesForSixDigitNumbers() {
+        SpaceTrackTleClient client = client();
+        expectLogin("");
+        server.expect(requestTo(
+                        BASE_URL + "/basicspacedata/query/class/gp/NORAD_CAT_ID/100534/limit/1/format/3le"))
+                .andRespond(withSuccess("0 STARLINK-38244\r\n"
+                        + TleFixtures.STARLINK_100534_LINE1 + "\r\n"
+                        + TleFixtures.STARLINK_100534_LINE2 + "\r\n", MediaType.TEXT_PLAIN));
+
+        TleSnapshot snapshot = client.fetch(100534);
+
+        server.verify();
+        assertThat(snapshot.noradId()).isEqualTo(100534);
+        assertThat(snapshot.name()).isEqualTo("STARLINK-38244");
+        assertThat(snapshot.line1()).isEqualTo(TleFixtures.STARLINK_100534_LINE1);
+    }
 }

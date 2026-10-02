@@ -5,6 +5,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, map, of } from 'rxjs';
 import { PassDto, PassesResponse } from '../api/passes.model';
 import { PassQuery, toParams } from '../api/passes.query';
+import { asNoradId } from '../api/satellites.service';
 import { SatellitePicker } from '../satellite-picker/satellite-picker';
 import { visibleWindow } from '../calendar/ics';
 
@@ -18,11 +19,11 @@ interface Search { query: PassQuery; ids: number[] }
 interface Result { noradId: number; response?: PassesResponse; error?: string }
 
 export function parseSatellites(text: string): number[] {
-  const tokens = text.trim().split(/[\s,]+/);
-  if (tokens.some(token => !/^\d{1,5}$/.test(token) || Number(token) < 1)) {
-    throw new Error($localize`Enter NORAD numbers from 1 to 99999, separated by commas.`);
+  const parsed = text.trim().split(/[\s,]+/).map(asNoradId);
+  if (parsed.some(id => id === undefined)) {
+    throw new Error($localize`Enter NORAD numbers from 1 to 339999, separated by commas.`);
   }
-  const ids = [...new Set(tokens.map(Number))];
+  const ids = [...new Set(parsed as number[])];
   if (ids.length > 5) throw new Error($localize`Search up to five distinct satellites at a time.`);
   return ids;
 }

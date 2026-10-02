@@ -41,8 +41,8 @@ import org.springframework.web.client.RestClient;
  * <h2>Validation at retrieval time</h2>
  * Width, checksum, Orekit parsing and the NORAD number are checked by
  * {@link TleResponseParser}, which every source shares: what a valid TLE looks like
- * belongs to NORAD, not to whoever served it. What stays here is the one thing that is
- * CelesTrak's own — how it says it does not have an object.
+ * belongs to NORAD, not to whoever served it. What stays here is what is CelesTrak's
+ * own — how it says it does not have an object, and which format it serves an object in.
  *
  * <h2>No HTTP status alone means "unknown satellite"</h2>
  * A 404 counts as "not found" only when its body is the {@code No GP data found} marker;
@@ -53,6 +53,14 @@ import org.springframework.web.client.RestClient;
  * {@link TleStore} throw away a perfectly good cached TLE and tell the user the object
  * does not exist. A misrouted request is not a fact about the sky — only CelesTrak's own
  * sentence is.
+ *
+ * <h2>Six-digit catalogue numbers</h2>
+ * Up to 99999 the request asks for {@code FORMAT=TLE}, whose lines are served verbatim.
+ * Above it CelesTrak publishes no TLE at all: {@code FORMAT=TLE} answers
+ * {@code No GP data found} for an object {@code FORMAT=JSON} returns (observed on
+ * 2 October 2026), so those numbers are asked for in JSON and rewritten as Alpha-5 lines
+ * by {@link OmmResponseParser}. The marker keeps its meaning in both formats, and so does
+ * every check that follows.
  *
  * <h2>One endpoint per instance</h2>
  * This class talks to exactly one host. Trying more than one is
@@ -74,6 +82,9 @@ public class CelestrakTleClient implements TleClient {
     private static final int ERROR_BODY_PEEK = 256;
 
     private static final String SOURCE = "celestrak";
+
+    /** The highest number CelesTrak's {@code FORMAT=TLE} serves: see the class javadoc. */
+    private static final int MAX_TLE_FORMAT_NUMBER = 99_999;
 
     /** Base URL of this endpoint. Carried for messages and logs, nothing else. */
     private final String endpoint;
@@ -114,8 +125,11 @@ public class CelestrakTleClient implements TleClient {
                     endpoint + " returned an empty body for satellite " + noradId);
         }
 
+        String threeLines = hasTleFormat(noradId) ? trimmed
+                : OmmResponseParser.toThreeLines(
+                        noradId, endpoint, trimmed, dataContext.getTimeScales().getUTC());
         TleSnapshot snapshot = TleResponseParser.parse(
-                noradId, endpoint, SOURCE, trimmed, fetchedAt, dataContext);
+                noradId, endpoint, SOURCE, threeLines, fetchedAt, dataContext);
         log.info("fetched TLE for {} ({}) from {}, epoch {}",
                 noradId, snapshot.name(), endpoint, snapshot.epoch());
         return snapshot;
@@ -126,7 +140,7 @@ public class CelestrakTleClient implements TleClient {
             return restClient.get()
                     .uri(uri -> uri.path("/NORAD/elements/gp.php")
                             .queryParam("CATNR", noradId)
-                            .queryParam("FORMAT", "TLE")
+                            .queryParam("FORMAT", hasTleFormat(noradId) ? "TLE" : "JSON")
                             .build())
                     .retrieve()
                     // Every error status is an outage, except a 404 that carries the
@@ -147,6 +161,11 @@ public class CelestrakTleClient implements TleClient {
             throw new TleUnavailableException(
                     endpoint + " unreachable for satellite " + noradId, e);
         }
+    }
+
+    /** Whether CelesTrak publishes this number as TLE: five digits, no Alpha-5. */
+    private static boolean hasTleFormat(int noradId) {
+        return noradId <= MAX_TLE_FORMAT_NUMBER;
     }
 
     private static boolean isNoDataMarker(String body) {

@@ -210,6 +210,23 @@ a failure, falling back to the last known TLE, the absence of a fallback on the 
 call, forgetting a satellite removed from the catalogue, the hard age limit and the
 collapsing of concurrent calls.
 
+**Amended on 2 October 2026: six-digit catalogue numbers.** Objects catalogued since July
+2026 carry numbers above 99999, and `/api/passes?noradId=100685` answered 400 before
+anything looked it up. Removing the bound was not enough: CelesTrak's GP API serves those
+objects **only as OMM** — `FORMAT=TLE` answers `No GP data found`, in 404, for an object
+`FORMAT=JSON` returns — so the client would have reported a live Starlink as re-entered,
+and the name index, read from the TLE form of the `active` group, stopped at 69998 and had
+no launch since July. Decisions: the bound becomes **339999**, `Z9999` in Alpha-5, the
+last number a TLE line can carry, because snapshots stay TLE lines (persisted, served in
+the API, re-parsed by Orekit). Up to 99999 the client keeps asking for verbatim TLE;
+above, it asks for JSON and has Orekit write Alpha-5 lines, which then go through the same
+validation as any source — the number written is the response's, so the
+returned-number check still bites. Orekit's own OMM parser was tried and rejected: it
+refuses CelesTrak's XML, and its TLE generation halves `MEAN_MOTION_DOT`, which CelesTrak
+publishes as the TLE field (ṅ/2), not as CCSDS's ṅ. The index now reads the group's JSON
+(≈ 7 MB a day, streamed record by record). Space-Track's 3LE uses Alpha-5 already, per its
+documentation; that is covered by a test, not yet checked against the live service.
+
 ---
 
 ## Milestone 5 — REST API (done)

@@ -1,6 +1,7 @@
 package space.nextpass.api;
 
 import space.nextpass.domain.ObserverLocation;
+import space.nextpass.domain.TleSnapshot;
 import space.nextpass.passes.PassPredictionService;
 import space.nextpass.passes.PassQueryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,8 +70,10 @@ public class PassController {
                             + " or elements too old. The type field tells the two apart.",
                     content = @io.swagger.v3.oas.annotations.media.Content)})
     public PassesResponse passes(
-            @Parameter(description = "NORAD number of the satellite", example = "25544")
-            @RequestParam @Min(1) @Max(99999) int noradId,
+            @Parameter(description = "NORAD number of the satellite. Six-digit numbers are"
+                    + " accepted up to " + TleSnapshot.MAX_NORAD_ID + ", the highest a TLE can carry;"
+                    + " their tle lines are in Alpha-5 (100534 is A0534).", example = "25544")
+            @RequestParam @Min(1) @Max(TleSnapshot.MAX_NORAD_ID) int noradId,
             @Parameter(description = "Latitude of the observer, in degrees", example = "45.7578")
             @RequestParam @DecimalMin("-90.0") @DecimalMax("90.0") double lat,
             @Parameter(description = "Longitude of the observer, in degrees", example = "4.8320")

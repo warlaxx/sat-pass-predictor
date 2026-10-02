@@ -1,6 +1,7 @@
 package space.nextpass.api;
 
 import space.nextpass.domain.ObserverLocation;
+import space.nextpass.domain.TleSnapshot;
 import space.nextpass.passes.PassPredictionService;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -67,7 +68,7 @@ public record BatchQuery(List<Integer> noradIds,
         for (String value : values(parameters, "noradId")) {
             // One parameter may carry several numbers: noradId=25544,20580.
             for (String part : value.split(",", -1)) {
-                noradIds.add((int) number("noradId", part, 1, 99_999, true));
+                noradIds.add((int) number("noradId", part, 1, TleSnapshot.MAX_NORAD_ID, true));
             }
         }
         SequencedSet<ObserverLocation> sites = new LinkedHashSet<>();

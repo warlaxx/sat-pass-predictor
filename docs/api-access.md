@@ -116,7 +116,7 @@ curl -H "X-API-Key: $NEXTPASS_API_KEY" \
 
 | Parameter | Format | Default |
 | --- | --- | --- |
-| `noradId` | NORAD numbers, repeated or comma-separated (`noradId=25544,20580`) | required |
+| `noradId` | NORAD numbers from 1 to 339999, repeated or comma-separated (`noradId=25544,20580`) | required |
 | `site` | `lat,lon` or `lat,lon,alt` (degrees, degrees, metres above the ellipsoid); repeat for several sites | required |
 | `hours` | 1–240 | 48 |
 | `minElevation` | 0–89 degrees | 10 |

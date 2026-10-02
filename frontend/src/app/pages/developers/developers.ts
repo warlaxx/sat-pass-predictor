@@ -89,7 +89,7 @@ for p in response.json()["passes"]:
     print(p["aos"]["instant"], p["culmination"]["elevationDeg"])`;
 
   protected readonly parameters = [
-    { name: 'noradId', format: $localize`integer, 1–99999`, fallback: $localize`required`, meaning: $localize`NORAD catalogue number of the satellite.` },
+    { name: 'noradId', format: $localize`integer, 1–339999`, fallback: $localize`required`, meaning: $localize`NORAD catalogue number of the satellite.` },
     { name: 'lat', format: $localize`degrees, −90 to 90`, fallback: $localize`required`, meaning: $localize`Latitude of the observer (WGS84).` },
     { name: 'lon', format: $localize`degrees, −180 to 180`, fallback: $localize`required`, meaning: $localize`Longitude of the observer.` },
     { name: 'alt', format: $localize`metres, −500 to 9000`, fallback: '0', meaning: $localize`Altitude above the WGS84 ellipsoid, not above sea level.` },

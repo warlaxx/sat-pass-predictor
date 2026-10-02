@@ -281,4 +281,79 @@ class CelestrakTleClientTest {
                 .isThrownBy(() -> client.fetch(25544))
                 .withMessageContaining(BASE_URL);
     }
+
+    private static final String SIX_DIGITS =
+            BASE_URL + "/NORAD/elements/gp.php?CATNR=100534&FORMAT=JSON";
+
+    /**
+     * Since July 2026 new objects have six-digit numbers, and CelesTrak serves them only
+     * as OMM: {@code FORMAT=TLE} answers {@code No GP data found}, the marker of a
+     * re-entered satellite. So the request asks for JSON, and the snapshot carries the
+     * same element set as Alpha-5 lines.
+     */
+    @Test
+    void asksForJsonAboveFiveDigitsAndKeepsAlphaFiveLines() {
+        server.expect(requestTo(SIX_DIGITS))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(TleFixtures.STARLINK_100534_OMM, MediaType.APPLICATION_JSON));
+
+        TleSnapshot snapshot = client.fetch(100534);
+
+        server.verify();
+        assertThat(snapshot.noradId()).isEqualTo(100534);
+        assertThat(snapshot.name()).isEqualTo("STARLINK-38244");
+        assertThat(snapshot.line1()).isEqualTo(TleFixtures.STARLINK_100534_LINE1);
+        assertThat(snapshot.line2()).isEqualTo(TleFixtures.STARLINK_100534_LINE2);
+        assertThat(snapshot.epoch())
+                .isCloseTo(Instant.parse("2026-10-01T22:11:24.452Z"), within(1, ChronoUnit.MILLIS));
+        assertThat(snapshot.source()).isEqualTo("celestrak");
+        assertThat(snapshot.fetchedAt()).isEqualTo(FETCHED_AT);
+    }
+
+    /** The last five-digit number still asks for the verbatim lines. */
+    @Test
+    void keepsAskingForTleUpToFiveDigits() {
+        server.expect(requestTo(BASE_URL + "/NORAD/elements/gp.php?CATNR=99999&FORMAT=TLE"))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND).contentType(MediaType.TEXT_PLAIN)
+                        .body("No GP data found"));
+
+        assertThatExceptionOfType(TleNotFoundException.class).isThrownBy(() -> client.fetch(99999));
+        server.verify();
+    }
+
+    /** The marker means the same thing in JSON: 100685 was not in the GP data on 2 October 2026. */
+    @Test
+    void treatsTheNoGpDataMarkerAsAnUnknownSatelliteInJsonToo() {
+        server.expect(requestTo(BASE_URL + "/NORAD/elements/gp.php?CATNR=100685&FORMAT=JSON"))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND).contentType(MediaType.TEXT_PLAIN)
+                        .body("No GP data found"));
+
+        assertThatExceptionOfType(TleNotFoundException.class)
+                .isThrownBy(() -> client.fetch(100685))
+                .satisfies(e -> assertThat(e.noradId()).isEqualTo(100685));
+        server.verify();
+    }
+
+    /** The number written into the lines is the response's, so the usual check still bites. */
+    @Test
+    void refusesAnOmmForAnotherSatellite() {
+        server.expect(requestTo(BASE_URL + "/NORAD/elements/gp.php?CATNR=100535&FORMAT=JSON"))
+                .andRespond(withSuccess(TleFixtures.STARLINK_100534_OMM, MediaType.APPLICATION_JSON));
+
+        assertThatExceptionOfType(TleUnavailableException.class)
+                .isThrownBy(() -> client.fetch(100535))
+                .withMessageContaining("100534");
+    }
+
+    /** An HTML page in 200 is an outage in JSON as in TLE, never an unknown satellite. */
+    @Test
+    void treatsAnHtmlPageAsAnOutageForSixDigitNumbers() {
+        server.expect(requestTo(SIX_DIGITS))
+                .andRespond(withSuccess("<html><body>Service temporarily unavailable</body></html>",
+                        MediaType.TEXT_HTML));
+
+        assertThatExceptionOfType(TleUnavailableException.class)
+                .isThrownBy(() -> client.fetch(100534))
+                .withMessageContaining(BASE_URL);
+    }
 }
