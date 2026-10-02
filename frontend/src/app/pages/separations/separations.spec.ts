@@ -197,10 +197,10 @@ describe('SeparationPage', () => {
   });
 
   it('asks for no prediction it cannot give yet', async () => {
-    const recent: SeparationEvent = { ...SHENZHOU, id: 'S100685', children: [object({ id: 'S100685', noradId: 100685, name: 'USA 667' })] };
-    const fixture = await render(SeparationPage, { id: 'S100685' });
+    const recent: SeparationEvent = { ...SHENZHOU, id: 'S400000', children: [object({ id: 'S400000', noradId: 400000, name: 'USA 667' })] };
+    const fixture = await render(SeparationPage, { id: 'S400000' });
     const http = TestBed.inject(HttpTestingController);
-    http.expectOne('/api/separations/S100685').flush(recent);
+    http.expectOne('/api/separations/S400000').flush(recent);
     await fixture.whenStable();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Passes not available yet');
@@ -229,17 +229,17 @@ describe('SeparationPage', () => {
 
   it('links a fragment to its page only when the predictor accepts its number', async () => {
     const recent: SeparationEvent = {
-      ...SHENZHOU, id: 'S100564', kind: 'FRAGMENTATION', childCount: 2,
-      children: [100564, 100565].map((n) => object({ id: `S${n}`, noradId: n, name: 'deb YG50-02', role: 'debris' })),
+      ...SHENZHOU, id: 'S400000', kind: 'FRAGMENTATION', childCount: 2,
+      children: [400000, 400001].map((n) => object({ id: `S${n}`, noradId: n, name: 'deb YG50-02', role: 'debris' })),
     };
-    const fixture = await render(SeparationPage, { id: 'S100564' });
-    TestBed.inject(HttpTestingController).expectOne('/api/separations/S100564').flush(recent);
+    const fixture = await render(SeparationPage, { id: 'S400000' });
+    TestBed.inject(HttpTestingController).expectOne('/api/separations/S400000').flush(recent);
     await fixture.whenStable();
 
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelectorAll('.objects tbody tr')).toHaveLength(2);
     expect(page.querySelector('.objects a')).toBeNull();
-    expect(page.querySelector('.objects tbody')!.textContent).toContain('100564');
+    expect(page.querySelector('.objects tbody')!.textContent).toContain('400000');
   });
 
   it('says plainly when no separation has that record', async () => {
