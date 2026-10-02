@@ -53,8 +53,8 @@ export class SeparationPage {
 
   protected readonly windowHours = SEPARATION_WINDOW_HOURS;
 
-  protected readonly resource = httpResource<SeparationEvent>(() =>
-    this.browser ? `/api/separations/${encodeURIComponent(this.id())}` : undefined);
+  /** On the server, only a prerendered event is rendered, and it comes from the build's snapshot. */
+  protected readonly resource = httpResource<SeparationEvent>(() => `/api/separations/${encodeURIComponent(this.id())}`);
   protected readonly event = computed(() => (this.resource.hasValue() ? this.resource.value() : undefined));
 
   /** The released object, when there is one; a breakup's fragments are listed instead. */
@@ -141,7 +141,8 @@ export class SeparationPage {
   });
 
   protected readonly passes = httpResource<PassesResponse>(() => {
-    const noradId = this.predictable();
+    // Never at build time: a prerendered pass would be stale by the time anyone reads it.
+    const noradId = this.browser ? this.predictable() : undefined;
     if (noradId === undefined) return undefined;
     const { lat, lon, alt } = this.observer();
     return {
