@@ -18,7 +18,10 @@ do not confuse local test success with commercial launch readiness.
 separations, built on McDowell's GCAT (CC-BY), one feature at a time.** The nightly
 import is `.github/workflows/daily-import.yml` calling `POST /internal/import`
 (`space.nextpass.ingest`), because Render's free plan sleeps and `@Scheduled` would not
-fire. Every backend class must live under `space.nextpass`: the component scan sees
+fire. The import is live in production since 2 October 2026. The separation pages
+(`/separations`, `/separations/:id`, `GET /api/separations`) are phase 3.1; their copy
+never names the data source, which is credited once in the page footer (CC BY 4.0).
+Every backend class must live under `space.nextpass`: the component scan sees
 nothing else. Tests need Orekit data; in a worktree, point `OREKIT_DATA_PATH` at the main
 checkout's `orekit-data`.
 

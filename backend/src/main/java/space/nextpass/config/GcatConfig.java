@@ -16,6 +16,7 @@ import org.springframework.web.client.RestClient;
 import space.nextpass.gcat.GcatImporter;
 import space.nextpass.gcat.GcatRepository;
 import space.nextpass.gcat.HttpGcatSource;
+import space.nextpass.separations.SeparationRepository;
 
 /**
  * Wiring of the GCAT import. It needs the database, so it exists only where the database
@@ -50,5 +51,14 @@ public class GcatConfig {
         transaction.setTimeout(600);
         return new GcatImporter(new HttpGcatSource(restClient), properties.files(),
                 new GcatRepository(jdbc), transaction, clock);
+    }
+
+    /** The separation pages read what the import wrote, with a request-sized budget. */
+    @Bean
+    @ConditionalOnProperty(name = "api-access.enabled", havingValue = "true")
+    public SeparationRepository separationRepository(HikariDataSource source) {
+        JdbcTemplate jdbc = new JdbcTemplate(source);
+        jdbc.setQueryTimeout(5);
+        return new SeparationRepository(jdbc);
     }
 }

@@ -21,8 +21,8 @@ demonstrates, a product on whether anyone pays. Phase 2 starts below milestone 1
 > gates remain. Milestone 15, commercial/legal readiness, is still open.
 >
 > **Active work since 2 October 2026: [phase 3](#phase-3--show-what-is-new-in-orbit),
-> on-orbit separations.** Phase 3.0 (the GCAT import) is implemented; its first
-> production run is pending.
+> on-orbit separations.** Phase 3.0 (the GCAT import) runs in production; phase 3.1
+> (the separation pages) is implemented, its deployment pending.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
 milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
@@ -1012,7 +1012,7 @@ phase 3.2 says someone wants it.
   `2026 Jun 19 2200?`, `2026 Jul 11 0402:25`. Both must survive the import; rounding
   `2026 May?` to 1 May would invent a fact.
 
-## Phase 3.0 — Foundations: the GCAT import (implemented; production run pending)
+## Phase 3.0 — Foundations: the GCAT import (done)
 
 - Download `satcat.tsv` and `satcat100k.tsv`, conditionally on their `ETag`; stream-parse
   them (the free Render instance has 512 MB); upsert by `JCAT` so a rerun changes nothing.
@@ -1030,12 +1030,40 @@ is stored as infinity. `first_seen_at` is written once, for phase 3.2. Measured 
 against the live files with a 358 MB heap: 70 961 objects and 28 372 separations in
 13 s, 256 MB resident, 23 MB of table; the next run answers `304` in 0.3 s; a forced
 re-download writes nothing. `GcatImporterPostgresTest` covers the conditional download,
-partial changes, `first_seen_at` and a download cut halfway. Not yet run in production.
+partial changes, `first_seen_at` and a download cut halfway. **In production on
+2 October 2026:** the first run imported 70 961 objects in 53 s on the free Render instance
+and Neon; the second answered `"status": "unchanged"` in 0.3 s.
 
-## Phase 3.1 — Event pages from GCAT
+## Phase 3.1 — Event pages from GCAT (implemented; deployment pending)
 
 One page per separation: parent, child, date with its precision, orbit, what GCAT says and
 where it says it — and a link to the child's next passes. A list of the latest ones.
+
+*Implemented,* from the validated mockup: `GET /api/separations` (latest events, this
+year by month) and `GET /api/separations/{id}`, outside the quota like the name search,
+cached 15 minutes; `/separations` (prerendered text, live list and month chart, filter by
+kind) and `/separations/:id` (rendered in the browser).
+
+- **An event is a parent and a recorded date**: the rows sharing both. Sixty-two fragments
+  of one breakup are one event. Its address is its smallest record identifier, and any
+  member's identifier finds it, so a link survives a member being added. A release leaves
+  at least one object that is not debris; a fragmentation leaves only debris. Records the
+  catalogue marks `ERR` are left out.
+- **Dates read at their recorded precision**: `2026 Sep?` is "September 2026 · to the
+  month · uncertain", never the first of September; times are UTC and say so.
+- **The page says why it shows no passes** rather than leaving a gap: no longer in orbit
+  (a decay date), no catalogue number, no published elements (the passes endpoint answers
+  `unknown-satellite`, as for USA 396 and USA 667), or a six-digit number the predictor
+  does not accept yet. A breakup lists its fragments, each linked to its own page.
+- **The source is credited once, at the foot of the page** (CC BY 4.0), not in the copy.
+
+**Known gap, its own change:** the pass endpoint and the satellite pages accept NORAD
+numbers up to 99999 only, so objects catalogued since July 2026 — most recent
+separations — show no passes yet.
+
+*Verified:* `SeparationRepositoryPostgresTest` (grouping, kinds, monthly counts, lineage,
+evidence, a missing parent) on real GCAT rows; `SeparationControllerTest`; page tests for
+both pages; the list and three event pages checked by hand against the live import.
 
 ## Phase 3.2 — Measure GCAT's delay, meet real users (the decision point)
 

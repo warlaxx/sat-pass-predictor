@@ -1,0 +1,244 @@
+@let loaded = event();
+@let subj = subject();
+
+<section class="page-hero wrap" appReveal aria-labelledby="event-title">
+  <span class="kicker">
+    <a routerLink="/separations" i18n>Separations</a>
+    @if (loaded) {
+      ·
+      @if (loaded.kind === 'RELEASE') { <span class="tag release" i18n>Release</span> }
+      @else { <span class="tag fragmentation" i18n>Fragmentation</span> }
+    }
+  </span>
+  <h1 id="event-title">{{ heading() }}</h1>
+  @if (lede(); as sentence) {
+    <p class="lede">{{ sentence }}</p>
+  }
+</section>
+
+@if (problem(); as failure) {
+  <div class="wrap page-section">
+    @if (notFound()) {
+      <p class="state error" role="alert" i18n>No separation is recorded for “{{ id() }}”. <a routerLink="/separations">See the latest separations</a>.</p>
+    } @else {
+      <div class="note" role="alert">
+        <b>{{ failure.title }}.</b> {{ failure.detail }}
+        <div class="actions"><button type="button" class="btn outline small" (click)="reload()" i18n>Try again</button></div>
+      </div>
+    }
+  </div>
+} @else if (!loaded) {
+  <div class="wrap">
+    <p class="state" role="status" i18n><span class="dot wait" aria-hidden="true"></span>Loading the separation…</p>
+  </div>
+} @else {
+  <section class="wrap" aria-label="Key facts" i18n-aria-label>
+    <div class="facts">
+      <div class="fact">
+        <span class="label" i18n>When</span>
+        <span class="num value">{{ when()?.label }}</span>
+        <span class="muted">{{ when()?.precision }}</span>
+      </div>
+      @if (afterLaunch(); as after) {
+        <div class="fact">
+          <span class="label" i18n>After launch</span>
+          <span class="num value">{{ after }}</span>
+        </div>
+      }
+      <div class="fact">
+        <span class="label" i18n>Orbit</span>
+        <span class="num value">{{ orbit(loaded.children[0].orbit) }}</span>
+        @if (loaded.children[0].orbit.inclinationDeg !== null) {
+          <span class="muted" i18n>inclination {{ loaded.children[0].orbit.inclinationDeg | number: '1.2-2' }}°</span>
+        }
+      </div>
+      <div class="fact">
+        <span class="label" i18n>Objects released</span>
+        <span class="num value">{{ loaded.childCount }}</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page-section wrap" appReveal aria-labelledby="lineage-title">
+    <div class="section-head">
+      <h2 id="lineage-title" i18n>Where it came from</h2>
+    </div>
+    <ol class="lineage">
+      @if (loaded.grandparent; as g) {
+        <li class="node">
+          <span class="label">{{ role(g.role) }}</span>
+          <span class="name">{{ g.name }}</span>
+          <span class="num muted">{{ g.piece }}@if (g.owner) { · {{ g.owner }}}@if (g.massKg) { · {{ g.massKg | number }} kg}</span>
+        </li>
+      }
+      @if (loaded.parent; as p) {
+        <li class="node">
+          <span class="label"><ng-container i18n>Parent</ng-container> · {{ role(p.role) }}</span>
+          <span class="name">{{ p.name }}</span>
+          <span class="num muted">{{ p.piece }}@if (p.owner) { · {{ p.owner }}}@if (p.massKg) { · {{ p.massKg | number }} kg}</span>
+        </li>
+      } @else {
+        <li class="node">
+          <span class="label" i18n>Parent</span>
+          <span class="name num">{{ parentName() }}</span>
+          <span class="muted" i18n>Not in the catalogue NextPass holds.</span>
+        </li>
+      }
+      <li class="node current">
+        <span class="label" i18n>This event</span>
+        @if (subj) {
+          <span class="name">{{ subj.name }}</span>
+          <span class="num muted">{{ subj.piece }}@if (subj.owner) { · {{ subj.owner }}}@if (subj.massKg) { · {{ subj.massKg | number }} kg}</span>
+        } @else {
+          <span class="name" i18n>{loaded.childCount, plural, =1 {1 object} other {{{ loaded.childCount }} objects}}</span>
+        }
+        <span class="muted">{{ when()?.label }}</span>
+      </li>
+    </ol>
+  </section>
+
+  @if (subj && loaded.parent; as p) {
+    <section class="page-section wrap" appReveal aria-labelledby="orbits-title">
+      <div class="section-head">
+        <h2 id="orbits-title" i18n>The two orbits</h2>
+        <span i18n>As recorded today, not at the moment of separation</span>
+      </div>
+      <table class="compare">
+        <thead>
+          <tr><th scope="col"></th><th scope="col">{{ p.name }}</th><th scope="col" class="child">{{ subj.name }}</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row" i18n>Perigee</th><td class="num">{{ p.orbit.perigeeKm | number: '1.0-0' }} km</td><td class="num">{{ subj.orbit.perigeeKm | number: '1.0-0' }} km</td></tr>
+          <tr><th scope="row" i18n>Apogee</th><td class="num">{{ p.orbit.apogeeKm | number: '1.0-0' }} km</td><td class="num">{{ subj.orbit.apogeeKm | number: '1.0-0' }} km</td></tr>
+          <tr><th scope="row" i18n>Inclination</th><td class="num">{{ p.orbit.inclinationDeg | number: '1.2-2' }}°</td><td class="num">{{ subj.orbit.inclinationDeg | number: '1.2-2' }}°</td></tr>
+          <tr><th scope="row" i18n>Mass</th><td class="num">{{ p.massKg | number }} kg</td><td class="num">{{ subj.massKg | number }} kg</td></tr>
+          <tr><th scope="row" i18n>Orbit class</th><td class="num">{{ p.orbit.orbitClass }}</td><td class="num">{{ subj.orbit.orbitClass }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+  }
+
+  @if (!subj) {
+    <section class="page-section wrap" appReveal aria-labelledby="children-title">
+      <div class="section-head">
+        <h2 id="children-title" i18n>The objects released</h2>
+        @if (loaded.childCount > loaded.children.length) {
+          <span i18n>The first {{ loaded.children.length }} of {{ loaded.childCount }}</span>
+        } @else {
+          <span i18n>Each one's page has its next passes</span>
+        }
+      </div>
+      <table class="objects">
+        <thead>
+          <tr><th scope="col" i18n>Object</th><th scope="col" i18n>NORAD</th><th scope="col" i18n>Orbit</th><th scope="col" i18n>Status</th></tr>
+        </thead>
+        <tbody>
+          @for (child of loaded.children; track child.id) {
+            <tr>
+              <th scope="row">{{ child.name }} <span class="num muted">{{ child.piece }}</span></th>
+              <td class="num">
+                @if (linkable(child)) {
+                  <a [routerLink]="['/satellites', child.noradId]">{{ child.noradId }}</a>
+                } @else { {{ child.noradId ?? '—' }} }
+              </td>
+              <td class="num">{{ orbit(child.orbit) }}</td>
+              <td>@if (child.inOrbit) {<ng-container i18n>In orbit</ng-container>} @else {<ng-container i18n>No longer in orbit</ng-container>}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+
+  <section class="page-section wrap" appReveal aria-labelledby="record-title">
+    <div class="section-head">
+      <h2 id="record-title" i18n>What the record says</h2>
+      <span i18n>Updated {{ loaded.updatedAt | date: 'mediumDate' }}</span>
+    </div>
+    @let evidence = loaded.children[0].evidence;
+    <dl class="record num">
+      <dt>JCAT</dt><dd>{{ evidence.id }}</dd>
+      @if (evidence.satcat !== null) { <dt>Satcat</dt><dd>{{ evidence.satcat }}</dd> }
+      <dt>Piece</dt><dd>{{ evidence.piece ?? '—' }}</dd>
+      <dt>Name</dt><dd>{{ evidence.name ?? '—' }}</dd>
+      @if (evidence.payloadName) { <dt>PLName</dt><dd>{{ evidence.payloadName }}</dd> }
+      <dt>Parent</dt><dd class="parent">{{ evidence.parent ?? '—' }}</dd>
+      <dt>SDate</dt><dd class="date">{{ evidence.separationDate ?? '—' }}</dd>
+      <dt>Owner</dt><dd>{{ evidence.owner ?? '—' }}</dd>
+      <dt>Status</dt><dd>{{ evidence.status ?? '—' }}</dd>
+    </dl>
+    <p class="muted" i18n>
+      Reading the date: it is known {{ when()?.precision }}, so this page writes “{{ when()?.label }}” and never more than that.
+    </p>
+  </section>
+
+  <section class="page-section wrap" appReveal aria-labelledby="see-title">
+    @switch (sighting()) {
+      @case ('passes') {
+        @let p = prediction();
+        <div class="section-head">
+          <h2 id="see-title" i18n>Next passes</h2>
+          @if (p) {
+            <span i18n>Above {{ p.minElevationDeg }}° over the next {{ windowHours }} h · {{ p.passes.length }} passes, {{ visibleCount() }} potentially visible</span>
+          }
+        </div>
+        <div class="observer">
+          <span class="muted">
+            <ng-container i18n>Seen from
+            <span class="num">{{ observer().lat | number: '1.2-4' }}°, {{ observer().lon | number: '1.2-4' }}°</span></ng-container>
+            @if (isDefaultObserver()) {<ng-container i18n>(Lyon, the default)</ng-container>} @else {<ng-container i18n>(your position)</ng-container>}
+          </span>
+          <button type="button" class="btn outline small" [disabled]="locating()" (click)="useMyPosition()">
+            @if (locating()) {<ng-container i18n>Locating…</ng-container>} @else {<ng-container i18n>Use my position</ng-container>}
+          </button>
+          @if (passes.isLoading()) { <span class="muted" role="status" i18n>Updating…</span> }
+          @if (locationError(); as failure) { <span class="error" role="status">{{ failure }}</span> }
+        </div>
+        @if (passesProblem(); as failure) {
+          <div class="note" role="alert">
+            <b>{{ failure.title }}.</b> {{ failure.detail }}
+            <div class="actions"><button type="button" class="btn outline small" (click)="reload()" i18n>Try again</button></div>
+          </div>
+        } @else if (p) {
+          @if (p.passes.length === 0) {
+            <p class="state" role="status" i18n>No pass above {{ p.minElevationDeg }}° from here in the next {{ windowHours }} hours.</p>
+          } @else {
+            <app-next-pass [passes]="p.passes" (select)="inspect($event)" />
+            <app-pass-table [passes]="p.passes" (select)="inspect($event)" />
+            <p class="muted" i18n>Choose a pass to open it in the predictor, with the globe and the sky chart.</p>
+          }
+        }
+      }
+      @case ('not-public') {
+        <div class="section-head"><h2 id="see-title" i18n>No public orbit to follow</h2></div>
+        <p class="lede" i18n>
+          This object has no published orbital elements: its positions are withheld. NextPass can show
+          the event and the record, but not where to look or when, and says so rather than guess.
+        </p>
+        @if (geostationary()) {
+          <p class="muted" i18n>It is geostationary: if its elements were public, this page would show the fixed point it holds in your sky.</p>
+        }
+      }
+      @case ('gone') {
+        <div class="section-head"><h2 id="see-title" i18n>No longer in orbit</h2></div>
+        <p class="lede" i18n>The record gives this object a decay date: it has re-entered, landed or been deorbited since the separation.</p>
+      }
+      @case ('no-number') {
+        <div class="section-head"><h2 id="see-title" i18n>No catalogue number</h2></div>
+        <p class="lede" i18n>This object has no NORAD number, so no orbital elements are published for it and its passes cannot be predicted.</p>
+      }
+      @case ('not-yet') {
+        <div class="section-head"><h2 id="see-title" i18n>Passes not available yet</h2></div>
+        <p class="lede" i18n>NextPass cannot yet predict passes for catalogue numbers above 99999, which every object catalogued since July 2026 has.</p>
+      }
+      @case ('several') {
+        <div class="section-head"><h2 id="see-title" i18n>Seeing them pass</h2></div>
+        <p class="lede" i18n>Each object above links to its own page, with its orbit and its next passes over you.</p>
+      }
+    }
+  </section>
+}
+
+<p class="wrap credit muted" i18n>
+  Separation data: GCAT, Jonathan C. McDowell, planet4589.org — CC BY 4.0. Passes: computed by NextPass with Orekit.
+</p>
