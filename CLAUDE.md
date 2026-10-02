@@ -63,10 +63,11 @@ without being asked. When the Linear tools are available:
   write `ABD-12` in commit messages and **`Fixes ABD-12`** in the PR description, so the
   GitHub integration can move the issue on its own once it is connected.
 - **The columns follow the branches.** PR opened → **In Review**, PR link attached.
-  Merged into `dev` → **Merged**. Checked on `dev` (CI green, behaviour verified) →
-  **Validated in dev**. The `dev` → `main` pull request that carries it merged and
-  production checked → **Done (in production)**, with a one-line comment saying what
-  shipped and how it was checked. Abandoned → **Canceled** with the reason.
+  Merged into `dev` and checked there (CI green, behaviour verified) → **Validated in
+  DEV**. The `dev` → `main` pull request that carries it opened → **In Review (dev ->
+  main)**. That pull request merged and production checked → **Done (merged
+  production)**, with a one-line comment saying what shipped and how it was checked.
+  Abandoned → **Canceled** with the reason.
 - **Tick the acceptance criteria** in the issue as they are met; comment anything learned
   that changes the plan (a bug found, a number measured, a decision taken).
 - **New work discovered on the way** becomes its own issue, linked to the current one
