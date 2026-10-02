@@ -18,7 +18,10 @@ demonstrates, a product on whether anyone pays. Phase 2 starts below milestone 1
 > GitHub self-serve accounts and key management; production OAuth activation and a real
 > login smoke test remain. Milestone 14 now implements opt-in Stripe billing and
 > calendar-month paid quotas; a real Stripe sandbox lifecycle and commercial launch
-> gates remain. Next milestone: 15, commercial/legal readiness.
+> gates remain. Milestone 15, commercial/legal readiness, is still open.
+>
+> **Active work since 2 October 2026: [phase 3](#phase-3--show-what-is-new-in-orbit),
+> on-orbit separations.** Phase 3.0 (the GCAT import) is in progress.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
 milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
@@ -948,6 +951,94 @@ discovered.
 - **Support eating the 4 h/week.** Every hour answering mail is an hour not shipping. This
   is the real reason milestones 13, 14 and 16 insist on self-serve everything.
 - **The data-rights question answered badly**, and answered late. See milestone 15.
+
+---
+
+# Phase 3 — Show what is new in orbit
+
+## Why the direction changes (2 October 2026)
+
+Presenting NextPass on Reddit drew the answer phase 2's premise already half-admitted:
+orbit and pass predictors exist by the dozen, and the value lies in the *information drawn
+from orbits*, not in the propagation. The suggested source of problems worth solving is the
+list published by the US Space Force's SDA TAP Lab.
+
+What a survey of that list found, for a solo developer:
+
+- **Manoeuvre detection** is already well served (Orbital Radar, SkyOSINT, SatWatch,
+  maneuver-detect). Rejected as a product.
+- **On-orbit object separations** — a satellite releasing another object, a deployer
+  emptying, a body breaking up — are the least served. Chosen.
+- **A radio profile from SatNOGS** is interesting; its feasibility is unverified. Parked.
+
+**[GCAT](https://planet4589.org/space/gcat/)**, Jonathan McDowell's catalogue, already
+records separations: every object has a `Parent` and a separation date `SDate`, under
+CC-BY. It is at once a partial competitor, the ground truth any home-made detector would be
+measured against, and the fastest way to ship something.
+
+## Positioning
+
+Show what is new in orbit, explain it with evidence, and say when to see it pass overhead.
+Two audiences, deliberately:
+
+- **OSINT analysts and journalists**, who want to understand a separation: what released
+  what, when, how sure the record is, where the claim comes from.
+- **Observers**, who want to watch it go by — the pass predictor phases 1 and 2 built.
+
+The pass predictor stops being the product and becomes the second half of every event page.
+
+**Guardrails.** One data foundation (GCAT, then whatever phase 3.3 justifies). One feature
+in progress at a time. Phase 2's billing stays disabled; nothing here is sold before
+phase 3.2 says someone wants it.
+
+## What GCAT holds, measured on 2 October 2026
+
+- `satcat.tsv` (19 MB, 70 000 rows) stops at catalogue number 69999. Objects catalogued
+  since July 2026 carry six-digit numbers and live in **`satcat100k.tsv`** (≈ 960 rows).
+  An import that reads only `satcat.tsv` silently stops at 11 July 2026.
+- It is fresh: the Falcon Heavy launched at 04:02 UTC that morning was listed by 13:52.
+  The files carry an `ETag` and a `Last-Modified`.
+- `Parent` is another GCAT object; its prefix names the catalogue it lives in: `S` the
+  satellite catalogue, `A` the auxiliary one (objects never given a NORAD number, such as
+  most Starlink upper stages), `R` and `L` catalogues of launch-vehicle stages. Most rows
+  simply point at the stage that carried them. **Working definition: a separation is a
+  row whose parent is an `S…` object and whose `SDate` is not its launch day** — 106 so
+  far in 2026 across both files, from a Shenzhou orbital module to debris shed by a
+  Yaogan satellite. Phase 3.1 refines it on real cases.
+- Dates have variable precision and an uncertainty mark: `2026 May?`,
+  `2026 Jun 19 2200?`, `2026 Jul 11 0402:25`. Both must survive the import; rounding
+  `2026 May?` to 1 May would invent a fact.
+
+## Phase 3.0 — Foundations: the GCAT import
+
+- Download `satcat.tsv` and `satcat100k.tsv`, conditionally on their `ETag`; stream-parse
+  them (the free Render instance has 512 MB); upsert by `JCAT` so a rerun changes nothing.
+- Store each date as an instant plus its precision and its uncertainty.
+- `POST /internal/import`, triggered nightly by `.github/workflows/daily-import.yml`,
+  reports rows read, objects added and separations added.
+- Attribution to GCAT (CC-BY) wherever its data is shown.
+
+*Done when* the nightly job fills the database and a second run reports zero changes.
+
+## Phase 3.1 — Event pages from GCAT
+
+One page per separation: parent, child, date with its precision, orbit, what GCAT says and
+where it says it — and a link to the child's next passes. A list of the latest ones.
+
+## Phase 3.2 — Measure GCAT's delay, meet real users (the decision point)
+
+How long between a separation and its appearance in GCAT, compared with Space-Track's
+first publication? And do analysts, journalists and observers use the pages? The answers
+decide whether phase 3.3 exists.
+
+## Phase 3.3 — A home-made detector, only if it buys speed
+
+Detecting separations from element sets is only worth the effort if it is faster than
+GCAT. GCAT is the ground truth it is tested against.
+
+## Phase 3.4 — Classification and alerts
+
+Deployment, debris, breakup; RSS and an API for whoever wants to be told first.
 
 ---
 
