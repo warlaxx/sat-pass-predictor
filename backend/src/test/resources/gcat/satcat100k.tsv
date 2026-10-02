@@ -1,0 +1,5 @@
+#JCAT	Satcat	Launch_Tag	Piece	Type	Name	PLName	LDate	Parent	SDate	Primary	DDate	Status	Dest	Owner	State	Manufacturer	Bus	Motor	Mass	MassFlag	DryMass	DryFlag	TotMass	TotFlag	Length	LFlag	Diameter	DFlag	Span	SpanFlag	Shape	ODate	Perigee	PF	Apogee	AF	Inc	IF	OpOrbit	OQUAL	AltNames
+# Excerpt of GCAT satcat100k.tsv (J. McDowell, planet4589.org/space/gcat, CC-BY), 2 Oct 2026, for tests
+S100000   	100000	2026-067	2026-067CY	P           	Saramago	Lusiada-3	2026 Mar 30	S68435	2026 Jul	Earth	-	O	-	LUSO	P	LUSO	Cubesat 8U	-	      15 	?	     15 	?	      15 	?	   0.4 	 	  0.2 	 	    0.4 	 	Box	2026 Jul 14	     500	 	     508	 	 97.46 	 	LLEO/S	-	-
+S100810   	100810	2026-051	2026-051BE	D  X        	deb YG50-02	-	2026 Mar 15	S68196	2026 Jul 20?	Earth	-	O	-	ZXW	CN	CAST	-	-	       0 	 	      0 	 	       0 	 	   0.0 	 	  0.0 	 	    0.0 	 	-	2026 Sep 23	     799	 	     940	 	141.94 	 	LEO/R	-	-
+S100961   	100961	2026-228	2026-228B	R2          	Falcon Heavy-014 Stage 2	FH-014 St2	2026 Oct  2	R86832	2026 Oct  2 0402	Earth	-	O	-	SPX	US	SPX	F9St2	-	    4000 	?	   4000 	?	    4000 	?	  12.6 	?	  3.6 	 	   12.6 	 	Cyl	-	       0	 	       0	 	  0.00 	 	-	-	-

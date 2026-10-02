@@ -149,3 +149,13 @@ billing:
 # Empty means the endpoint answers 503: nothing is exposed until the secret is set.
 ingest:
   token: ${IMPORT_TOKEN:}
+
+# Jonathan McDowell's GCAT (CC-BY), imported by the daily job above into the database of
+# api-access - without one there is nothing to import into. See GcatImporter for why there
+# are two files: satcat.tsv stops at catalogue number 69999.
+gcat:
+  base-url: ${GCAT_BASE_URL:https://planet4589.org/space/gcat/tsv/cat}
+  files: satcat.tsv,satcat100k.tsv
+  connect-timeout: 10s
+  # Per read, not for the whole 19 MB: a stalled transfer fails, a slow one finishes.
+  read-timeout: 60s
