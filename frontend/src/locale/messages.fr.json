@@ -716,7 +716,7 @@
     "2462465035420126620": "Pas de numéro de catalogue",
     "6142396660115795843": "Cet objet n’a pas de numéro NORAD : aucun élément orbital n’est publié pour lui et ses passages ne peuvent pas être prédits.",
     "2353317882044265145": "Passages pas encore disponibles",
-    "5496025490164541178": "NextPass ne sait pas encore prédire les passages des numéros de catalogue au-delà de 99999, ceux de tous les objets catalogués depuis juillet 2026.",
+    "3149226466843637200": "NextPass ne sait pas encore prédire les passages des numéros de catalogue au-delà de 339999, le dernier qu’un jeu d’éléments à deux lignes puisse porter.",
     "617723762141697334": "Les voir passer",
     "1193364501495164313": "Chaque objet ci-dessus renvoie à sa propre page, avec son orbite et ses prochains passages au-dessus de vous.",
     "9191078862231660170": " Données de séparation : GCAT, Jonathan C. McDowell, planet4589.org — CC BY 4.0. Passages : calculés par NextPass avec Orekit.\n",
