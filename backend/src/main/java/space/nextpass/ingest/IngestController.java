@@ -1,4 +1,4 @@
-package dev.abdallah.satpass.ingest;
+package space.nextpass.ingest;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import java.nio.charset.StandardCharsets;
