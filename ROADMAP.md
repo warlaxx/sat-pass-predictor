@@ -21,7 +21,8 @@ demonstrates, a product on whether anyone pays. Phase 2 starts below milestone 1
 > gates remain. Milestone 15, commercial/legal readiness, is still open.
 >
 > **Active work since 2 October 2026: [phase 3](#phase-3--show-what-is-new-in-orbit),
-> on-orbit separations.** Phase 3.0 (the GCAT import) is in progress.
+> on-orbit separations.** Phase 3.0 (the GCAT import) is implemented; its first
+> production run is pending.
 
 The interface has a **validated mockup** (16/09/2026) that serves as the reference for
 milestones 6 to 8: `docs/interface-mockup.html`, which opens directly in a browser.
@@ -1011,7 +1012,7 @@ phase 3.2 says someone wants it.
   `2026 Jun 19 2200?`, `2026 Jul 11 0402:25`. Both must survive the import; rounding
   `2026 May?` to 1 May would invent a fact.
 
-## Phase 3.0 — Foundations: the GCAT import
+## Phase 3.0 — Foundations: the GCAT import (implemented; production run pending)
 
 - Download `satcat.tsv` and `satcat100k.tsv`, conditionally on their `ETag`; stream-parse
   them (the free Render instance has 512 MB); upsert by `JCAT` so a rerun changes nothing.
@@ -1021,6 +1022,15 @@ phase 3.2 says someone wants it.
 - Attribution to GCAT (CC-BY) wherever its data is shown.
 
 *Done when* the nightly job fills the database and a second run reports zero changes.
+
+*Implemented:* `space.nextpass.gcat`, migration `V5__gcat_objects.sql`. Columns are found
+by header name; `Parent` keeps its identifier for joins and GCAT's whole cell (`S03504*`,
+`S16273  AL`), whose mark and location phase 3.1 interprets. An apogee of `Inf` (escape)
+is stored as infinity. `first_seen_at` is written once, for phase 3.2. Measured locally
+against the live files with a 358 MB heap: 70 961 objects and 28 372 separations in
+13 s, 256 MB resident, 23 MB of table; the next run answers `304` in 0.3 s; a forced
+re-download writes nothing. `GcatImporterPostgresTest` covers the conditional download,
+partial changes, `first_seen_at` and a download cut halfway. Not yet run in production.
 
 ## Phase 3.1 — Event pages from GCAT
 

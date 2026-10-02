@@ -13,15 +13,15 @@ import java.time.ZoneOffset;
  * rules about time. Testing them against the wall clock would mean either waiting, or
  * lowering the thresholds until the real ones are no longer tested.
  */
-final class MutableClock extends Clock {
+public final class MutableClock extends Clock {
 
     private Instant instant;
 
-    MutableClock(Instant start) {
+    public MutableClock(Instant start) {
         this.instant = start;
     }
 
-    void advance(Duration amount) {
+    public void advance(Duration amount) {
         instant = instant.plus(amount);
     }
 
