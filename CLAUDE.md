@@ -58,12 +58,15 @@ without being asked. When the Linear tools are available:
 - **Before starting**, find the issue the task belongs to (`ABD-…`). None fits? Create one
   in the project (French, user story with acceptance criteria, label Feature / Bug /
   Improvement / Research / Chore) before writing code. Set it **In Progress**.
-- **Branch** with the issue's `gitBranchName`, or put the identifier in the branch name;
+- **Branch** from `dev` with the issue's `gitBranchName`, or put the identifier in the
+  branch name; the pull request targets `dev`, never `main` (see "Branches" in the README);
   write `ABD-12` in commit messages and **`Fixes ABD-12`** in the PR description, so the
   GitHub integration can move the issue on its own once it is connected.
-- **PR opened** → issue **In Review**, PR link attached. **Merged and verified** → **Done**,
-  with a one-line comment saying what shipped and how it was checked. Abandoned →
-  **Canceled** with the reason.
+- **The columns follow the branches.** PR opened → **In Review**, PR link attached.
+  Merged into `dev` → **Merged**. Checked on `dev` (CI green, behaviour verified) →
+  **Validated in dev**. The `dev` → `main` pull request that carries it merged and
+  production checked → **Done (in production)**, with a one-line comment saying what
+  shipped and how it was checked. Abandoned → **Canceled** with the reason.
 - **Tick the acceptance criteria** in the issue as they are met; comment anything learned
   that changes the plan (a bug found, a number measured, a decision taken).
 - **New work discovered on the way** becomes its own issue, linked to the current one
