@@ -1,0 +1,73 @@
+.tag { border: 1px solid; border-radius: var(--r-pill); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 1px 10px; text-transform: uppercase; }
+.tag.release { border-color: #3a4280; color: var(--accent); }
+.tag.fragmentation { border-color: #6b3a2e; color: var(--hot); }
+
+.fact .muted { font-size: 13px; }
+
+/* Grandparent → parent → this event, left to right; stacked on a phone. */
+.lineage { counter-reset: none; display: flex; flex-wrap: wrap; gap: 16px 56px; list-style: none; margin: 0; padding: 0; }
+.node {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  display: flex;
+  flex: 1 1 260px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px;
+  position: relative;
+}
+.node + .node::before {
+  color: var(--ink-4);
+  content: '→';
+  font-size: 22px;
+  left: -40px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.node.current { background: #0e1020; border-color: var(--accent); }
+.node.current + .node::before, .node.current::before { color: var(--accent); }
+.node .label { color: var(--ink-3); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+.node.current .label { color: var(--accent); }
+.node .name { font-size: 20px; font-weight: 600; }
+.node .muted { font-size: 13px; }
+
+.compare, .objects { border-collapse: collapse; width: 100%; }
+.compare th, .compare td, .objects th, .objects td {
+  border-bottom: 1px solid var(--line-soft);
+  font-weight: 400;
+  padding: 12px 0;
+  text-align: left;
+}
+.compare thead th, .objects thead th { border-bottom-color: var(--line-strong); color: var(--ink-3); font-weight: 500; }
+.compare td, .compare thead th:not(:first-child) { text-align: right; }
+.compare thead th.child { color: var(--accent); }
+.compare tbody th { color: var(--ink-2); }
+.objects td, .objects th { padding-right: 16px; }
+
+.record {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  display: grid;
+  font-size: 14px;
+  gap: 8px 16px;
+  grid-template-columns: 120px minmax(0, 1fr);
+  margin: 0 0 12px;
+  max-width: 640px;
+  padding: 20px 24px;
+}
+.record dt { color: var(--ink-3); }
+.record dd { margin: 0; }
+.record .parent { color: var(--accent); }
+.record .date { color: var(--lit); }
+
+.observer { align-items: center; display: flex; flex-wrap: wrap; gap: 12px 20px; margin-bottom: 16px; }
+
+.credit { font-size: 13px; padding-bottom: 48px; }
+
+@media (width < 640px) {
+  .node + .node::before { content: '↓'; left: 50%; top: -22px; transform: translateX(-50%); }
+  .lineage { gap: 28px; }
+}

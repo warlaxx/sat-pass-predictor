@@ -1,0 +1,136 @@
+@let loaded = response();
+
+<section class="page-hero wrap" appReveal aria-labelledby="separations-title">
+  <span class="kicker" i18n>Separations · updated nightly</span>
+  <h1 id="separations-title" i18n>What separated in orbit</h1>
+  <p class="lede" i18n>
+    Satellites releasing satellites, deployers emptying, bodies breaking apart. Each event
+    comes with the record it rests on, and with when you can see the object pass over you.
+  </p>
+</section>
+
+@if (problem(); as failure) {
+  <div class="wrap page-section">
+    <div class="note" role="alert">
+      <b>{{ failure.title }}.</b> {{ failure.detail }}
+      <div class="actions"><button type="button" class="btn outline small" (click)="reload()" i18n>Try again</button></div>
+    </div>
+  </div>
+} @else if (!loaded) {
+  <div class="wrap">
+    <p class="state" role="status" i18n><span class="dot wait" aria-hidden="true"></span>Loading the latest separations…</p>
+  </div>
+} @else {
+  <section class="wrap" aria-label="Figures" i18n-aria-label>
+    <div class="facts">
+      <div class="fact">
+        <span class="label" i18n>Objects separated in orbit, since 1957</span>
+        <span class="num value">{{ loaded.stats.objects | number }}</span>
+      </div>
+      <div class="fact">
+        <span class="label" i18n>Of them in {{ loaded.stats.year }}</span>
+        <span class="num value">{{ loaded.stats.objectsThisYear | number }}</span>
+      </div>
+      @if (updatedAt(); as updated) {
+        <div class="fact">
+          <span class="label" i18n>Last update, refreshed nightly</span>
+          <span class="num value">{{ updated }}</span>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="page-section wrap" appReveal aria-labelledby="by-month-title">
+    <div class="section-head">
+      <h2 id="by-month-title" i18n>Events in {{ loaded.stats.year }}, by month</h2>
+      <span i18n>One event is one parent releasing one or more objects at the same moment</span>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="swatch release"></i><ng-container i18n>Releases</ng-container></span>
+      <span><i class="swatch fragmentation"></i><ng-container i18n>Fragmentations</ng-container></span>
+    </div>
+    <div class="chart" [style.height.px]="chartHeight() + 28" role="img" i18n-aria-label
+         aria-label="Separation events by month this year; the same figures are in the table below.">
+      @for (bar of bars(); track bar.month) {
+        <div class="column" (mouseenter)="hovered.set(bar.month)" (mouseleave)="hovered.set(undefined)">
+          <span class="num total">{{ bar.total }}</span>
+          <div class="stack">
+            @if (bar.fragmentations) { <div class="segment fragmentation" [style.height.px]="bar.fragmentationHeight - 2"></div> }
+            @if (bar.releases) { <div class="segment release" [class.top]="!bar.fragmentations" [style.height.px]="bar.releaseHeight - 2"></div> }
+          </div>
+        </div>
+      }
+    </div>
+    <div class="months" aria-hidden="true">
+      @for (bar of bars(); track bar.month) { <span>{{ bar.label }}</span> }
+    </div>
+    <p class="muted hover" aria-live="polite">{{ hoverText() ?? '' }}</p>
+    <details class="table-view">
+      <summary i18n>Show as a table</summary>
+      <table>
+        <thead>
+          <tr><th scope="col" i18n>Month</th><th scope="col" class="num" i18n>Releases</th><th scope="col" class="num" i18n>Fragmentations</th></tr>
+        </thead>
+        <tbody>
+          @for (bar of bars(); track bar.month) {
+            <tr><th scope="row">{{ bar.label }}</th><td class="num">{{ bar.releases }}</td><td class="num">{{ bar.fragmentations }}</td></tr>
+          }
+        </tbody>
+      </table>
+    </details>
+  </section>
+
+  <section class="page-section wrap" appReveal aria-labelledby="events-title">
+    <div class="section-head">
+      <h2 id="events-title" i18n>Latest events</h2>
+      <span i18n>Dates are shown with exactly the precision that is known</span>
+    </div>
+    <div class="filters" role="group" aria-label="Show" i18n-aria-label>
+      @for (item of filters(); track item.key) {
+        <button type="button" [attr.aria-pressed]="filter() === item.key" (click)="choose(item.key)">
+          {{ item.label }} <span class="num">{{ item.count }}</span>
+        </button>
+      }
+    </div>
+
+    @for (month of months(); track month.label) {
+      <h3 class="month">{{ month.label }}</h3>
+      <ul class="events">
+        @for (event of month.events; track event.id) {
+          <li>
+            <a class="event" [routerLink]="['/separations', event.id]">
+              <span class="when">
+                <span class="num">{{ event.date }}</span>
+                <span class="muted">{{ event.precision }}</span>
+              </span>
+              <span class="what">
+                <span class="names">
+                  <span class="parent">{{ event.parent }}</span>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+                  <span class="visually-hidden" i18n>released</span>
+                  <span class="child">{{ event.child }}</span>
+                </span>
+                <span class="tags">
+                  @if (event.kind === 'RELEASE') {
+                    <span class="tag release" i18n>Release</span>
+                  } @else {
+                    <span class="tag fragmentation" i18n>Fragmentation</span>
+                  }
+                  @if (event.who) { <span class="muted">{{ event.who }}</span> }
+                </span>
+              </span>
+              <span class="num orbit">{{ event.orbit }}</span>
+              <span class="muted see">{{ event.see }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    } @empty {
+      <p class="state" role="status" i18n>No event of this kind among the latest.</p>
+    }
+  </section>
+}
+
+<p class="wrap credit muted" i18n>
+  Separation data: GCAT, Jonathan C. McDowell, planet4589.org — CC BY 4.0.
+</p>

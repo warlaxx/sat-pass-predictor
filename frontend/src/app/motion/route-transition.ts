@@ -8,6 +8,7 @@ import { PRICING_ENABLED } from '../shared/site';
 export const NAV_PAGES = [
   { path: '/', label: $localize`:Header link:Predictor` },
   { path: '/satellites', label: $localize`:Header link:Satellites` },
+  { path: '/separations', label: $localize`:Header link:Separations` },
   { path: '/alerts', label: $localize`:Header link:Alerts` },
   { path: '/developers', label: $localize`:Header link:Developers` },
   { path: '/pricing', label: $localize`:Header link:Pricing` },
@@ -16,12 +17,13 @@ export const NAV_PAGES = [
 ].filter(page => PRICING_ENABLED || page.path !== '/pricing');
 
 /** Pages that are reachable but not in the header: named, not numbered. */
-const OTHER_PAGES: Record<string, string> = { legal: $localize`Legal`, satellite: $localize`Satellite`, starlink: $localize`Starlink` };
+const OTHER_PAGES: Record<string, string> = { legal: $localize`Legal`, satellite: $localize`Satellite`, separation: $localize`Separation`, starlink: $localize`Starlink` };
 
 /** "04 — Developers" for a header page, "Satellite" for a detail page, "Page" otherwise. */
 export function pageLabel(url: string): string {
   const segments = url.split(/[?#]/)[0].split('/').filter(Boolean);
   if (segments[0] === 'satellites' && segments.length > 1) return OTHER_PAGES['satellite'];
+  if (segments[0] === 'separations' && segments.length > 1) return OTHER_PAGES['separation'];
   const path = '/' + (segments[0] ?? '');
   const index = NAV_PAGES.findIndex(page => page.path === path);
   if (index >= 0) return `${String(index + 1).padStart(2, '0')} — ${NAV_PAGES[index].label}`;

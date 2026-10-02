@@ -56,6 +56,18 @@ const pages: Routes = [
     data: { description: $localize`:Meta description:Saw a line of lights crossing the sky? The newest Starlink launches and when their train passes over you, from fresh CelesTrak elements.` },
   },
   {
+    path: 'separations',
+    loadComponent: () => import('./pages/separations/separations').then((m) => m.SeparationsPage),
+    title: $localize`:Page title:What separated in orbit`,
+    data: { description: $localize`:Meta description:Satellites releasing satellites, deployers emptying, bodies breaking apart: the latest separations in orbit, with the record behind each one and when to see the object pass over you.` },
+  },
+  {
+    path: 'separations/:id',
+    loadComponent: () => import('./pages/separation/separation').then((m) => m.SeparationPage),
+    title: $localize`:Page title:Separation`,
+    data: { description: $localize`:Meta description:One separation in orbit: what released what, when, both orbits, the record and when to see it pass over you.` },
+  },
+  {
     path: 'alerts',
     loadComponent: () => import('./pages/alerts/alerts').then((m) => m.AlertsPage),
     title: $localize`:Page title:Satellite pass reminders in your calendar`,

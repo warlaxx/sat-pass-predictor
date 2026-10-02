@@ -1,0 +1,97 @@
+/*
+ * The two series of the month chart. Their own tones, not --accent and --hot: those two
+ * sit above the lightness band a chart mark needs on true black, and these pass the
+ * colour-blind separation check against it (ΔE ≥ 25). Text never wears them.
+ */
+:host {
+  --release: #7b8bf0;
+  --fragmentation: #e2643f;
+}
+
+.legend { color: var(--ink-2); display: flex; flex-wrap: wrap; font-size: 13px; gap: 20px; margin-bottom: 16px; }
+.legend span { align-items: center; display: flex; gap: 8px; }
+.swatch { border-radius: 3px; display: inline-block; height: 12px; width: 12px; }
+.swatch.release { background: var(--release); }
+.swatch.fragmentation { background: var(--fragmentation); }
+
+.chart, .months {
+  display: grid;
+  gap: 12px;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  padding: 0 8px;
+}
+.chart { align-items: end; border-bottom: 1px solid var(--line-strong); }
+.column { align-items: center; display: flex; flex-direction: column; gap: 6px; height: 100%; justify-content: flex-end; }
+.total { color: var(--ink-2); font-size: 13px; }
+.stack { display: flex; flex-direction: column; gap: 2px; max-width: 40px; width: 100%; }
+.segment.fragmentation { background: var(--fragmentation); border-radius: 4px 4px 0 0; }
+.segment.release { background: var(--release); }
+.segment.release.top { border-radius: 4px 4px 0 0; }
+.months { color: var(--ink-3); font-size: 13px; margin-top: 8px; text-align: center; }
+.hover { font-size: 14px; margin: 12px 0 4px; min-height: 22px; }
+
+.table-view { color: var(--ink-2); font-size: 14px; }
+.table-view summary { color: var(--accent); cursor: pointer; min-height: 32px; }
+.table-view table { border-collapse: collapse; margin-top: 8px; }
+.table-view th, .table-view td { font-weight: 400; padding: 4px 16px 4px 0; text-align: left; }
+.table-view thead th { color: var(--ink-3); font-weight: 500; }
+.table-view .num { text-align: right; }
+
+.filters {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 4px;
+}
+.filters button {
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--ink-2);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  min-height: 40px;
+  padding: 8px 16px;
+}
+.filters button[aria-pressed='true'] { background: var(--ink); color: var(--bg); font-weight: 600; }
+.filters .num { opacity: 0.7; }
+
+.month { font-size: 26px; margin: 32px 0 8px; }
+.events { list-style: none; margin: 0; padding: 0; }
+.event {
+  align-items: center;
+  border-radius: var(--r);
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink);
+  display: grid;
+  gap: 8px 24px;
+  grid-template-columns: 210px minmax(0, 1fr) 180px 190px;
+  padding: 18px 16px;
+  text-decoration: none;
+}
+.event:hover, .event:focus-visible { background: var(--panel); }
+.when { display: flex; flex-direction: column; gap: 2px; }
+.when .muted { font-size: 12px; }
+.what { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.names { align-items: center; display: flex; flex-wrap: wrap; font-size: 17px; gap: 10px; }
+.names svg { color: var(--ink-3); }
+.parent { color: var(--ink-2); }
+.child { font-weight: 600; }
+.tags { align-items: center; display: flex; flex-wrap: wrap; font-size: 13px; gap: 8px; }
+.tag { border: 1px solid; border-radius: var(--r-pill); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 1px 10px; text-transform: uppercase; }
+.tag.release { border-color: #3a4280; color: var(--accent); }
+.tag.fragmentation { border-color: #6b3a2e; color: var(--hot); }
+.orbit { color: var(--ink-2); font-size: 14px; }
+.see { font-size: 13px; }
+
+.credit { font-size: 13px; padding-bottom: 48px; }
+
+@media (width < 880px) {
+  .event { grid-template-columns: minmax(0, 1fr); }
+  .chart, .months { gap: 4px; padding: 0; }
+}

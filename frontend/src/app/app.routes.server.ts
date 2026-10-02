@@ -22,5 +22,7 @@ export const serverRoutes: ServerRoute[] = [
     // Any other catalogue number is a valid page, rendered in the browser.
     fallback: PrerenderFallback.Client,
   },
+  // An event exists once the nightly import has it: there is no list of them at build time.
+  { path: 'separations/:id', renderMode: RenderMode.Client },
   { path: '**', renderMode: RenderMode.Prerender },
 ];

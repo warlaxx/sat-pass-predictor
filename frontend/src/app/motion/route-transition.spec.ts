@@ -8,12 +8,14 @@ import { PRICING_ENABLED } from '../shared/site';
 describe('pageLabel', () => {
   it('numbers the header pages in their order', () => {
     expect(pageLabel('/')).toBe('01 — Predictor');
-    expect(pageLabel('/developers#quotas')).toBe('04 — Developers');
-    expect(pageLabel('/status?x=1')).toBe(PRICING_ENABLED ? '07 — Status' : '06 — Status');
+    expect(pageLabel('/separations')).toBe('03 — Separations');
+    expect(pageLabel('/developers#quotas')).toBe('05 — Developers');
+    expect(pageLabel('/status?x=1')).toBe(PRICING_ENABLED ? '08 — Status' : '07 — Status');
   });
 
   it('names the pages outside the header without a number', () => {
     expect(pageLabel('/satellites/25544')).toBe('Satellite');
+    expect(pageLabel('/separations/S100685')).toBe('Separation');
     expect(pageLabel('/legal#privacy')).toBe('Legal');
     expect(pageLabel('/nowhere')).toBe('Page');
   });
