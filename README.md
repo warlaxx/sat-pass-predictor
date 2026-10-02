@@ -109,6 +109,48 @@ cd frontend && npm install && npm start
 # French instead of English: npx ng serve --configuration fr
 ```
 
+## Branches
+
+`main` is production: Vercel and Render deploy every commit that lands on it. `dev` is
+the integration branch and the repository's default, so a new pull request targets it.
+
+```mermaid
+flowchart LR
+    feature["feature branch<br/>opened from dev"]
+    dev["dev<br/>integration"]
+    main["main<br/>production"]
+    deploy(["Vercel + Render"])
+    other["any other branch"]
+
+    feature -- "pull request<br/>backend + frontend green" --> dev
+    dev -- "pull request, merge commit<br/>source-branch + backend + frontend green<br/>threads resolved" --> main
+    main -- "deploys" --> deploy
+    other -. refused by source-branch .-x main
+```
+
+Work starts on a feature branch opened from `dev` and comes back to `dev` by pull
+request. `dev` reaches `main` by another pull request once it has been checked. Nothing
+reaches `main` any other way, so production never holds a change `dev` lacks, and `dev`
+needs no merge back from `main` after a release.
+
+Two repository rulesets enforce this:
+
+| Rule | `dev` | `main` |
+| :--- | :---: | :---: |
+| Direct push, force-push, deletion | refused | refused |
+| Pull request required | yes | yes |
+| CI jobs `backend` and `frontend` green | yes | yes |
+| CI job `source-branch` green: the pull request comes from `dev` | — | yes |
+| Review threads resolved | — | yes |
+| Merge method | any | merge commit only |
+
+`source-branch` fails any pull request into `main` whose head is not this repository's
+`dev`. A merge commit keeps the commits of `dev` as they are; a squash or a rebase would
+put on `main` commits that `dev` does not have. No approval is required, since the
+repository has a single maintainer, and nobody bypasses the rulesets: changing one is
+done in the repository settings, under Rules. CodeRabbit reviews pull requests into
+both branches (`.coderabbit.yaml`).
+
 ## Tests
 
 ```bash

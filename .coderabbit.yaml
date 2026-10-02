@@ -1,0 +1,6 @@
+# Pull requests target dev; only dev goes to main. Review both.
+reviews:
+  auto_review:
+    base_branches:
+      - dev
+      - main
