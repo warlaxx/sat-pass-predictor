@@ -31,7 +31,7 @@
 
 @if (id() === undefined) {
   <div class="wrap">
-    <p class="state error" role="alert" i18n>“{{ noradId() }}” is not a NORAD number. They run from 1 to 99999.</p>
+    <p class="state error" role="alert" i18n>“{{ noradId() }}” is not a NORAD number. They run from 1 to 339999.</p>
   </div>
 } @else if (resource.isLoading() && !loaded) {
   <div class="wrap">

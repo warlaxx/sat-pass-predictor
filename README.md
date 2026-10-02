@@ -238,6 +238,22 @@ modelled. Flags are sampled every 10 s, so short opportunities can be missed and
 shadow-entry times are approximate. The API exposes these conditions separately as
 `track[].illuminated` and `track[].visible`.
 
+## Six-digit catalogue numbers
+
+Objects catalogued since July 2026 have NORAD numbers above 99999, and the API accepts
+them up to **339999**. That ceiling is the TLE format's: five columns hold the number, and
+Alpha-5 — Space-Track's encoding, where a letter stands for the leading two digits
+(`A0534` is 100534, `Z9999` is 339999) — is the most they can carry. Elements are stored
+and propagated as TLE lines, so a six-digit object's `tle.line1`/`line2` come back in
+Alpha-5.
+
+CelesTrak does not serve these objects as TLE at all: `FORMAT=TLE` answers `No GP data
+found`, in 404, for an object `FORMAT=JSON` returns (observed on 2 October 2026). Above
+99999 the client therefore asks for the OMM in JSON and has Orekit write the same element
+set as Alpha-5 lines, which then pass the usual checks — width, checksum, Orekit parsing,
+and the number compared with the one requested. Space-Track's 3LE output already uses
+Alpha-5; that path needs no conversion.
+
 ## Searching by name
 
 The satellite field accepts a name as well as a NORAD number. Digits are used as-is, with
@@ -247,11 +263,13 @@ passes are computed: a half-typed name never silently keeps the previous satelli
 
 The same index answers `GET /api/satellites/launches?q=starlink&limit=3`: the satellites
 whose name starts with the query, grouped by the launch of their international designator
-(`2026-045` for `26045A`), newest first, each with its count and its lowest-numbered
+(`2026-045` for `2026-045A`), newest first, each with its count and its lowest-numbered
 satellite. The `/starlink` page shows that satellite's passes as the train's.
 
-The index is CelesTrak's `active` group (`gp.php?GROUP=active&FORMAT=TLE`), fetched through
-the same `tle.base-urls` chain — the Vercel relay already forwards that path. It is
+The index is CelesTrak's `active` group as OMM (`gp.php?GROUP=active&FORMAT=JSON`, about
+7 MB), fetched through the same `tle.base-urls` chain — the Vercel relay already forwards
+that path. Not `FORMAT=TLE`: that form leaves out every six-digit catalogue number (see
+below), so it misses everything launched since July 2026. It is
 downloaded on the first search, not at startup, held in memory, refreshed after
 `catalog.refresh-after` (24 h) and never retried more often than `catalog.retry-after`
 (5 min). A failed refresh keeps the previous index; with nothing ever downloaded, the

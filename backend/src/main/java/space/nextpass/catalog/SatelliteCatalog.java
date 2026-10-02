@@ -59,7 +59,8 @@ public class SatelliteCatalog {
     public static final int MIN_QUERY_LENGTH = 2;
 
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Z0-9]+");
-    private static final Pattern NORAD_NUMBER = Pattern.compile("\\d{1,5}");
+    /** Up to six digits: numbers above 99999 are given since July 2026. */
+    private static final Pattern NORAD_NUMBER = Pattern.compile("\\d{1,6}");
 
     private final List<CatalogSource> sources;
     private final Duration refreshAfter;

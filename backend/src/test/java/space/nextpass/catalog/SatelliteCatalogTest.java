@@ -93,6 +93,15 @@ class SatelliteCatalogTest {
         assertThat(ids(catalog.search("1007", 10))).containsExactly(1007, 44713);
     }
 
+    /** Six digits are a number too since July 2026, and rank above names containing them. */
+    @Test
+    void findsASixDigitNumber() {
+        SatelliteCatalog catalog = catalog(new ScriptedSource().then(List.of(
+                new SatelliteEntry(100534, "STARLINK-38244"), new SatelliteEntry(70001, "SAT 100534 B"))));
+
+        assertThat(ids(catalog.search("100534", 10))).containsExactly(100534, 70001);
+    }
+
     @Test
     void respectsTheLimitAndReportsTheIndexAge() {
         SatelliteCatalog.Result result = catalog(new ScriptedSource()).search("iss", 2);

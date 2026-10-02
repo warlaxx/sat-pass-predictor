@@ -22,6 +22,10 @@ fire. Every backend class must live under `space.nextpass`: the component scan s
 nothing else. Tests need Orekit data; in a worktree, point `OREKIT_DATA_PATH` at the main
 checkout's `orekit-data`.
 
+NORAD numbers run to 339999 (`TleSnapshot.MAX_NORAD_ID`, Alpha-5's `Z9999`): objects
+catalogued since July 2026 have six digits, and CelesTrak serves those only as OMM, never
+as `FORMAT=TLE` — see "Six-digit catalogue numbers" in the README.
+
 The frontend is now prerendered at build time and bilingual: English at the root, French
 under `/fr/` (`@angular/localize`), with canonical, hreflang, sitemap and robots.txt. See
 [search engines and languages](docs/seo.md). Every new text needs `i18n` or `$localize`

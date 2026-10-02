@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -240,6 +241,35 @@ class PassControllerTest {
     void aWindowBeyondTheCapIsRejected() throws Exception {
         mockMvc.perform(get("/api/passes?noradId=25544&lat=45.7578&lon=4.8320&hours=241"))
                 .andExpect(status().isBadRequest());
+    }
+
+    /**
+     * Objects catalogued since July 2026 have six-digit numbers; {@code 100685} used to
+     * be refused with a 400 before anything looked it up.
+     */
+    @Test
+    void acceptsASixDigitNoradNumber() throws Exception {
+        when(passQueryService.findPasses(anyInt(), any(), any(), anyDouble()))
+                .thenReturn(PassFixtures.prediction());
+
+        mockMvc.perform(get("/api/passes?noradId=100685&lat=48.857&lon=2.352"))
+                .andExpect(status().isOk());
+
+        verify(passQueryService).findPasses(eq(100685), any(), any(), anyDouble());
+    }
+
+    /** Z9999 in Alpha-5 is the last number a TLE line can carry. */
+    @Test
+    void acceptsTheLastNumberATleCanCarryAndRefusesTheNext() throws Exception {
+        when(passQueryService.findPasses(anyInt(), any(), any(), anyDouble()))
+                .thenReturn(PassFixtures.prediction());
+
+        mockMvc.perform(get("/api/passes?noradId=339999&lat=48.857&lon=2.352"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/passes?noradId=340000&lat=48.857&lon=2.352"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(400));
     }
 
     @Test

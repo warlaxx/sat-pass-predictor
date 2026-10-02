@@ -91,13 +91,21 @@ class BatchQueryTest {
                 .hasMessageContaining("At most 25 predictions").hasMessageContaining("asks for 30");
     }
 
+    /** Six-digit numbers have been given since July 2026; Alpha-5 ends at 339999. */
+    @Test
+    void acceptsSixDigitNumbersUpToTheLastATleCanCarry() {
+        BatchQuery batch = BatchQuery.parse(query("noradId", "100685,100961", "noradId", "339999", "site", "0,0"));
+
+        assertThat(batch.noradIds()).containsExactly(100685, 100961, 339999);
+    }
+
     @Test
     void refusesWhatTheSingleEndpointRefuses() {
         String[][] invalid = {
                 {"site", "0,0"},
                 {"noradId", "25544"},
                 {"noradId", "0", "site", "0,0"},
-                {"noradId", "100000", "site", "0,0"},
+                {"noradId", "340000", "site", "0,0"},
                 {"noradId", "25544,", "site", "0,0"},
                 {"noradId", "iss", "site", "0,0"},
                 {"noradId", "25544", "site", "91,0"},

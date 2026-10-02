@@ -30,7 +30,8 @@ export function prediction(noradId: number, minute: number, favourable = true): 
 describe('opportunity selection', () => {
   it('deduplicates IDs and refuses invalid or unbounded batches', () => {
     expect(parseSatellites('25544, 48274 25544')).toEqual([25544, 48274]);
-    for (const value of ['', '0', '1.2', 'NaN', '100000', '1,2,3,4,5,6']) {
+    expect(parseSatellites('100685,100961')).toEqual([100685, 100961]);
+    for (const value of ['', '0', '1.2', 'NaN', '340000', '1,2,3,4,5,6']) {
       expect(() => parseSatellites(value)).toThrow();
     }
   });

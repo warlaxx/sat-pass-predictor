@@ -41,6 +41,11 @@ import org.springframework.web.util.UriUtils;
  * {@link java.net.http.HttpClient} this client's {@code RestClient} is built on, which is
  * why that client is its own and not shared with the CelesTrak endpoints.
  *
+ * <h2>Six-digit catalogue numbers</h2>
+ * Space-Track writes them in Alpha-5 in its 3LE output, as its documentation states
+ * ({@code A0534} for 100534), where CelesTrak serves them only as OMM. Orekit decodes
+ * Alpha-5, so the same query and the same {@link TleResponseParser} serve both ranges.
+ *
  * <h2>Two ways this differs from CelesTrak, both handled here</h2>
  * <ul>
  *   <li>An object the catalogue does not hold comes back as an <strong>empty

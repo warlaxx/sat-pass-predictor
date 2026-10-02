@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * Carrying a TLE here would create a second, looser path to a prediction.
  *
  * <p>{@code launch} is the launch part of the international designator, {@code "2026-045"}
- * for {@code 26045A}: what groups the satellites of one Starlink launch into one train.
+ * for {@code 2026-045A}: what groups the satellites of one Starlink launch into one train.
  * Null when the line carries none. It is not part of the search response, whose contract
  * predates it.
  */

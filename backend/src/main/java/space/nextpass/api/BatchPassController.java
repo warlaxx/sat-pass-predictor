@@ -3,6 +3,7 @@ package space.nextpass.api;
 import space.nextpass.api.BatchPassesResponse.Entry;
 import space.nextpass.api.PassesResponse.ObserverDto;
 import space.nextpass.domain.ObserverLocation;
+import space.nextpass.domain.TleSnapshot;
 import space.nextpass.passes.PassPrediction;
 import space.nextpass.passes.PassQueryService;
 import space.nextpass.tle.TleException;
@@ -65,7 +66,7 @@ public class BatchPassController {
     @Parameters({
             @Parameter(name = "noradId", in = ParameterIn.QUERY, required = true,
                     description = "NORAD numbers, repeated or comma-separated",
-                    array = @ArraySchema(schema = @Schema(type = "integer", minimum = "1", maximum = "99999")),
+                    array = @ArraySchema(schema = @Schema(type = "integer", minimum = "1", maximum = "" + TleSnapshot.MAX_NORAD_ID)),
                     example = "25544"),
             @Parameter(name = "site", in = ParameterIn.QUERY, required = true,
                     description = "Observer as lat,lon or lat,lon,alt (degrees, degrees, metres above the"

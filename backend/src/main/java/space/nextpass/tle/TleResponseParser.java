@@ -30,7 +30,9 @@ import org.orekit.propagation.analytical.tle.TLE;
  *       returned NORAD number with the requested one. Without that last check, a response
  *       cached by an intermediary for another satellite would produce perfectly plausible
  *       passes — and wrong ones. With a relay in the chain, "an intermediary" stopped
- *       being hypothetical.</li>
+ *       being hypothetical. Orekit decodes Alpha-5, so {@code A0534} compares as 100534
+ *       — and a letter counts for nothing in the checksum, as it does for whoever wrote
+ *       the line.</li>
  * </ol>
  *
  * <p>Everything it refuses is a {@link TleUnavailableException}: at this point the service

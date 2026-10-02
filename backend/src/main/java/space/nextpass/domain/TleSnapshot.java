@@ -26,6 +26,14 @@ import java.time.Instant;
  * </ul>
  * Confusing the two is the classic mistake: a cache that expires after two hours believes
  * it guarantees an accuracy it does not control.
+ *
+ * <h2>Six-digit catalogue numbers</h2>
+ * Objects catalogued since July 2026 carry numbers above 99999, which the five columns of
+ * a TLE cannot hold as digits. Their lines use <em>Alpha-5</em>, Space-Track's encoding:
+ * the first column becomes a letter standing for the leading two digits, {@code A} for
+ * 10 to {@code Z} for 33, skipping {@code I} and {@code O} — 100534 is {@code A0534}.
+ * Orekit reads and writes it, so the lines stay the canonical form; the price is a
+ * ceiling, {@value #MAX_NORAD_ID}, above which no TLE exists and no prediction can be made.
  */
 public record TleSnapshot(int noradId,
                           String name,
@@ -34,6 +42,13 @@ public record TleSnapshot(int noradId,
                           Instant epoch,
                           Instant fetchedAt,
                           String source) {
+
+    /**
+     * The highest catalogue number a TLE line can carry: {@code Z9999} in Alpha-5. Every
+     * bound on a NORAD number refers to this one — the API refuses above it rather than
+     * promise a prediction the elements cannot be stored for.
+     */
+    public static final int MAX_NORAD_ID = 339_999;
 
     /** Length of a TLE line, fixed by NORAD's column-based format. */
     private static final int LINE_LENGTH = 69;
