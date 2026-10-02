@@ -68,6 +68,11 @@ without being asked. When the Linear tools are available:
   main)**. That pull request merged and production checked → **Done (merged
   production)**, with a one-line comment saying what shipped and how it was checked.
   Abandoned → **Canceled** with the reason.
+- **A `dev` → `main` pull request names every issue it ships**: one `Fixes ABD-…` line
+  per issue, found in the commit messages and branch names of `git log
+  origin/main..origin/dev`, cross-checked against the issues in **Validated in DEV**.
+  Linear moves only the issues a pull request names; any it misses stays behind and has
+  to be moved by hand.
 - **Tick the acceptance criteria** in the issue as they are met; comment anything learned
   that changes the plan (a bug found, a number measured, a decision taken).
 - **New work discovered on the way** becomes its own issue, linked to the current one
