@@ -22,6 +22,12 @@ concurrency:
   group: daily-import
   cancel-in-progress: false
 
+# Explicit bash adds pipefail, without which `curl | tee` would hide a failed import and
+# the job would report success.
+defaults:
+  run:
+    shell: bash
+
 jobs:
   import:
     runs-on: ubuntu-latest

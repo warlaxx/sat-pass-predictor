@@ -3,7 +3,7 @@
 See [README.md](README.md) for what this project is and [ROADMAP.md](ROADMAP.md) for
 its milestones, decisions and current status.
 
-## Current state — 1 October 2026
+## Current state — 2 October 2026
 
 Milestones 0–12 are implemented (the showcase demo GIF is still missing).
 Milestone 13 adds GitHub accounts, but real production OAuth remains unverified.
@@ -13,6 +13,14 @@ provider resources were created. See [billing](docs/billing.md) for activation,
 replay and the exact quota contract, and [commercial readiness](docs/commercial-readiness.md)
 for release gates. Next work is milestone 15 plus real OAuth/Stripe sandbox checks;
 do not confuse local test success with commercial launch readiness.
+
+**Since 2 October 2026 the active work is phase 3 of the [roadmap](ROADMAP.md): on-orbit
+separations, built on McDowell's GCAT (CC-BY), one feature at a time.** The nightly
+import is `.github/workflows/daily-import.yml` calling `POST /internal/import`
+(`space.nextpass.ingest`), because Render's free plan sleeps and `@Scheduled` would not
+fire. Every backend class must live under `space.nextpass`: the component scan sees
+nothing else. Tests need Orekit data; in a worktree, point `OREKIT_DATA_PATH` at the main
+checkout's `orekit-data`.
 
 The frontend is now prerendered at build time and bilingual: English at the root, French
 under `/fr/` (`@angular/localize`), with canonical, hreflang, sitemap and robots.txt. See
