@@ -1,6 +1,7 @@
 package space.nextpass.delays;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import space.nextpass.tle.MutableClock;
 import space.nextpass.tle.TleUnavailableException;
@@ -183,6 +185,42 @@ class DelayMeasurementPostgresTest {
 
         assertThat(report.newlyMeasured()).singleElement()
                 .satisfies(delay -> assertThat(delay.gcatAfterSpaceTrackHours()).isEqualTo(-13.6));
+    }
+
+    /** Two GCAT rows with one NORAD number are one object, dated by GCAT's first sighting. */
+    @Test
+    void aDuplicateNoradNumberCountsOnce() {
+        gcatObject("S101000X", 101000, "STARLINK-40000 DUP", false, null, null, null,
+                SECOND_NIGHT.plus(Duration.ofDays(1)));
+
+        DelayMeasurement.Report report = measurement(spaceTrack).run(SECOND_NIGHT);
+
+        assertThat(report.allObjects().objects()).isEqualTo(2);
+        assertThat(report.newlyMeasured()).filteredOn(delay -> delay.noradId() == 101000).singleElement()
+                .satisfies(delay -> assertThat(delay.jcat()).isEqualTo("S101000"));
+    }
+
+    /** And a duplicate GCAT already had at its first import keeps the object out. */
+    @Test
+    void aDuplicateOfAnObjectTheFirstImportHadIsNotNew() {
+        gcatObject("S69998X", 69998, "OBJECT Z DUP", true, null, null, null, SECOND_NIGHT);
+
+        measurement(spaceTrack).run(SECOND_NIGHT);
+
+        assertThat(jdbc.queryForList("SELECT norad_id FROM catalogue_delays", Integer.class))
+                .containsExactlyInAnyOrder(100961, 101000);
+    }
+
+    /** The database failing is not Space-Track failing: it is thrown, for the caller to report. */
+    @Test
+    void aDatabaseFailureIsNotReportedAsSpaceTrackUnavailable() {
+        jdbc.execute("ALTER TABLE spacetrack_debuts RENAME TO spacetrack_debuts_gone");
+        try {
+            assertThatThrownBy(() -> measurement(spaceTrack).run(SECOND_NIGHT))
+                    .isInstanceOf(DataAccessException.class);
+        } finally {
+            jdbc.execute("ALTER TABLE spacetrack_debuts_gone RENAME TO spacetrack_debuts");
+        }
     }
 
     /** Space-Track down is a night without debuts, not a failed import. */

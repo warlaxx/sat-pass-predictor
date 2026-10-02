@@ -11,9 +11,10 @@ import org.slf4j.LoggerFactory;
  * Phase 3.2 of the roadmap (ABD-9): measure how late GCAT lists an object compared with
  * Space-Track's public catalogue, and how late both are after a separation.
  *
- * <p>Runs after the GCAT import, in the same nightly request. It never throws: Space-Track
- * unreachable, refusing the account or over budget becomes {@code "unavailable"} in the
- * report, and the GCAT import — already committed — stands. Without credentials it says
+ * <p>Runs after the GCAT import, in the same nightly request. Space-Track unreachable,
+ * refusing the account or over budget becomes {@code "unavailable"} in the report, and
+ * the GCAT import — already committed — stands. A database failure is thrown, for the
+ * caller to report as {@code "failed"}. Without credentials it says
  * {@code "not-configured"} and still reports what earlier nights measured.
  */
 public class DelayMeasurement {
@@ -84,19 +85,26 @@ public class DelayMeasurement {
             // Truncated like GcatImporter's: PostgreSQL keeps microseconds, and
             // first_fetched_at = runAt is how the new rows are counted.
             Instant runAt = clock.instant().truncatedTo(ChronoUnit.MICROS);
+            List<SpaceTrackDebut> debuts;
             try {
-                List<SpaceTrackDebut> debuts = source.recent();
+                debuts = source.recent();
+            } catch (RuntimeException e) {
+                // The GCAT import is already committed; this night only loses its debuts,
+                // and the seven-day window will pick them up tomorrow.
+                debuts = null;
+                detail = e.getMessage();
+                log.warn("Space-Track debuts unavailable, GCAT import kept: {}", e.getMessage());
+            }
+            if (debuts == null) {
+                status = "unavailable";
+            } else {
+                // Outside the catch: a database failure is not Space-Track's, and the
+                // controller reports it as "failed".
                 repository.upsert(debuts, runAt);
                 fetched = debuts.size();
                 inserted = repository.countFirstFetched(runAt);
                 status = "measured";
                 log.info("Space-Track debuts: {} over the last week, {} new", fetched, inserted);
-            } catch (RuntimeException e) {
-                // The GCAT import is already committed; this night only loses its debuts,
-                // and the seven-day window will pick them up tomorrow.
-                status = "unavailable";
-                detail = e.getMessage();
-                log.warn("Space-Track debuts unavailable, GCAT import kept: {}", e.getMessage());
             }
         }
         return new Report(status, detail, fetched, inserted,
