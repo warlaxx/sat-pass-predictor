@@ -3,6 +3,7 @@ package space.nextpass.config;
 import space.nextpass.tle.CelestrakTleClient;
 import space.nextpass.tle.FallbackTleClient;
 import space.nextpass.tle.RequestBudget;
+import space.nextpass.tle.SpaceTrackSession;
 import space.nextpass.tle.SpaceTrackTleClient;
 import space.nextpass.tle.TleClient;
 import java.net.CookieManager;
@@ -14,8 +15,10 @@ import java.util.List;
 import org.orekit.data.DataContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
@@ -58,12 +61,16 @@ public class TleClientConfig {
     @Bean
     public TleClient tleClient(TleProperties properties,
                                SpaceTrackProperties spaceTrack,
+                               ObjectProvider<SpaceTrackSession> spaceTrackSession,
                                DataContext dataContext,
                                Clock clock) {
         List<TleClient> sources = new ArrayList<>(celestrakSources(properties, dataContext, clock));
 
-        if (spaceTrack.configured()) {
-            sources.add(spaceTrackSource(spaceTrack, properties, dataContext, clock));
+        SpaceTrackSession session = spaceTrackSession.getIfAvailable();
+        if (session != null) {
+            log.info("Space-Track joins the chain as its last source, capped at {}/min and {}/h",
+                    spaceTrack.requestsPerMinute(), spaceTrack.requestsPerHour());
+            sources.add(new SpaceTrackTleClient(session, dataContext, clock));
         } else {
             // Said once, out loud. A second source that is silently absent is worth less
             // than no second source, because you believe you have one.
@@ -75,10 +82,33 @@ public class TleClientConfig {
         // instance will actually try is the first thing anyone wants to know when the
         // deployed application and the local one disagree.
         log.info("TLE sources, in order: {}{}", properties.baseUrls(),
-                spaceTrack.configured() ? " then " + spaceTrack.baseUrl() + " (space-track)" : "");
+                session != null ? " then " + spaceTrack.baseUrl() + " (space-track)" : "");
         log.info("TLE HTTP budgets: connect={}, request={}, source cooldown={}",
                 properties.connectTimeout(), properties.readTimeout(), properties.sourceCooldown());
         return new FallbackTleClient(sources, properties.sourceCooldown(), clock);
+    }
+
+    /**
+     * The one Space-Track account, shared by the TLE chain and the nightly catalogue-debut
+     * fetch so that both spend one budget and one cookie. Absent without credentials.
+     */
+    @Bean
+    @Conditional(SpaceTrackConfiguredCondition.class)
+    public SpaceTrackSession spaceTrackSession(SpaceTrackProperties spaceTrack,
+                                               TleProperties properties,
+                                               Clock clock) {
+        // ACCEPT_ALL rather than the default ACCEPT_ORIGINAL_SERVER: the login and the
+        // query are the same host, but a redirect through www. would otherwise drop the
+        // cookie and turn every query into a re-login.
+        CookieManager cookies = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
+        RestClient client = RestClient.builder()
+                .baseUrl(spaceTrack.baseUrl())
+                .requestFactory(requestFactory(properties, cookies))
+                .build();
+        RequestBudget budget = new RequestBudget(
+                spaceTrack.requestsPerMinute(), spaceTrack.requestsPerHour(), clock);
+        return new SpaceTrackSession(spaceTrack.baseUrl(), client, budget,
+                spaceTrack.identity(), spaceTrack.password());
     }
 
     private List<TleClient> celestrakSources(TleProperties properties,
@@ -92,27 +122,6 @@ public class TleClientConfig {
                         dataContext,
                         clock))
                 .toList();
-    }
-
-    private TleClient spaceTrackSource(SpaceTrackProperties spaceTrack,
-                                       TleProperties properties,
-                                       DataContext dataContext,
-                                       Clock clock) {
-        // ACCEPT_ALL rather than the default ACCEPT_ORIGINAL_SERVER: the login and the
-        // query are the same host, but a redirect through www. would otherwise drop the
-        // cookie and turn every query into a re-login.
-        CookieManager cookies = new CookieManager(null, CookiePolicy.ACCEPT_ALL);
-        RestClient client = RestClient.builder()
-                .baseUrl(spaceTrack.baseUrl())
-                .requestFactory(requestFactory(properties, cookies))
-                .build();
-        RequestBudget budget = new RequestBudget(
-                spaceTrack.requestsPerMinute(), spaceTrack.requestsPerHour(), clock);
-
-        log.info("Space-Track joins the chain as its last source, capped at {}/min and {}/h",
-                spaceTrack.requestsPerMinute(), spaceTrack.requestsPerHour());
-        return new SpaceTrackTleClient(spaceTrack.baseUrl(), client, dataContext, clock,
-                budget, spaceTrack.identity(), spaceTrack.password());
     }
 
     static JdkClientHttpRequestFactory requestFactory(TleProperties properties,
