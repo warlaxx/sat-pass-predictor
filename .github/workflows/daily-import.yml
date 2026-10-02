@@ -1,0 +1,76 @@
+name: Daily import
+
+# Why a GitHub Action and not @Scheduled: the backend runs on Render's free plan, which
+# spins the service down after 15 minutes without traffic. A Spring scheduler would only
+# fire while someone happened to be using the site, and would fail silently otherwise.
+# This workflow wakes the service, then triggers the import through a token-protected
+# endpoint (see IngestController). Space-Track credentials stay on Render: GitHub only
+# holds the URL and the trigger token.
+#
+# Repository secrets (Settings > Secrets and variables > Actions):
+#   BACKEND_URL   https://sat-pass-predictor-api.onrender.com (no trailing slash)
+#   IMPORT_TOKEN  same value as the IMPORT_TOKEN environment variable on Render
+
+on:
+  schedule:
+    # Space-Track publishes SATCAT once a day after 17:00 UTC. Off the hour on purpose:
+    # GitHub delays jobs queued at :00 the most.
+    - cron: '23 18 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: daily-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BACKEND_URL: ${{ secrets.BACKEND_URL }}
+      IMPORT_TOKEN: ${{ secrets.IMPORT_TOKEN }}
+    steps:
+      # Until the secrets exist, skip with a warning instead of failing every night.
+      - name: Check configuration
+        id: config
+        run: |
+          if [ -z "$BACKEND_URL" ] || [ -z "$IMPORT_TOKEN" ]; then
+            echo "::warning::BACKEND_URL or IMPORT_TOKEN is not set; skipping the import."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A cold start on the free plan takes up to about a minute.
+      - name: Wake the backend
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$BACKEND_URL/actuator/health" || echo "000")
+            echo "Attempt $i: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "::error::The backend did not answer /actuator/health."
+          exit 1
+
+      # Synchronous on purpose: the open request keeps Render from spinning the service
+      # down mid-import, and the job's verdict is the import's verdict.
+      - name: Run the import
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          curl -sS --fail-with-body --max-time 900 -X POST \
+            -H "Authorization: Bearer $IMPORT_TOKEN" \
+            "$BACKEND_URL/internal/import" | tee import-report.json
+
+      - name: Summary
+        if: always() && steps.config.outputs.ready == 'true'
+        run: |
+          {
+            echo "## Daily import"
+            if [ -s import-report.json ]; then
+              echo '```json'; cat import-report.json; echo; echo '```'
+            else
+              echo "No report received."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
