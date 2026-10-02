@@ -1,11 +1,13 @@
 package space.nextpass.ingest;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import space.nextpass.delays.DelayMeasurement;
 import space.nextpass.gcat.GcatImportException;
 import space.nextpass.gcat.GcatImporter;
 
@@ -65,6 +68,50 @@ class IngestControllerTest {
             mvc.perform(post("/internal/import").header("Authorization", "Bearer s3cret"))
                     .andExpect(status().isBadGateway())
                     .andExpect(jsonPath("$.detail").value("GCAT answered 503 for satcat.tsv"));
+        }
+    }
+
+    @Nested
+    @WebMvcTest(controllers = IngestController.class, properties = "ingest.token=s3cret")
+    class WithDelayMeasurement {
+        @Autowired MockMvc mvc;
+        @MockitoBean Clock clock;
+        @MockitoBean GcatImporter importer;
+        @MockitoBean DelayMeasurement delays;
+
+        static final GcatImporter.Report GCAT = new GcatImporter.Report("unchanged",
+                List.of(new GcatImporter.FileReport("satcat.tsv", "unchanged", 0, 0)), 0, 0, 0, 0, 300);
+
+        /** The workflow reads GCAT's fields where they always were; the delays sit beside them. */
+        @Test void addsTheDelaysBesideGcatsReport() throws Exception {
+            when(clock.instant()).thenReturn(Instant.parse("2026-10-03T18:23:00Z"));
+            when(importer.run()).thenReturn(GCAT);
+            DelayMeasurement.Stat none = new DelayMeasurement.Stat(null, null);
+            DelayMeasurement.Summary empty = new DelayMeasurement.Summary(0, none, none, none);
+            when(delays.run(Instant.parse("2026-10-03T18:23:00Z"))).thenReturn(new DelayMeasurement.Report(
+                    "unavailable", "https://www.space-track.org unreachable for the catalogue debuts",
+                    0, 0, empty, empty, 0, List.of()));
+
+            mvc.perform(post("/internal/import").header("Authorization", "Bearer s3cret"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("unchanged"))
+                    .andExpect(jsonPath("$.files[0].file").value("satcat.tsv"))
+                    .andExpect(jsonPath("$.gcat").doesNotExist())
+                    .andExpect(jsonPath("$.delays.status").value("unavailable"))
+                    .andExpect(jsonPath("$.delays.allObjects.objects").value(0));
+        }
+
+        /** Whatever happens to the measurement, the GCAT import stands and the job passes. */
+        @Test void aFailedMeasurementKeepsTheImport() throws Exception {
+            when(clock.instant()).thenReturn(Instant.parse("2026-10-03T18:23:00Z"));
+            when(importer.run()).thenReturn(GCAT);
+            when(delays.run(any())).thenThrow(new IllegalStateException("connection refused"));
+
+            mvc.perform(post("/internal/import").header("Authorization", "Bearer s3cret"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("unchanged"))
+                    .andExpect(jsonPath("$.delays.status").value("failed"))
+                    .andExpect(jsonPath("$.delays.detail").value("connection refused"));
         }
     }
 

@@ -56,10 +56,9 @@ class SpaceTrackTleClientTest {
     private SpaceTrackTleClient clientWithBudget(int perMinute, int perHour) {
         RestClient.Builder builder = RestClient.builder().baseUrl(BASE_URL);
         server = MockRestServiceServer.bindTo(builder).build();
-        return new SpaceTrackTleClient(BASE_URL, builder.build(), dataContext,
-                Clock.fixed(FETCHED_AT, ZoneOffset.UTC),
-                new RequestBudget(perMinute, perHour, clock),
-                "pilot@example.test", "secret");
+        SpaceTrackSession session = new SpaceTrackSession(BASE_URL, builder.build(),
+                new RequestBudget(perMinute, perHour, clock), "pilot@example.test", "secret");
+        return new SpaceTrackTleClient(session, dataContext, Clock.fixed(FETCHED_AT, ZoneOffset.UTC));
     }
 
     private SpaceTrackTleClient client() {

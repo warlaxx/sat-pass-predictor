@@ -3,6 +3,7 @@ package space.nextpass.config;
 import com.zaxxer.hikari.HikariDataSource;
 import java.net.http.HttpClient;
 import java.time.Clock;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -13,10 +14,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClient;
+import space.nextpass.delays.DelayMeasurement;
+import space.nextpass.delays.DelayRepository;
+import space.nextpass.delays.HttpSpaceTrackDebutSource;
 import space.nextpass.gcat.GcatImporter;
 import space.nextpass.gcat.GcatRepository;
 import space.nextpass.gcat.HttpGcatSource;
 import space.nextpass.separations.SeparationRepository;
+import space.nextpass.tle.SpaceTrackSession;
 
 /**
  * Wiring of the GCAT import. It needs the database, so it exists only where the database
@@ -60,5 +65,21 @@ public class GcatConfig {
         JdbcTemplate jdbc = new JdbcTemplate(source);
         jdbc.setQueryTimeout(5);
         return new SeparationRepository(jdbc);
+    }
+
+    /**
+     * Phase 3.2's delay measurement, run after the GCAT import. Without Space-Track
+     * credentials it still exists, and says so in the report.
+     */
+    @Bean
+    @ConditionalOnProperty(name = "api-access.enabled", havingValue = "true")
+    public DelayMeasurement delayMeasurement(HikariDataSource source,
+                                             ObjectProvider<SpaceTrackSession> spaceTrack,
+                                             Clock clock) {
+        JdbcTemplate jdbc = new JdbcTemplate(source);
+        jdbc.setQueryTimeout(60);
+        SpaceTrackSession session = spaceTrack.getIfAvailable();
+        return new DelayMeasurement(session == null ? null : new HttpSpaceTrackDebutSource(session),
+                new DelayRepository(jdbc), clock);
     }
 }

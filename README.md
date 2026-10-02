@@ -203,6 +203,9 @@ A source that says "I do not have this object" ends the chain; a source that can
 reached does not. Space-Track is an *availability* fallback, not a *coverage* one — it is
 the catalogue CelesTrak republishes — and its calls are capped well under the published
 limits of 30 a minute and 300 an hour, because an account suspended is a source lost.
+The same account, session and budget also serve the nightly import, which reads
+Space-Track's catalogue debuts to measure GCAT's delay (phase 3.2 of the
+[roadmap](ROADMAP.md)); without credentials that measurement reports `"not-configured"`.
 
 The line to read in the startup log is `TLE sources, in order: [...]`. It says exactly
 what this instance will try, which is the first thing worth knowing when the deployed
