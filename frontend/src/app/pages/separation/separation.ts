@@ -14,7 +14,7 @@ import { requestPosition } from '../../shared/geolocation';
 import { Seo } from '../../shared/seo';
 import { countUsage } from '../../shared/usage';
 import {
-  isGeostationary, orbitLabel, precisionLabel, recordedDateLabel, roleLabel, timeSinceLaunch,
+  ParentCell, isGeostationary, orbitLabel, parentCell, precisionLabel, recordedDateLabel, roleLabel, timeSinceLaunch,
 } from '../separations/separation-format';
 
 /** Three days, as on a satellite's page. */
@@ -65,7 +65,9 @@ export class SeparationPage {
 
   protected readonly parentName = computed(() => {
     const event = this.event();
-    return event?.parent?.name ?? event?.children[0]?.evidence.parent ?? '';
+    // The identifier alone: the record's cell may append a mark and a port location.
+    const record = event?.children[0]?.evidence.parent ?? null;
+    return event?.parent?.name ?? parentCell(record)?.id ?? record ?? '';
   });
 
   protected readonly heading = computed(() => {
@@ -99,6 +101,14 @@ export class SeparationPage {
       : '';
     return date + payload;
   });
+
+  /** A child's own Parent cell: the port it left from, and whether its designation may mislead. */
+  protected cellOf(child: SpaceObject): ParentCell | undefined {
+    return parentCell(child.evidence.parent);
+  }
+  /** How many of the listed objects carry the mark: each record has its own. */
+  protected readonly flaggedCount = computed(() =>
+    (this.event()?.children ?? []).filter((child) => this.cellOf(child)?.designationMayDiffer).length);
 
   protected readonly afterLaunch = computed(() => {
     const event = this.event();

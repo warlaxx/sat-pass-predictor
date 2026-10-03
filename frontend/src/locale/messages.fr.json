@@ -770,6 +770,12 @@
     "8241545206751418688": "Un objet non catalogué",
     "3155105621433884357": "Occupe un point fixe dans le ciel",
     "2592078266756224266": "Passe au-dessus de vous",
-    "7146350517948690721": "{$START_BOLD_TEXT}Sur les pages séparations{$CLOSE_BOLD_TEXT}, quelques actions (ouvrir un événement, un tableau ou la page d'un fragment, utiliser votre position, ouvrir un passage) ajoutent chacune un à un compteur du jour. Rien d'autre n'est envoyé ni conservé : ni cookie, ni identifiant, ni adresse, ni votre position."
+    "7146350517948690721": "{$START_BOLD_TEXT}Sur les pages séparations{$CLOSE_BOLD_TEXT}, quelques actions (ouvrir un événement, un tableau ou la page d'un fragment, utiliser votre position, ouvrir un passage) ajoutent chacune un à un compteur du jour. Rien d'autre n'est envoyé ni conservé : ni cookie, ni identifiant, ni adresse, ni votre position.",
+    "6199639618908559324": "La désignation de lancement de cet objet ({$INTERPOLATION}) n’est peut-être pas celle du lancement de son parent : les objets libérés depuis une station spatiale, par exemple, reçoivent une désignation tirée du lancement de la station. Sa date et sa désignation de lancement sont à prendre avec prudence.",
+    "837785262487923150": "Attaché au point {$START_TAG_SPAN}{$INTERPOLATION}{$CLOSE_TAG_SPAN}, selon l’enregistrement",
+    "889231934249531184": "{$ICU}, qui n’est peut-être pas celle du lancement du parent (signalée ci-dessous) : les objets libérés depuis une station spatiale, par exemple, reçoivent une désignation tirée du lancement de la station. Leurs dates et désignations de lancement sont à prendre avec prudence.",
+    "8891739789520724075": "{VAR_PLURAL, plural, =1 {L’un de ces objets a une désignation de lancement} other {{INTERPOLATION} de ces objets ont une désignation de lancement}}",
+    "6586274776203057095": "· désignation peut-être différente du lancement du parent",
+    "4122708660676573132": "· point {$START_TAG_SPAN}{$INTERPOLATION}{$CLOSE_TAG_SPAN}"
   }
 }

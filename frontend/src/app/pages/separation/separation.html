@@ -63,6 +63,19 @@
     <div class="section-head">
       <h2 id="lineage-title" i18n>Where it came from</h2>
     </div>
+    @if (subj && cellOf(subj)?.designationMayDiffer) {
+      <p class="note designation" i18n>
+        This object's launch designation ({{ subj.piece ?? '—' }}) may not be its parent's launch: objects
+        released from a space station, for instance, are designated after the station's launch. Its launch date
+        and designation call for care.
+      </p>
+    } @else if (!subj && flaggedCount() > 0) {
+      <p class="note designation" i18n>
+        {flaggedCount(), plural, =1 {One of these objects has a launch designation} other {{{ flaggedCount() }} of these objects have launch designations}}
+        that may not be their parent's launch, marked below: objects released from a space station, for instance, are
+        designated after the station's launch. Their launch dates and designations call for care.
+      </p>
+    }
     <ol class="lineage">
       @if (loaded.grandparent; as g) {
         <li class="node">
@@ -76,12 +89,18 @@
           <span class="label"><ng-container i18n>Parent</ng-container> · {{ role(p.role) }}</span>
           <span class="name">{{ p.name }}</span>
           <span class="num muted">{{ p.piece }}@if (p.owner) { · {{ p.owner }}}@if (p.massKg) { · {{ p.massKg | number }} kg}</span>
+          @if (subj && cellOf(subj)?.port; as port) {
+            <span class="muted port" i18n>Attached at port <span class="num">{{ port }}</span>, as recorded</span>
+          }
         </li>
       } @else {
         <li class="node">
           <span class="label" i18n>Parent</span>
           <span class="name num">{{ parentName() }}</span>
           <span class="muted" i18n>Not in the catalogue NextPass holds.</span>
+          @if (subj && cellOf(subj)?.port; as port) {
+            <span class="muted port" i18n>Attached at port <span class="num">{{ port }}</span>, as recorded</span>
+          }
         </li>
       }
       <li class="node current">
@@ -135,7 +154,16 @@
         <tbody>
           @for (child of loaded.children; track child.id) {
             <tr>
-              <th scope="row">{{ child.name }} <span class="num muted">{{ child.piece }}</span></th>
+              @let cell = cellOf(child);
+              <th scope="row">
+                {{ child.name }} <span class="num muted">{{ child.piece }}</span>
+                @if (cell?.designationMayDiffer) {
+                  <span class="muted flagged" i18n>· designation may not be the parent's launch</span>
+                }
+                @if (cell?.port; as port) {
+                  <span class="muted port" i18n>· port <span class="num">{{ port }}</span></span>
+                }
+              </th>
               <td class="num">
                 @if (linkable(child)) {
                   <a [routerLink]="['/satellites', child.noradId]" (click)="countFragment()">{{ child.noradId }}</a>

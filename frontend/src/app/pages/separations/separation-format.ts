@@ -104,3 +104,31 @@ export function roleLabel(role: ObjectRole): string {
     other: $localize`:Role of a catalogued object:Object`,
   }[role];
 }
+
+/**
+ * The record's Parent cell, read as its documentation defines it
+ * (https://planet4589.org/space/gcat/web/intro/jcat.html, "Extended JCAT identifier";
+ * https://planet4589.org/space/gcat/web/cat/cols.html, "Parent"):
+ *
+ * - an identifier, optionally followed by one or more spaces and a **port location**: the
+ *   part of the parent the object was attached to - a docking port (`A07305 N`), an
+ *   exposed-facility slot (`A07559 EFU5`), a truss battery slot (`A07476 1B3`), an airlock.
+ *   There is no table of these codes, so the page quotes them rather than translate them.
+ * - an **asterisk** after the identifier (`S03504*`): the object's launch designation (its
+ *   Piece) may not be the parent's launch, as for objects released from the ISS, which
+ *   are given 1998-067 designations whatever their launch. It says nothing about whether
+ *   the parent is right; it warns about the launch date and designation.
+ */
+export interface ParentCell {
+  readonly id: string;
+  /** The asterisk: the Piece designation may name another launch than the parent's. */
+  readonly designationMayDiffer: boolean;
+  /** Where on the parent the object was attached, as recorded (`AL`, `N`, `EFU5`). */
+  readonly port: string | null;
+}
+
+export function parentCell(text: string | null): ParentCell | undefined {
+  const match = /^([A-Z]\d+)(\*?)(?:\s+(\S.*?))?\s*$/.exec(text ?? '');
+  if (!match) return undefined;
+  return { id: match[1], designationMayDiffer: match[2] === '*', port: match[3] ?? null };
+}
