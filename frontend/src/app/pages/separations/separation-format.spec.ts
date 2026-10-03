@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RecordedDate } from '../../api/separations.model';
-import { isGeostationary, orbitLabel, precisionLabel, recordedDateLabel, recordedDateShort, timeSinceLaunch } from './separation-format';
+import { isGeostationary, orbitLabel, parentCell, precisionLabel, recordedDateLabel, recordedDateShort, timeSinceLaunch } from './separation-format';
 
 const date = (text: string, at: string, precision: RecordedDate['precision'], uncertain = false): RecordedDate =>
   ({ text, at, precision, uncertain });
@@ -67,5 +67,23 @@ describe('orbitLabel', () => {
   it('knows a geostationary orbit by its class', () => {
     expect(isGeostationary({ perigeeKm: 35800, apogeeKm: 36100, inclinationDeg: 0, orbitClass: 'GEO/D' })).toBe(true);
     expect(isGeostationary({ perigeeKm: 382, apogeeKm: 394, inclinationDeg: 41, orbitClass: 'LLEO/I' })).toBe(false);
+  });
+});
+
+describe('parentCell', () => {
+  it('reads the asterisk as a warning about the launch designation, not about the parent', () => {
+    expect(parentCell('S03504*')).toEqual({ id: 'S03504', designationMayDiffer: true, port: null });
+  });
+
+  it('reads what follows the spaces as a port location, kept as recorded', () => {
+    expect(parentCell('S16273  AL')).toEqual({ id: 'S16273', designationMayDiffer: false, port: 'AL' });
+    expect(parentCell('A07559 EFU5')).toEqual({ id: 'A07559', designationMayDiffer: false, port: 'EFU5' });
+    expect(parentCell('A09547* N')).toEqual({ id: 'A09547', designationMayDiffer: true, port: 'N' });
+  });
+
+  it('leaves a plain identifier plain, and refuses what is not one', () => {
+    expect(parentCell('S66645')).toEqual({ id: 'S66645', designationMayDiffer: false, port: null });
+    expect(parentCell(null)).toBeUndefined();
+    expect(parentCell('Earth')).toBeUndefined();
   });
 });

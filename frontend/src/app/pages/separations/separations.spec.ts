@@ -221,6 +221,42 @@ describe('SeparationPage', () => {
     expect(page.querySelector('app-pass-table')).toBeNull();
   });
 
+  it('says which port of the parent the object left from', async () => {
+    const child = object({});
+    const fromAirlock: SeparationEvent = {
+      ...SHENZHOU, children: [{ ...child, evidence: { ...child.evidence, parent: 'S16273  AL' } }],
+    };
+    const fixture = await render(SeparationPage, { id: 'S69328' });
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/separations/S69328').flush(fromAirlock);
+    await settle();
+    http.expectOne((r) => r.url === '/api/passes').flush(prediction());
+    await fixture.whenStable();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('.lineage .port')!.textContent).toContain('Attached at port AL');
+    expect(page.querySelector('.designation')).toBeNull();
+    expect(page.querySelector('.record .parent')!.textContent).toBe('S16273  AL');
+  });
+
+  it('warns about the launch designation when the record flags it, and names the parent without the mark', async () => {
+    const child = object({ piece: '1998-067RP' });
+    const flagged: SeparationEvent = {
+      ...SHENZHOU, parent: null, grandparent: null, children: [{ ...child, evidence: { ...child.evidence, parent: 'S03504*' } }],
+    };
+    const fixture = await render(SeparationPage, { id: 'S69328' });
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/separations/S69328').flush(flagged);
+    await settle();
+    http.expectOne((r) => r.url === '/api/passes').flush(prediction());
+    await fixture.whenStable();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('.designation')!.textContent).toContain('launch designation (1998-067RP) may not be its parent');
+    expect(page.querySelector('h1')!.textContent).toBe('S03504 released Shenzhou 22 Guidao Cang');
+    expect(page.querySelector('.lineage .port')).toBeNull();
+  });
+
   it('asks for no prediction it cannot give yet', async () => {
     const recent: SeparationEvent = { ...SHENZHOU, id: 'S400000', children: [object({ id: 'S400000', noradId: 400000, name: 'USA 667' })] };
     const fixture = await render(SeparationPage, { id: 'S400000' });

@@ -14,9 +14,12 @@ import java.time.temporal.ChronoUnit;
  *     unlike a NORAD number
  * @param satcat the NORAD catalogue number, {@code null} when GCAT has none ({@code NNA})
  * @param parent the GCAT identifier of the object this one came from, {@code null} if none
- * @param parentText GCAT's whole cell, which may add a {@code *} mark and a location such
- *     as {@code AL} (airlock) or a port number after the identifier; kept verbatim until
- *     phase 3.1 decides what an event page says about them
+ * @param parentText GCAT's whole cell, kept verbatim: an "extended JCAT identifier" may add a
+ *     port location after one or more spaces ({@code S16273  AL}: where on the parent the
+ *     object was attached, with no table of codes), and an {@code *} after the identifier
+ *     flags a launch designation that may not be the parent's launch
+ *     (https://planet4589.org/space/gcat/web/intro/jcat.html). The event page reads it in
+ *     {@code separation-format.ts}, {@code parentCell}
  */
 public record GcatObject(
         String jcat,

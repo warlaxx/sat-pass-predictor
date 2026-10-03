@@ -14,7 +14,7 @@ import { requestPosition } from '../../shared/geolocation';
 import { Seo } from '../../shared/seo';
 import { countUsage } from '../../shared/usage';
 import {
-  isGeostationary, orbitLabel, precisionLabel, recordedDateLabel, roleLabel, timeSinceLaunch,
+  isGeostationary, orbitLabel, parentCell, precisionLabel, recordedDateLabel, roleLabel, timeSinceLaunch,
 } from '../separations/separation-format';
 
 /** Three days, as on a satellite's page. */
@@ -65,7 +65,8 @@ export class SeparationPage {
 
   protected readonly parentName = computed(() => {
     const event = this.event();
-    return event?.parent?.name ?? event?.children[0]?.evidence.parent ?? '';
+    // The identifier alone: the record's cell may append a mark and a port location.
+    return event?.parent?.name ?? this.parentRecord()?.id ?? event?.children[0]?.evidence.parent ?? '';
   });
 
   protected readonly heading = computed(() => {
@@ -99,6 +100,9 @@ export class SeparationPage {
       : '';
     return date + payload;
   });
+
+  /** The record's Parent cell: the port the object left from, and the designation warning. */
+  protected readonly parentRecord = computed(() => parentCell(this.event()?.children[0]?.evidence.parent ?? null));
 
   protected readonly afterLaunch = computed(() => {
     const event = this.event();
