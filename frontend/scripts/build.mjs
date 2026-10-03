@@ -6,11 +6,17 @@
  * `ngSiteOrigin` (canonical and hreflang links, see src/app/shared/seo.ts), and into
  * robots.txt and sitemap.xml. Without one, the build still succeeds: the links and the
  * sitemap are left out rather than pointing at the wrong host.
+ *
+ * Before building, it fetches the newest separation events (separations-snapshot.mjs) and
+ * hands the file to the prerender through NG_SEPARATIONS_SNAPSHOT: those pages are written
+ * to HTML, and so listed in the sitemap.
  */
 import { spawnSync } from 'node:child_process';
-import { readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { robotsTxt, siteOrigin, sitemapXml } from './seo-files.mjs';
+import { fetchSnapshot, snapshotApi } from './separations-snapshot.mjs';
 
 const root = new URL('../', import.meta.url);
 const ng = createRequire(import.meta.url).resolve('@angular/cli/bin/ng.js');
@@ -18,8 +24,17 @@ const origin = siteOrigin(process.env);
 
 console.log(origin ? `Public origin: ${origin}` : 'No SITE_URL or VERCEL_PROJECT_PRODUCTION_URL: canonical links and sitemap left out.');
 
+const api = snapshotApi(process.env);
+const separations = api ? await fetchSnapshot(api) : {};
+console.log(api
+  ? `Separations to prerender, from ${api}: ${Object.keys(separations).length}.`
+  : 'PRERENDER_API=none: no separation page prerendered.');
+const snapshot = new URL('tmp/separations.json', root);
+mkdirSync(new URL('./', snapshot), { recursive: true });
+writeFileSync(snapshot, JSON.stringify(separations));
+
 const build = spawnSync(process.execPath, [ng, 'build', '--define', `ngSiteOrigin=${JSON.stringify(origin)}`, ...process.argv.slice(2)], {
-  cwd: root, stdio: 'inherit',
+  cwd: root, stdio: 'inherit', env: { ...process.env, NG_SEPARATIONS_SNAPSHOT: fileURLToPath(snapshot) },
 });
 if (build.status !== 0) process.exit(build.status ?? 1);
 

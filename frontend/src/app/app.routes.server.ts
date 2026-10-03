@@ -1,5 +1,6 @@
 import { PrerenderFallback, RenderMode, ServerRoute } from '@angular/ssr';
 import { FEATURED } from './shared/featured';
+import { separationSnapshot } from './separations-snapshot.server';
 
 /**
  * Which pages are written to HTML at build time.
@@ -11,7 +12,8 @@ import { FEATURED } from './shared/featured';
  *
  * Passes are never prerendered - they would be stale by the time anyone reads them. A
  * featured satellite's page carries its name and its card's text; its orbit and passes
- * come from the API, in the browser.
+ * come from the API, in the browser. The newest separation events, fetched once by
+ * `npm run build`, carry their heading and record; their passes, too, come later.
  */
 export const serverRoutes: ServerRoute[] = [
   {
@@ -22,7 +24,12 @@ export const serverRoutes: ServerRoute[] = [
     // Any other catalogue number is a valid page, rendered in the browser.
     fallback: PrerenderFallback.Client,
   },
-  // An event exists once the nightly import has it: there is no list of them at build time.
-  { path: 'separations/:id', renderMode: RenderMode.Client },
+  {
+    path: 'separations/:id',
+    renderMode: RenderMode.Prerender,
+    getPrerenderParams: async () => Object.keys(separationSnapshot()).map(id => ({ id })),
+    // Older events, and those imported since the build, are rendered in the browser.
+    fallback: PrerenderFallback.Client,
+  },
   { path: '**', renderMode: RenderMode.Prerender },
 ];

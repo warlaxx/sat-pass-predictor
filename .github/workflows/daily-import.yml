@@ -10,6 +10,10 @@ name: Daily import
 # Repository secrets (Settings > Secrets and variables > Actions):
 #   BACKEND_URL   https://sat-pass-predictor-api.onrender.com (no trailing slash)
 #   IMPORT_TOKEN  same value as the IMPORT_TOKEN environment variable on Render
+#   VERCEL_DEPLOY_HOOK  optional: a Vercel deploy hook on `main` (Project Settings > Git >
+#                 Deploy Hooks). The build prerenders the newest separation pages, so
+#                 redeploying after the import puts last night's events in the HTML and
+#                 the sitemap. Without it, they are prerendered at the next deployment.
 
 on:
   schedule:
@@ -35,6 +39,7 @@ jobs:
     env:
       BACKEND_URL: ${{ secrets.BACKEND_URL }}
       IMPORT_TOKEN: ${{ secrets.IMPORT_TOKEN }}
+      VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
     steps:
       # Until the secrets exist, skip with a warning instead of failing every night.
       - name: Check configuration
@@ -68,6 +73,17 @@ jobs:
           curl -sS --fail-with-body --max-time 900 -X POST \
             -H "Authorization: Bearer $IMPORT_TOKEN" \
             "$BACKEND_URL/internal/import" | tee import-report.json
+
+      # Only after a successful import: the build then reads the fresh events.
+      - name: Redeploy the site
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK" ]; then
+            echo "::notice::VERCEL_DEPLOY_HOOK is not set; the new separation pages wait for the next deployment."
+            exit 0
+          fi
+          curl -sS --fail-with-body --max-time 60 -X POST "$VERCEL_DEPLOY_HOOK" > /dev/null
+          echo "Redeployment requested."
 
       - name: Summary
         if: always() && steps.config.outputs.ready == 'true'
