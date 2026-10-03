@@ -221,6 +221,67 @@ describe('SeparationPage', () => {
     expect(page.querySelector('app-pass-table')).toBeNull();
   });
 
+  it('says which port of the parent the object left from', async () => {
+    const child = object({});
+    const fromAirlock: SeparationEvent = {
+      ...SHENZHOU,
+      parent: object({ id: 'S16273', noradId: 16273, name: 'Kvant', piece: '1987-030A' }),
+      children: [{ ...child, evidence: { ...child.evidence, parent: 'S16273  AL' } }],
+    };
+    const fixture = await render(SeparationPage, { id: 'S69328' });
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/separations/S69328').flush(fromAirlock);
+    await settle();
+    http.expectOne((r) => r.url === '/api/passes').flush(prediction());
+    await fixture.whenStable();
+
+    const page = fixture.nativeElement as HTMLElement;
+    const parentNode = page.querySelector('.lineage .port')!.closest('.node')!;
+    expect(parentNode.querySelector('.name')!.textContent).toBe('Kvant');
+    expect(parentNode.querySelector('.port')!.textContent).toContain('Attached at port AL');
+    expect(page.querySelector('.designation')).toBeNull();
+    expect(page.querySelector('.record .parent')!.textContent).toBe('S16273  AL');
+  });
+
+  it('warns about the launch designation when the record flags it, and names the parent without the mark', async () => {
+    const child = object({ piece: '1998-067RP' });
+    const flagged: SeparationEvent = {
+      ...SHENZHOU, parent: null, grandparent: null, children: [{ ...child, evidence: { ...child.evidence, parent: 'S03504*' } }],
+    };
+    const fixture = await render(SeparationPage, { id: 'S69328' });
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/separations/S69328').flush(flagged);
+    await settle();
+    http.expectOne((r) => r.url === '/api/passes').flush(prediction());
+    await fixture.whenStable();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('.designation')!.textContent).toContain('launch designation (1998-067RP) may not be its parent');
+    expect(page.querySelector('h1')!.textContent).toBe('S03504 released Shenzhou 22 Guidao Cang');
+    expect(page.querySelector('.lineage .port')).toBeNull();
+  });
+
+  it('reads each released object\'s own record, not only the first one\'s', async () => {
+    const child = (n: number, parent: string) => {
+      const base = object({ id: `S${n}`, noradId: n, name: `Cubesat ${n}`, piece: `1998-067${n}` });
+      return { ...base, evidence: { ...base.evidence, id: `S${n}`, parent } };
+    };
+    const deployment: SeparationEvent = {
+      ...SHENZHOU, id: 'S70001', childCount: 3,
+      children: [child(70001, 'A09547'), child(70002, 'A09547* N'), child(70003, 'A09547*')],
+    };
+    const fixture = await render(SeparationPage, { id: 'S70001' });
+    TestBed.inject(HttpTestingController).expectOne('/api/separations/S70001').flush(deployment);
+    await fixture.whenStable();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('.designation')!.textContent).toContain('2 of these objects have launch designations');
+    const rows = [...page.querySelectorAll('.objects tbody tr')];
+    expect(rows.map((row) => !!row.querySelector('.flagged'))).toEqual([false, true, true]);
+    expect(rows.map((row) => row.querySelector('.port')?.textContent?.trim() ?? null)).toEqual([null, '· port N', null]);
+    expect(page.querySelector('.lineage .port')).toBeNull();
+  });
+
   it('asks for no prediction it cannot give yet', async () => {
     const recent: SeparationEvent = { ...SHENZHOU, id: 'S400000', children: [object({ id: 'S400000', noradId: 400000, name: 'USA 667' })] };
     const fixture = await render(SeparationPage, { id: 'S400000' });
