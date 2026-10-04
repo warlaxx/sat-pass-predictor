@@ -1,9 +1,9 @@
-import { describe, beforeEach, afterEach, it, expect } from 'vitest';
+import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { HomePage, queryFromUrl } from './home';
 
 /**
@@ -203,6 +203,31 @@ describe('HomePage geolocation', () => {
     frequency.dispatchEvent(new Event('input'));
     const without = submit();
     expect(without.request.params.has('frequencyMhz')).toBe(false);
+  });
+
+  it('computes from the hero button and brings the console into view', async () => {
+    const fixture = TestBed.createComponent(HomePage);
+    await fixture.whenStable();
+    const console = fixture.nativeElement.querySelector('#query') as HTMLElement;
+    const scrolled = vi.fn();
+    console.scrollIntoView = scrolled;
+
+    (fixture.nativeElement.querySelector('app-hero .ctas button') as HTMLButtonElement).click();
+    TestBed.tick();
+
+    TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/passes');
+    expect(scrolled).toHaveBeenCalled();
+  });
+
+  it('writes the URL of a search without sending the reader back to the top', async () => {
+    const fixture = TestBed.createComponent(HomePage);
+    await fixture.whenStable();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+    fixture.nativeElement.querySelector('form.query').dispatchEvent(new Event('submit', { cancelable: true }));
+    TestBed.tick();
+
+    expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({ scroll: 'manual' }));
   });
 });
 

@@ -281,12 +281,23 @@ export class HomePage {
     this.writeUrl(this.form());
   }
 
+  /**
+   * The hero's call to action: the same computation as the console's button, then the
+   * console in view, where the progress, a refused satellite or the result appear.
+   */
+  protected computeFromHero(): void {
+    this.search();
+    document.getElementById('query')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   /** The URL of the result on screen, so that copying the address shares the result. */
   private writeUrl(query: PassQuery): void {
     const queryParams = Object.fromEntries(
       Object.entries(URL_FIELDS).map(([field, name]) => [name, query[field as keyof PassQuery]]),
     );
-    void this.router.navigate([], { queryParams, replaceUrl: true });
+    // 'manual': the router's scroll restoration would otherwise send the reader back to
+    // the top of the page, away from the button they just pressed.
+    void this.router.navigate([], { queryParams, replaceUrl: true, scroll: 'manual' });
   }
 
   protected reload(): void {

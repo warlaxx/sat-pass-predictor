@@ -1,4 +1,4 @@
-<app-hero [query]="form()" [response]="response()" [loading]="loading()" />
+<app-hero [query]="form()" [response]="response()" [loading]="loading()" (compute)="computeFromHero()" />
 
 <section id="query" class="console-band wrap" aria-labelledby="query-title">
   <form class="query" (submit)="$event.preventDefault(); search()">
