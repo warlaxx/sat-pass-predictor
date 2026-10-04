@@ -60,7 +60,7 @@ export const DEMO_LIMITS = { daily: 200, perMinute: 20 } as const;
 export const BATCH_LIMITS = { satellites: 10, sites: 10, predictions: 25 } as const;
 
 /**
- * The operator of the site, as French law requires it to be published (LCEN art. 6).
+ * The operator of the site, as French law requires it to be published (LCEN art. 1-1).
  *
  * The publisher is a private individual, so there is no legal form, SIREN or VAT number
  * to publish; add them here, and to the legal page, the day a business is registered to
@@ -71,6 +71,7 @@ export const BATCH_LIMITS = { satellites: 10, sites: 10, predictions: 25 } as co
 export const OPERATOR = {
   name: '',
   address: '',
+  telephone: '',
   email: 'contact@nextpass.space',
   publicationDirector: '',
 } as const;

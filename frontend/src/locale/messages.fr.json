@@ -650,7 +650,6 @@
     "5964462718539237859": " Un seul appel HTTP renvoie tous les passages d'un satellite au-dessus d'un point du globe : lever, culmination et coucher, la trajectoire échantillonnée toutes les 10 s, la vitesse radiale et le décalage Doppler, l'éclairement et la visibilité, et l'âge des éléments orbitaux utilisés, pour que vos utilisateurs sachent ce que valent les horaires. ",
     "3810041813035819185": " Chaque point et chaque phase portent {$START_TAG_CODE}rangeRateKmS{$CLOSE_TAG_CODE}, issu de la vitesse calculée par Orekit plutôt que de différences de distances. Sa valeur est négative pendant que le satellite se rapproche. Avec {$START_TAG_CODE}frequencyMhz{$CLOSE_TAG_CODE}, chacun porte aussi {$START_TAG_CODE}dopplerHz{$CLOSE_TAG_CODE}, le décalage au premier ordre à appliquer au récepteur, {$START_TAG_CODE}−f · rangeRate / c{$CLOSE_TAG_CODE}. Pour une liaison montante, appliquez le signe opposé. Demander plusieurs fréquences ne coûte qu'une propagation : le décalage est mis à l'échelle à partir de la prédiction en cache. ",
     "7422422665402298679": " Qui édite ce site, les règles d'utilisation du site et de son API, et exactement quelles données y transitent, c'est-à-dire très peu. ",
-    "5607167376189880890": "LCEN, article 6",
     "1083165323644082096": " Les horaires et positions proviennent d'un modèle alimenté par des éléments publiés des heures ou des jours plus tôt, et leur précision se dégrade avec cet âge. La {$START_LINK}méthodologie{$CLOSE_LINK} en donne les ordres de grandeur. Elles conviennent à l'observation, à la photographie, à la radio amateur et à la planification. {$START_BOLD_TEXT}Elles ne doivent pas être utilisées dans un but où une erreur pourrait mettre en danger des personnes ou des biens{$CLOSE_BOLD_TEXT}, comme l'évitement de collision, la navigation ou la sécurité des vols. ",
     "3501058155002209898": "{$START_BOLD_TEXT}Les avis par e-mail{$CLOSE_BOLD_TEXT} sont facultatifs. Un message que vous envoyez, avec l'adresse de la page depuis laquelle il a été écrit préremplie pour vous, ne sert qu'à vous répondre et à améliorer le site ; il n'est jamais ajouté à une liste de diffusion. {$START_TAG_SPAN}à compléter : durée de conservation des messages{$CLOSE_TAG_SPAN}",
     "4856108139540020448": "{$START_BOLD_TEXT}La connexion passe par GitHub.{$CLOSE_BOLD_TEXT} Le compte conserve votre identifiant numérique GitHub, pas votre nom, votre adresse e-mail ni vos dépôts.",
@@ -764,9 +763,6 @@
     "4122708660676573132": "· point {$START_TAG_SPAN}{$INTERPOLATION}{$CLOSE_TAG_SPAN}",
     "39489756812320254": "Version en vigueur : {$INTERPOLATION}.",
     "3432340878641587903": "Ce site est édité par un particulier, en son nom propre : aucune société n'est derrière.",
-    "7763819756191711846": "Le site est hébergé par {$START_LINK}Vercel Inc.{$CLOSE_LINK}, 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis.",
-    "881766486108046865": "L'API de prédiction est hébergée par {$START_LINK}Render Services, Inc.{$CLOSE_LINK}, États-Unis. {$START_TAG_SPAN}à compléter : adresse postale{$CLOSE_TAG_SPAN}",
-    "962780820437877241": "La base de données des comptes est hébergée par {$START_TAG_SPAN}à compléter : hébergeur et adresse{$CLOSE_TAG_SPAN}",
     "4736032522753683365": " Le code source est publié sur {$START_LINK}GitHub{$CLOSE_LINK} selon les conditions qui y sont indiquées. Les éléments orbitaux proviennent de CelesTrak ; les côtes de Natural Earth, dans le domaine public. Le catalogue d'objets spatiaux des pages de séparations est réutilisé sous licence CC BY 4.0, crédité en bas de ces pages. Les textes, visuels et l'identité graphique de NextPass ne peuvent être reproduits sans autorisation, sauf dans les cas permis par la loi, comme une courte citation mentionnant sa source. ",
     "663834402655023259": "Acceptation",
     "1158390045678247755": "Utiliser le site ou l'API vaut acceptation des présentes conditions. Si vous ne les acceptez pas, n'utilisez pas le service.",
@@ -790,6 +786,12 @@
     "2382245244634319036": "Compteurs d'utilisation : {$START_TAG_SPAN}à compléter : durée de conservation{$CLOSE_TAG_SPAN}",
     "4469365129986894821": "Pièces comptables des paiements, une fois ouverts : 10 ans, comme la loi l'exige.",
     "638687820086950902": "Vous pouvez accéder à vos données, les rectifier, les supprimer ou les exporter, vous opposer à leur traitement, en demander la limitation et retirer votre consentement à tout moment. Vous pouvez révoquer vous-même votre clé d'API depuis la {$START_LINK}page du compte{$CLOSE_LINK}. Pour fermer un compte ou exercer tout autre droit, écrivez à",
-    "6741282714093951633": "Une réponse vous sera apportée sous un mois. Vous pouvez aussi introduire une réclamation auprès de la {$START_LINK}CNIL{$CLOSE_LINK}."
+    "6741282714093951633": "Une réponse vous sera apportée sous un mois. Vous pouvez aussi introduire une réclamation auprès de la {$START_LINK}CNIL{$CLOSE_LINK}.",
+    "2618708270695911053": "LCEN, article 1-1",
+    "8182992454830081485": "Le site est hébergé par {$START_LINK}Vercel Inc.{$CLOSE_LINK}, 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis. {$START_TAG_SPAN}à compléter : téléphone{$CLOSE_TAG_SPAN}",
+    "4484122111597755860": "L'API de prédiction est hébergée par {$START_LINK}Render Services, Inc.{$CLOSE_LINK}, États-Unis. {$START_TAG_SPAN}à compléter : adresse postale et téléphone{$CLOSE_TAG_SPAN}",
+    "233484806414123948": "La base de données des comptes est hébergée par {$START_TAG_SPAN}à compléter : hébergeur, adresse et téléphone{$CLOSE_TAG_SPAN}",
+    "7067281551876664063": "Les messages envoyés par e-mail, que vous ayez un compte ou non, sont traités sur la base de l'intérêt légitime de l'éditeur à y répondre et à améliorer le site.",
+    "2458848059908306406": "Téléphone"
   }
 }

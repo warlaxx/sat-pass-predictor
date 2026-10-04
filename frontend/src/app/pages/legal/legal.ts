@@ -20,8 +20,9 @@ interface IdentityLine {
  * may set cookies, after the consent message Google shows in Europe. What the code cannot know - who the operator is, how long logs are
  * kept - is left visibly blank. Milestone 15 is the review that fills it.
  *
- * The publisher is a private individual, not a company: the notice names a person, a
- * contact and the hosts (LCEN art. 6), and asks for no legal form, SIREN or VAT number.
+ * The publisher is a private individual, not a company: the notice names a person, their
+ * address, telephone and e-mail, and the hosts with theirs (LCEN art. 1-1), and asks for
+ * no legal form, SIREN or VAT number.
  */
 @Component({
   selector: 'app-legal',
@@ -51,6 +52,7 @@ export class LegalPage {
   protected readonly identity: readonly IdentityLine[] = [
     { label: $localize`Publisher`, value: OPERATOR.name },
     { label: $localize`Address`, value: OPERATOR.address },
+    { label: $localize`Telephone`, value: OPERATOR.telephone },
     { label: $localize`Contact`, value: OPERATOR.email },
     { label: $localize`Publication director`, value: OPERATOR.publicationDirector },
   ];
