@@ -219,6 +219,23 @@ describe('HomePage geolocation', () => {
     expect(scrolled).toHaveBeenCalled();
   });
 
+  it('computes again when the same query is asked twice', async () => {
+    const fixture = TestBed.createComponent(HomePage);
+    await fixture.whenStable();
+    const http = TestBed.inject(HttpTestingController);
+    const hero = fixture.nativeElement.querySelector('app-hero .ctas button') as HTMLButtonElement;
+    (fixture.nativeElement.querySelector('#query') as HTMLElement).scrollIntoView = vi.fn();
+
+    hero.click();
+    TestBed.tick();
+    http.expectOne((r) => r.url === '/api/passes').flush(null, { status: 500, statusText: 'Server Error' });
+    await fixture.whenStable();
+
+    hero.click();
+    TestBed.tick();
+    http.expectOne((r) => r.url === '/api/passes');
+  });
+
   it('writes the URL of a search without sending the reader back to the top', async () => {
     const fixture = TestBed.createComponent(HomePage);
     await fixture.whenStable();
