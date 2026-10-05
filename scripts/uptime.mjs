@@ -144,7 +144,10 @@ async function main() {
       });
       console.log(`Opened ${created.html_url}`);
     } else if (decision.action === 'comment') {
-      await github(`/issues/${issue.number}`, { method: 'PATCH', body: { body: issue.body.replace(MARKER, `<!-- uptime-checks: ${decision.ids.join(',')} -->`) } });
+      // An issue whose marker was edited away gets it back, or every run would comment again.
+      const marker = `<!-- uptime-checks: ${decision.ids.join(',')} -->`;
+      const body = MARKER.test(issue.body ?? '') ? issue.body.replace(MARKER, marker) : `${marker}\n${issue.body ?? ''}`;
+      await github(`/issues/${issue.number}`, { method: 'PATCH', body: { body } });
       await github(`/issues/${issue.number}/comments`, { method: 'POST', body: { body: `Now down as well: ${decision.added.join(', ')}.\n\n${table(results)}\n\nRun: ${runUrl}` } });
       console.log(`Updated ${issue.html_url}`);
     } else if (decision.action === 'close') {
