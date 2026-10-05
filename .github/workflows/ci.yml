@@ -129,3 +129,6 @@ jobs:
 
       - name: Verify account dashboard interactions
         run: node --test scripts/account-dashboard.test.mjs
+
+      - name: Verify the uptime probe rules
+        run: node --test scripts/uptime.test.mjs

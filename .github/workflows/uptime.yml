@@ -1,0 +1,53 @@
+name: Uptime
+
+# The 502 of 3 October 2026 raised no alert (ABD-29). This probe checks the website and the
+# API from outside Render and Vercel; a check failing twice in a row, a minute apart, opens
+# an issue labelled `incident`, which GitHub notifies the owner of by e-mail and on mobile.
+# The issue closes itself once the checks answer again. The repository is public, so the
+# run history and the closed incidents are the public uptime record the /status page links
+# to. See scripts/uptime.mjs for the rules, scripts/uptime.test.mjs for their tests.
+#
+# Two rates, because of Neon's free plan: its compute suspends after 5 idle minutes, and
+# 100 compute-hours a month would not cover a database kept awake around the clock (744 h
+# at 0.25 CU is 186). So:
+#   every 5 minutes   the website and /actuator/health/liveness, which leave PostgreSQL
+#                     alone (the same choice as keep-awake.yml);
+#   every 30 minutes  also /actuator/health and /api/separations, which read it. Each wakes
+#                     the compute for about 5 minutes: some 30 CU-hours a month.
+#
+# GitHub delays scheduled runs, sometimes by several minutes, and pauses schedules in a
+# public repository after 60 days without a commit. An outside service (UptimeRobot, Better
+# Stack) has neither limit; it needs an account, and the owner can add one on top of this.
+#
+# Repository secret: BACKEND_URL, shared with daily-import.yml and keep-awake.yml.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+    # Off the five-minute marks, so the two schedules never coincide.
+    - cron: '2,32 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+
+      - name: Check the website and the API
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODE: ${{ (github.event_name == 'workflow_dispatch' || github.event.schedule == '2,32 * * * *') && 'deep' || 'fast' }}
+        run: node scripts/uptime.mjs "$MODE"
