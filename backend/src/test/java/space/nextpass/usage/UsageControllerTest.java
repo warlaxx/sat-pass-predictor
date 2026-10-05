@@ -50,6 +50,11 @@ class UsageControllerTest {
             verify(repository).record(UsageEvent.EVENT_USE_POSITION, LocalDate.of(2026, 10, 2));
         }
 
+        @Test void countsAnEventOpenedFromTheHomePage() throws Exception {
+            mvc.perform(post("/api/usage/home-open-event")).andExpect(status().isNoContent());
+            verify(repository).record(UsageEvent.HOME_OPEN_EVENT, LocalDate.of(2026, 10, 2));
+        }
+
         @Test void ignoresAnUnknownActionWithoutSayingSo() throws Exception {
             mvc.perform(post("/api/usage/anything-at-all")).andExpect(status().isNoContent());
             verifyNoInteractions(repository);

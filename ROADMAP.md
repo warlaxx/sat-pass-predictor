@@ -1097,13 +1097,14 @@ decide whether phase 3.3 exists.
 
 **Measuring use** (ABD-8, four weeks from the deployment). Vercel Web Analytics gives
 page views and where they come from (Reddit, search, direct); its free plan records no
-custom events, so five actions are counted by the backend instead: `POST
+custom events, so six actions are counted by the backend instead: `POST
 /api/usage/{event}`, one counter per UTC day and action in `usage_counts`, nothing about
 the visitor (`space.nextpass.usage`, `V6__usage_counts.sql`). The actions, by audience:
 
 | Action | Event | Audience |
 | --- | --- | --- |
 | An event opened from the list | `list-open-event` | both |
+| An event opened from the home page (ABD-32) | `home-open-event` | both |
 | The month chart opened as a table | `list-show-table` | analysts |
 | A fragment's page opened from a breakup | `event-open-fragment` | analysts |
 | "Use my position" on an event page | `event-use-position` | observers |

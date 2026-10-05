@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FetchBackend, HttpEvent, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { SeparationEvent } from './api/separations.model';
+import { SeparationEvent, SeparationSummary } from './api/separations.model';
 
 /**
  * The separation events prerendered by this build, server side only.
@@ -30,6 +30,30 @@ export function separationSnapshot(): Readonly<Record<string, SeparationEvent>> 
     }
   }
   return events!;
+}
+
+/**
+ * The newest events of the snapshot as `GET /api/separations` lists them, for the home
+ * page. The snapshot is in the list's order, newest first. The first child is the one
+ * that names the event, as in the backend's list.
+ */
+export function latestSeparations(limit: number): SeparationSummary[] {
+  return Object.values(separationSnapshot()).slice(0, limit).map((event) => {
+    const first = event.children.find((child) => child.id === event.id) ?? event.children[0];
+    return {
+      id: event.id,
+      kind: event.kind,
+      date: event.date,
+      parentName: event.parent?.name ?? null,
+      parentOwner: event.parent?.owner ?? null,
+      parentState: event.parent?.state ?? null,
+      firstChildName: first?.name ?? null,
+      firstChildNoradId: first?.noradId ?? null,
+      children: event.childCount,
+      orbit: first?.orbit ?? { perigeeKm: null, apogeeKm: null, inclinationDeg: null, orbitClass: null },
+      inOrbit: first?.inOrbit ?? false,
+    };
+  });
 }
 
 const EVENT_URL = /^\/api\/separations\/([^/]+)$/;
