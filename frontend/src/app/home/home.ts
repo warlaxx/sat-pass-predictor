@@ -17,6 +17,7 @@ import { SkyPanorama } from '../sky-panorama/sky-panorama';
 import { NextPass } from '../next-pass/next-pass';
 import { PassProfile } from '../pass-profile/pass-profile';
 import { Hero } from '../hero/hero';
+import { LatestSeparations } from './latest-separations';
 import { facingAzimuth } from '../sky-panorama/panorama-geometry';
 import { groupIntoNights } from '../pass-ribbon/nights';
 import { compassPoint, utcOffsetLabel } from '../format';
@@ -55,7 +56,7 @@ export function queryFromUrl(params: { get(name: string): string | null }): Pass
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile, Hero],
+  imports: [RouterLink, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile, Hero, LatestSeparations],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './home.scss',
   templateUrl: './home.html',
@@ -78,6 +79,19 @@ export class HomePage {
     return passes.find(pass => pass.aos.instant === this.selected()) ?? passes[0];
   });
   protected readonly searched = computed(() => !!this.discovered() || this.api.lastQuery() !== undefined);
+
+  /**
+   * What the hero counts down to: the reader's own result, or until there is one the next
+   * passes of the ISS over Lyon, asked for as the page opens (ABD-31). Those stay out of
+   * the console: the reader has computed nothing yet, and the page below says so.
+   */
+  private readonly featured = this.api.featured;
+  protected readonly heroResponse = computed(() =>
+    this.response() ?? (this.featured.hasValue() ? this.featured.value() : undefined));
+  /** A shared link opens on its own result, and the featured passes are not asked for. */
+  private readonly linked: boolean;
+  protected readonly featuredPending = computed(() =>
+    !this.linked && !this.featured.hasValue() && !this.featured.error());
 
   /**
    * The error, as the API means it to be read.
@@ -136,6 +150,7 @@ export class HomePage {
     // they do not come back through it.
     const params = inject(ActivatedRoute).snapshot.queryParamMap;
     const linked = queryFromUrl(params);
+    this.linked = linked !== undefined;
     if (linked) {
       this.form.set(linked);
       this.api.search(linked);
@@ -145,6 +160,10 @@ export class HomePage {
 
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
+      // In the browser only: the prerendered HTML must not carry a pass that would be
+      // stale by the time anyone reads it.
+      if (!this.linked) this.api.loadFeatured();
+
       const update = (): void => {
         let current: string = this.sections[0].id;
         for (const section of this.sections) {
@@ -203,7 +222,13 @@ export class HomePage {
   // --- Browser geolocation -------------------------------------------------
 
   protected readonly locating = signal(false);
-  protected readonly locationError = signal<string | undefined>(undefined);
+  private readonly locationError = signal<string | undefined>(undefined);
+  /** Where the position was asked for, so that a failure is said there and nowhere else. */
+  private readonly locatedFrom = signal<'console' | 'hero'>('console');
+  protected readonly consoleLocationError = computed(() =>
+    this.locatedFrom() === 'console' ? this.locationError() : undefined);
+  protected readonly heroLocationError = computed(() =>
+    this.locatedFrom() === 'hero' ? this.locationError() : undefined);
 
   /**
    * Fills the position from the browser, and never becomes the only way to give one.
@@ -216,8 +241,11 @@ export class HomePage {
    * <p>With a result already on screen, the position is computed for at once. The pass
    * globe draws the observer of the response, and only a new response can put its dot on
    * the located position without leaving the track and the sight line at the old one.
+   * From the hero's card it always computes: that button promises the next pass over
+   * the reader's own sky in one click, not a filled form further down.
    */
-  protected useMyPosition(): void {
+  protected useMyPosition(from: 'console' | 'hero' = 'console'): void {
+    this.locatedFrom.set(from);
     this.locationError.set(undefined);
     this.locating.set(true);
     requestPosition().then(
@@ -228,7 +256,7 @@ export class HomePage {
           lon: position.lon,
           alt: position.alt ?? query.alt,
         }));
-        if (this.searched() && this.satelliteResolved()) this.search();
+        if ((from === 'hero' || this.searched()) && this.satelliteResolved()) this.search();
       },
       (error: Error) => this.locationError.set(error.message),
     ).finally(() => this.locating.set(false));

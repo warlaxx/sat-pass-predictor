@@ -1,0 +1,42 @@
+<section class="latest wrap" aria-labelledby="latest-title">
+  <div class="head">
+    <span class="kicker" i18n>Separations · updated nightly</span>
+    <h2 id="latest-title" i18n>Just separated in orbit</h2>
+    <p i18n>
+      Satellites releasing satellites, deployers emptying, bodies breaking apart. Each event
+      says when the released object passes over you.
+    </p>
+  </div>
+
+  @if (rows().length) {
+    <ul class="events">
+      @for (event of rows(); track event.id) {
+        <li>
+          <a class="event" [routerLink]="['/separations', event.id]" (click)="countOpen()">
+            <span class="when">
+              <span class="num">{{ event.date }}</span>
+              <span class="muted">{{ event.precision }}</span>
+            </span>
+            <span class="names">
+              <span class="parent">{{ event.parent }}</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"></path></svg>
+              <span class="visually-hidden" i18n>released</span>
+              <span class="child">{{ event.child }}</span>
+            </span>
+            @if (event.kind === 'RELEASE') {
+              <span class="tag release" i18n>Release</span>
+            } @else {
+              <span class="tag fragmentation" i18n>Fragmentation</span>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+  } @else if (resource.isLoading()) {
+    <p class="muted" role="status" i18n>Loading the newest events…</p>
+  } @else if (resource.error()) {
+    <p class="muted" role="status" i18n>The newest events could not be loaded. The full list may still open.</p>
+  }
+
+  <a class="btn outline" routerLink="/separations" i18n>All separations</a>
+</section>

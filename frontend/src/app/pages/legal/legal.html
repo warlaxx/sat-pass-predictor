@@ -4,6 +4,7 @@
   <p class="lede" i18n>
     Who runs this site, the rules for using it and its API, and exactly what data passes through it, which is very little.
   </p>
+  <p class="version" i18n>Version in force: {{ version | date: 'longDate' }}.</p>
   <nav class="toc" aria-label="On this page" i18n-aria-label>
     <a class="btn outline small" routerLink="." fragment="notice" i18n>Legal notice</a>
     <a class="btn outline small" routerLink="." fragment="terms" i18n>Terms of use</a>
@@ -20,8 +21,9 @@
 <section class="page-section wrap" appReveal id="notice" aria-labelledby="notice-title">
   <div class="section-head">
     <h2 id="notice-title" i18n>Legal notice</h2>
-    <span i18n>Mentions légales · LCEN, article 6</span>
+    <span i18n>Mentions légales · LCEN, article 1-1</span>
   </div>
+  <p i18n>This site is published by a private individual, in their own name: no company stands behind it.</p>
   <dl>
     @for (line of identity; track line.label) {
       <dt>{{ line.label }}</dt>
@@ -32,17 +34,19 @@
   </dl>
   <div class="prose">
     <h3 i18n>Hosting</h3>
-    <p i18n>
-      The website is served by <a href="https://vercel.com/legal" rel="noopener">Vercel Inc.</a>
-      The prediction API runs on <a href="https://render.com/legal" rel="noopener">Render Services, Inc.</a>
-      Both are established in the United States. Their postal addresses and telephone numbers
-      are published on those pages. <span class="todo">to be completed: copy them here</span>
-    </p>
+    <ul>
+      <li i18n>The website is hosted by <a href="https://vercel.com/legal" rel="noopener">Vercel Inc.</a>, 440 N Barranca Ave #4133, Covina, CA 91723, United States. <span class="todo">to be completed: telephone</span></li>
+      <li i18n>The prediction API is hosted by <a href="https://render.com/legal" rel="noopener">Render Services, Inc.</a>, United States. <span class="todo">to be completed: postal address and telephone</span></li>
+      <li i18n>The account database is hosted by <span class="todo">to be completed: host, address and telephone</span></li>
+    </ul>
     <h3 i18n>Intellectual property</h3>
     <p i18n>
       The source code is published on <a [href]="repositoryUrl" rel="noopener">GitHub</a> under
       the terms stated there. Orbital elements come from CelesTrak; coastlines from Natural
-      Earth, in the public domain.
+      Earth, in the public domain. The space-object catalogue behind the separation pages is
+      reused under the CC BY 4.0 licence, credited at the foot of those pages. The texts,
+      visuals and look of NextPass may not be reproduced without permission, except where the
+      law allows it, such as a short quotation naming its source.
     </p>
   </div>
 </section>
@@ -52,6 +56,8 @@
     <h2 id="terms-title" i18n>Terms of use</h2>
   </div>
   <div class="prose">
+    <h3 i18n>Acceptance</h3>
+    <p i18n>Using the website or the API means accepting these terms. If you do not accept them, do not use the service.</p>
     <h3 i18n>The service</h3>
     <p i18n>
       NextPass computes when satellites pass over a place on Earth, from public
@@ -72,25 +78,37 @@
       <li i18n>An API key is personal to its account. Keep it secret, keep it on a server, and do not share or resell access.</li>
       <li i18n>Do not try to bypass quotas, rate limits or authentication, or to disrupt the service.</li>
     </ul>
-    <p i18n>A key used against these rules may be revoked.</p>
+    <p i18n>A key used against these rules may be revoked, and its account closed.</p>
+    <h3 i18n>Accounts</h3>
+    <p i18n>
+      An account is created by signing in with GitHub. You must meet GitHub's minimum age,
+      and be at least 15 to consent alone to the processing of your data (French Data
+      Protection Act, article 45). You can close your account at any time.
+    </p>
     <h3 i18n>Paid plans</h3>
     <p i18n>
       Paid plans are not on sale yet. When they open, payment will be handled by Stripe;
-      prices and taxes will be shown before confirmation, subscriptions will renew monthly
+      prices including taxes will be shown before confirmation, subscriptions will renew monthly
       and can be cancelled at any time from the account page, with access kept until the end
-      of the paid period. Quotas reset at 00:00 UTC on the first of each month.
+      of the paid period. Quotas reset at 00:00 UTC on the first of each month. Full terms
+      of sale, including the right of withdrawal and the consumer mediator, will be
+      published before they open.
     </p>
     <h3 i18n>Availability and liability</h3>
     <p i18n>
       The service is provided as is, without a guaranteed level of availability. The live
       state is on the <a routerLink="/status">status page</a>. To the extent permitted by law,
-      the operator is not liable for indirect losses resulting from the use of the
-      predictions or from an interruption of the service.
+      the publisher is not liable for indirect losses resulting from the use of the
+      predictions or from an interruption of the service. This limit does not apply to gross
+      or intentional misconduct, nor to the rights the law guarantees consumers.
     </p>
     <h3 i18n>Changes and applicable law</h3>
     <p i18n>
-      These terms may change; the date of the current version is shown below. They are
-      governed by French law. <span class="todo">to be completed: version date, competent court</span>
+      These terms may change; the date of the version in force is shown at the top of this
+      page, and account holders are told of any significant change. They are governed by
+      French law. In case of dispute, please write to the publisher first to seek an amicable
+      solution; failing that, the competent French courts may be seized. If you are a
+      consumer, you may also bring the matter before the court of your place of residence.
     </p>
   </div>
 </section>
@@ -101,6 +119,9 @@
     <span i18n>GDPR</span>
   </div>
   <div class="prose">
+    <h3 i18n>Data controller</h3>
+    <p i18n>The publisher named in the legal notice above, reachable at the contact address given there.</p>
+
     <h3 i18n>Using the predictor</h3>
     <ul>
       <li i18n><b>No account needed.</b> The predictor itself sets no cookie and stores nothing in your browser; only the advertising below may, and in Europe only with your consent.</li>
@@ -116,10 +137,10 @@
     <h3 i18n>API accounts</h3>
     <ul>
       <li i18n><b>Sign-in is through GitHub.</b> The account keeps your GitHub numeric identifier, not your name, email address or repositories.</li>
-      <li i18n><b>API keys</b> are stored only as a SHA-256 hash: nobody, including the operator, can read a key back.</li>
+      <li i18n><b>API keys</b> are stored only as a SHA-256 hash: nobody, including the publisher, can read a key back.</li>
       <li i18n><b>Usage counters</b> record how many requests each key made per UTC day, to enforce quotas.</li>
       <li i18n><b>Payments</b>, when open, are handled by Stripe. The account keeps a Stripe customer identifier; card details never reach this service.</li>
-      <li i18n><b>Cookies</b> on the account page are limited to the sign-in session and its CSRF protection, which the page cannot work without.</li>
+      <li i18n><b>Cookies</b> on the account page are limited to the sign-in session and its CSRF protection, which the page cannot work without; they therefore need no consent.</li>
     </ul>
 
     <h3 i18n>Hosting logs</h3>
@@ -128,30 +149,39 @@
       <span class="todo">to be completed: retention period of these logs</span>
     </p>
 
-    <h3 i18n>Legal basis, recipients and transfers</h3>
+    <h3 i18n>Legal basis</h3>
+    <ul>
+      <li i18n>Account data is processed to provide the service you asked for: performance of a contract.</li>
+      <li i18n>Logs, audience measurement and counters rest on the publisher's legitimate interest in running a secure, working service.</li>
+      <li i18n>Feedback messages, from visitors with or without an account, are processed on the publisher's legitimate interest in answering them and improving the site.</li>
+      <li i18n>Advertising cookies and personalised ads are used only with your consent.</li>
+    </ul>
+
+    <h3 i18n>Recipients and transfers</h3>
     <p i18n>
-      Account data is processed to provide the service you asked for (performance of a
-      contract); logs and audience measurement under the operator's legitimate interest in
-      running a secure, working service; advertising cookies and personalised ads only with
-      your consent. Data is processed by Vercel, Render, GitHub, Google for advertising and,
-      for payments, Stripe: companies established in the United States, which may involve
-      transfers outside the European Union. <span class="todo">to be completed: transfer safeguards, database host</span>
+      Data is processed only by the publisher and by technical subcontractors: Vercel,
+      Render, GitHub, Google for advertising and, for payments, Stripe. These companies are
+      established in the United States, which involves transfers outside the European Union.
+      The transfers rely on the EU–US Data Privacy Framework or, failing that, on the
+      European Commission's standard contractual clauses. No data is sold.
     </p>
 
     <h3 i18n>Retention</h3>
-    <p i18n>
-      Account data is kept while the account exists. <span class="todo">to be completed: retention after closure, and of usage counters and invoices</span>
-    </p>
+    <ul>
+      <li i18n>Account data: while the account exists, then deleted within 30 days of its closure.</li>
+      <li i18n>Usage counters: <span class="todo">to be completed: retention period</span></li>
+      <li i18n>Accounting records of payments, once open: 10 years, as the law requires.</li>
+    </ul>
 
     <h3 i18n>Your rights</h3>
     <p>
-      <ng-container i18n>You can access, correct, delete or export your data, object to its processing, or
-      restrict it. You can revoke your API key yourself from the
-      <a [href]="accountUrl">account page</a>. To close an account or exercise any other
-      right, write to</ng-container>
+      <ng-container i18n>You can access, correct, delete or export your data, object to its processing,
+      restrict it, and withdraw your consent at any time. You can revoke your API key yourself
+      from the <a [href]="accountUrl">account page</a>. To close an account or exercise any
+      other right, write to</ng-container>
       @if (operatorEmail) { <a [href]="'mailto:' + operatorEmail">{{ operatorEmail }}</a>. }
       @else { <span class="todo" i18n>to be completed: contact address</span>. }
-      <ng-container i18n>You can also lodge a complaint with the <a href="https://www.cnil.fr" rel="noopener">CNIL</a>.</ng-container>
+      <ng-container i18n>You will receive an answer within one month. You can also lodge a complaint with the <a href="https://www.cnil.fr" rel="noopener">CNIL</a>.</ng-container>
     </p>
   </div>
 </section>

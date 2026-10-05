@@ -131,6 +131,11 @@ describe('discovery selection in the application', () => {
       { provide: THREE_LOADER, useValue: () => Promise.reject(new Error('WebGL unavailable in test')) },
     ] });
     const fixture = TestBed.createComponent(HomePage);
+    // The page asks for the hero's featured passes as it opens: told the API is down.
+    TestBed.tick();
+    await Promise.resolve();
+    TestBed.tick();
+    TestBed.inject(HttpTestingController).expectOne('/api/featured-pass').flush(null, { status: 503, statusText: 'Down' });
     await fixture.whenStable();
     const discovery = fixture.debugElement.query(By.directive(Discovery)).componentInstance as Discovery;
     discovery.open.emit(nextOpportunity(prediction(48274, 1))!);

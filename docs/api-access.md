@@ -92,6 +92,10 @@ one propagation.
 - The anonymous demo shares one internal identity across users and replicas:
   **200 requests/day and 20/minute**. No public secret is shipped to the frontend.
   Its UUID is `00000000-0000-0000-0000-000000000001`; use the usage command to inspect it.
+- The home page's countdown (`GET /api/featured-pass`, the ISS over Lyon for 48 h) is not
+  metered and does not count in `api_usage`: every visit asks for it, and it takes no
+  parameter. It is answered from the prediction cache and kept 60 s by the controller and
+  the browser, so page views do not inflate the cache hit ratio either.
 - Counters persist by key, UTC day and endpoint. Transactions lock the key row before
   checking and incrementing, including across backend processes and restarts.
 - 401 means invalid/missing/revoked credentials. 429 Problem Details includes

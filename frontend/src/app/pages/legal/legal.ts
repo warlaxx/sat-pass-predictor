@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Reveal } from '../../motion/reveal';
@@ -18,14 +19,19 @@ interface IdentityLine {
  * third-party font) - the AdSense script in index.html being the one third party that
  * may set cookies, after the consent message Google shows in Europe. What the code cannot know - who the operator is, how long logs are
  * kept - is left visibly blank. Milestone 15 is the review that fills it.
+ *
+ * The publisher is a private individual, not a company: the notice names a person, their
+ * address, telephone and e-mail, and the hosts with theirs (LCEN art. 1-1), and asks for
+ * no legal form, SIREN or VAT number.
  */
 @Component({
   selector: 'app-legal',
-  imports: [RouterLink, Reveal],
+  imports: [DatePipe, RouterLink, Reveal],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'page' },
   templateUrl: './legal.html',
   styles: `
+    .version { color: var(--ink-3); }
     .toc { display: flex; flex-wrap: wrap; gap: 12px; }
     dl { display: grid; gap: 10px 32px; grid-template-columns: max-content 1fr; margin: 0; }
     dt { color: var(--ink-3); }
@@ -40,12 +46,13 @@ export class LegalPage {
   protected readonly demo = DEMO_LIMITS;
   protected readonly operatorEmail = OPERATOR.email;
 
+  /** The date of the version in force, quoted by the terms; move it with every change of substance. */
+  protected readonly version = '2026-10-03';
+
   protected readonly identity: readonly IdentityLine[] = [
     { label: $localize`Publisher`, value: OPERATOR.name },
-    { label: $localize`Legal form`, value: OPERATOR.legalForm },
-    { label: 'SIREN', value: OPERATOR.siren },
-    { label: $localize`VAT number`, value: OPERATOR.vatNumber },
     { label: $localize`Address`, value: OPERATOR.address },
+    { label: $localize`Telephone`, value: OPERATOR.telephone },
     { label: $localize`Contact`, value: OPERATOR.email },
     { label: $localize`Publication director`, value: OPERATOR.publicationDirector },
   ];

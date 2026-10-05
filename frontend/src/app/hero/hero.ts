@@ -3,7 +3,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PassDto, PassesResponse } from '../api/passes.model';
 import { DEFAULT_QUERY, PassQuery } from '../api/passes.query';
-import { compassPoint } from '../format';
+import { compassPoint, utcOffsetLabel } from '../format';
 import { visibilityRadiusDeg } from '../globe/globe-geometry';
 import { nextPassState } from '../next-pass/next-pass-state';
 import { orbitFromTle } from '../shared/orbit';
@@ -41,11 +41,12 @@ function placeName({ lat, lon }: { lat: number; lon: number }): string {
  * The first screen of the predictor: what it does, the way in, and a countdown to the next
  * pass over a globe that turns behind it.
  *
- * Every figure on it is either computed or a dash. Before the first search there is no
- * prediction to count down to, and the card says so rather than ticking towards an
- * invented pass: fetching one on every visit would spend the anonymous quota the whole
- * site shares. The globe follows the form as it is typed or located, so the observer moves
- * when the coordinates do, even with an earlier result still on screen.
+ * Every figure on it is either computed or a dash. The page hands it the next passes of
+ * the ISS over Lyon as it opens, from an unmetered endpoint, so the countdown runs before
+ * anyone has filled the form (ABD-31); until they arrive - and in the prerendered HTML a
+ * crawler reads - the card says in words what it is waiting for rather than showing dashes
+ * alone. The globe follows the form as it is typed or located, so the observer moves when
+ * the coordinates do, even with an earlier result still on screen.
  */
 @Component({
   selector: 'app-hero',
@@ -58,8 +59,15 @@ export class Hero {
   readonly query = input.required<PassQuery>();
   readonly response = input<PassesResponse>();
   readonly loading = input(false);
+  /** True while the page's automatic computation is still to come or under way. */
+  readonly pending = input(false);
+  readonly locating = input(false);
+  /** Why the position asked for from this card could not be had. */
+  readonly locationError = input<string>();
   /** The call to action asks the page to compute: the form it would point to holds the query. */
   readonly compute = output<void>();
+  /** "Use my position", from the card: the page locates, then computes for that position. */
+  readonly locate = output<void>();
 
   private readonly now = signal(Date.now());
 
@@ -140,14 +148,23 @@ export class Hero {
   });
 
   protected readonly tag = computed<{ text: string; tone: Tone }>(() => {
-    if (this.loading()) return { text: $localize`COMPUTING`, tone: 'busy' };
     const response = this.response();
+    if (this.loading() || (!response && this.pending())) return { text: $localize`COMPUTING`, tone: 'busy' };
     if (!response) return { text: $localize`NOT YET COMPUTED`, tone: 'quiet' };
     const state = this.state();
     if (!state) return { text: $localize`NO PASS`, tone: 'quiet' };
     if (state.kind === 'now') return { text: $localize`ABOVE HORIZON`, tone: 'go' };
     if (state.kind === 'over') return { text: $localize`WINDOW OVER`, tone: 'quiet' };
     return state.visibleFrom ? { text: $localize`VISIBLE`, tone: 'go' } : { text: $localize`NOT VISIBLE`, tone: 'quiet' };
+  });
+
+  /** One line under the facts, so that the card reads as a sentence whatever its state. */
+  protected readonly note = computed(() => {
+    const pass = this.pass();
+    if (pass) return $localize`Times are local (${utcOffsetLabel(pass.aos.instant)}:zone:).`;
+    if (this.response()) return $localize`No pass above the threshold in this window.`;
+    if (this.loading() || this.pending()) return $localize`Computed live as the page opens, from the latest orbital elements.`;
+    return $localize`Not computed yet: press Compute passes, or use your position.`;
   });
 
   protected readonly legend = computed(() => [

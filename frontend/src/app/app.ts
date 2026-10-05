@@ -9,6 +9,7 @@ import { feedbackHref } from './shared/feedback';
 import { SITE_ORIGIN } from './shared/seo';
 import { ServiceStatus } from './shared/service-status';
 import { RouteCurtain } from './motion/route-curtain';
+import { ApiWaitNotice } from './shared/api-wait-notice';
 import { NAV_PAGES } from './motion/route-transition';
 
 const STATUS_LABELS = {
@@ -26,7 +27,7 @@ const STATUS_LABELS = {
  */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, RouteCurtain],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, RouteCurtain, ApiWaitNotice],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './app.scss',
   templateUrl: './app.html',

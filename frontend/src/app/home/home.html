@@ -1,4 +1,6 @@
-<app-hero [query]="form()" [response]="response()" [loading]="loading()" (compute)="computeFromHero()" />
+<app-hero [query]="form()" [response]="heroResponse()" [loading]="loading()" [pending]="featuredPending()"
+          [locating]="locating()" [locationError]="heroLocationError()"
+          (compute)="computeFromHero()" (locate)="useMyPosition('hero')" />
 
 <section id="query" class="console-band wrap" aria-labelledby="query-title">
   <form class="query" (submit)="$event.preventDefault(); search()">
@@ -89,7 +91,7 @@
     @if (satelliteError(); as failure) {
       <p class="location-error" role="alert">{{ failure }}</p>
     }
-    @if (locationError(); as failure) {
+    @if (consoleLocationError(); as failure) {
       <p class="location-error" role="status">{{ failure }}</p>
     }
   </form>
@@ -193,6 +195,8 @@
   </section>
 }
 
+<app-latest-separations appReveal />
+
 <section class="features wrap" appReveal aria-labelledby="features-title">
   <div class="features-head">
     <h2 id="features-title" i18n>One pass, read four ways.</h2>
@@ -210,3 +214,8 @@
 </section>
 
 <app-discovery appReveal [query]="form()" (open)="inspect($event)" />
+
+<!-- The licence's attribution, for the separations above; the copy never names the source. -->
+<p class="wrap credit" i18n>
+  Separation data: GCAT, Jonathan C. McDowell, planet4589.org — CC BY 4.0.
+</p>

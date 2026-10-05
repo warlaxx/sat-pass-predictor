@@ -15,7 +15,11 @@ export interface PassQuery {
   readonly frequencyMhz?: number;
 }
 
-/** Lyon, and the defaults the API itself applies. Same numbers, one source. */
+/**
+ * Lyon, and the defaults the API itself applies. Same numbers, one source. The backend's
+ * `FeaturedPassController` computes this very query for the home page's countdown, so
+ * that a default search and the countdown share one cached prediction.
+ */
 export const DEFAULT_QUERY: PassQuery = {
   noradId: 25544,
   lat: 45.7578,

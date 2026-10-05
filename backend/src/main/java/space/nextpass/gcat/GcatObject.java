@@ -1,5 +1,7 @@
 package space.nextpass.gcat;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -49,19 +51,98 @@ public record GcatObject(
         String altNames) {
 
     /**
-     * Working definition from the roadmap (phase 3): released by another catalogued
-     * satellite ({@code S…} parent), on a day other than its launch. Most rows instead
-     * point at the stage that carried them, and those are launches, not separations.
-     * Phase 3.1 refines this on real cases.
+     * How long the launch lasts for a stage or anything fixed to it. A stage delivering a
+     * satellite to a high orbit releases it hours after lift-off, often past midnight UTC;
+     * on real GCAT rows, the releases of launch hardware cluster under one day and thin out
+     * after two (ABD-12).
      */
-    public boolean isSeparation() {
-        if (parent == null || !parent.startsWith("S") || separation == null) {
-            return false;
+    static final Duration LAUNCH_PHASE = Duration.ofDays(2);
+
+    /**
+     * What the rule needs of the parent's own row: its GCAT type and its own parent's
+     * identifier. A {@code null} parent stands for one outside the satellite catalogue.
+     */
+    public record Parent(String type, String parent) {
+
+        /**
+         * Launch hardware by its type, or a vehicle GCAT counts as a payload but hangs on an
+         * entry of its launch vehicle database ({@code R…}): Starship, whose parent is the
+         * Super Heavy booster, delivers its payloads as a stage does.
+         */
+        boolean isLaunchVehicle() {
+            return isLaunchHardware(type) || (parent != null && parent.startsWith("R"));
         }
-        return launch == null || !day(separation).equals(day(launch));
     }
 
-    private static java.time.Instant day(GcatDate date) {
-        return date.start().truncatedTo(ChronoUnit.DAYS);
+    /**
+     * Whether this object separated in orbit from its parent, rather than being launched.
+     * The answer depends on what the parent is, which only the parent's own row says.
+     * See {@link #isSeparation(String, String, GcatDate, GcatDate, Parent)}.
+     */
+    public boolean isSeparation(Parent of) {
+        return isSeparation(type, parent, launch, separation, of);
+    }
+
+    /**
+     * The definition of a separation, refined on real cases (ABD-12; ROADMAP.md lists them).
+     *
+     * <ul>
+     *   <li>No parent, no separation date, a parent outside the satellite catalogues
+     *       (a launch vehicle's {@code R…}), or a row GCAT marks spurious ({@code Z}),
+     *       deleted ({@code X}) or an alias of another: never.</li>
+     *   <li>The parent belongs to the launch vehicle ({@link Parent#isLaunchVehicle()}) - a
+     *       stage, an adapter, a fairing, a motor or tank, an ejection mechanism, a carrier
+     *       permanently attached to the stage: only {@link #LAUNCH_PHASE} or more after the
+     *       launch. Before, it is the launch delivering its payloads; after, a stage breaking
+     *       up or releasing late.</li>
+     *   <li>The parent is not catalogued: the same two days, since nothing says what it
+     *       is. It is often a deployer inside a station or a tug; it is sometimes the stage.</li>
+     *   <li>The parent is a spacecraft and the object a payload: always, launch day
+     *       included. That is a deployer emptying - a tug's cubesats, a host's subsatellites.</li>
+     *   <li>The parent is a spacecraft and the object anything else - a component, debris:
+     *       after the launch day. On the launch day it is deployment hardware, a cover or a
+     *       clamp; a breakup that soon (Kosmos-249, 1968) is the rare case this misses.</li>
+     * </ul>
+     *
+     * A date is the start of the interval GCAT gives: {@code 2026 May?} starts on 1 May, so
+     * a vague date only counts when even its earliest reading is late enough.
+     */
+    static boolean isSeparation(String type, String parent, GcatDate launch, GcatDate separation, Parent of) {
+        if (parent == null || separation == null || !(parent.startsWith("S") || parent.startsWith("A"))) {
+            return false;
+        }
+        char kind = flag(type, 0);
+        if (kind == 'Z' || kind == 'X' || flag(type, 1) == 'A') {
+            return false;
+        }
+        if (launch == null) {
+            return true;
+        }
+        Instant released = separation.start();
+        if (of == null || !parent.startsWith("S") || of.isLaunchVehicle()) {
+            return !released.isBefore(launch.start().plus(LAUNCH_PHASE));
+        }
+        if (kind == 'P') {
+            return true;
+        }
+        return !released.isBefore(launch.start().truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS));
+    }
+
+    /**
+     * A GCAT type that belongs to the launch vehicle: a stage ({@code R}); a component that
+     * is an adapter, a fairing, a motor or tank, or an ejection mechanism (fourth character
+     * {@code A}, {@code F}, {@code M}, {@code V}); or anything permanently attached to the
+     * stage (third character {@code A}), such as a rideshare carrier.
+     * See https://planet4589.org/space/gcat/web/intro/type.html.
+     */
+    static boolean isLaunchHardware(String type) {
+        return flag(type, 0) == 'R'
+                || flag(type, 2) == 'A'
+                || (flag(type, 0) == 'C' && "AFMV".indexOf(flag(type, 3)) >= 0);
+    }
+
+    /** One character of a GCAT type, a space past its end: GCAT pads the column. */
+    private static char flag(String type, int index) {
+        return type != null && index < type.length() ? type.charAt(index) : ' ';
     }
 }

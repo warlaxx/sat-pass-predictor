@@ -47,6 +47,17 @@ describe('Hero', () => {
     expect(card.querySelector('.countdown')!.textContent).toContain('T−––:––:––');
   });
 
+  it('says in words what it is waiting for while the page computes, not dashes alone', async () => {
+    const fixture = TestBed.createComponent(Hero);
+    fixture.componentRef.setInput('query', DEFAULT_QUERY);
+    fixture.componentRef.setInput('pending', true);
+    await fixture.whenStable();
+    const card = fixture.nativeElement.querySelector('.card') as HTMLElement;
+    expect(card.textContent).toContain('COMPUTING');
+    expect(card.querySelector('.note')!.textContent).toContain('Computed live as the page opens');
+    expect(card.querySelector('.locate')!.textContent).toContain('Use my position');
+  });
+
   it('counts down to the next computed pass and reads the orbit off the elements', async () => {
     const rise = Date.now() + 3_600_000;
     const point = (offset: number, elevationDeg: number): TrackPointDto => ({

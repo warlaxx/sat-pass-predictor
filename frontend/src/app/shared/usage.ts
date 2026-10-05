@@ -1,9 +1,10 @@
 /**
- * The actions counted on the separation pages, for the phase 3.2 decision (ABD-8).
+ * The actions counted on the separation pages and the home page's separations, for the phase 3.2 decision (ABD-8).
  * The same closed list as the backend's `UsageEvent`: any other name is ignored there.
  */
 export type UsageEvent =
   | 'list-open-event'      // from the list to one event
+  | 'home-open-event'      // from the home page's newest events to one event
   | 'list-show-table'      // the month chart opened as a table: analyst side
   | 'event-use-position'   // passes from the reader's own position: observer side
   | 'event-open-pass'      // a pass opened in the predictor: observer side

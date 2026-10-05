@@ -33,7 +33,7 @@ class IngestControllerTest {
         @Test void rightTokenRunsTheImport() throws Exception {
             when(importer.run()).thenReturn(new GcatImporter.Report("imported",
                     List.of(new GcatImporter.FileReport("satcat.tsv", "imported", 69999, 0)),
-                    69999, 12, 3, 2, 4200));
+                    69999, 12, 3, 2, 0, 4200));
 
             mvc.perform(post("/internal/import").header("Authorization", "Bearer s3cret"))
                     .andExpect(status().isOk())
@@ -80,7 +80,7 @@ class IngestControllerTest {
         @MockitoBean DelayMeasurement delays;
 
         static final GcatImporter.Report GCAT = new GcatImporter.Report("unchanged",
-                List.of(new GcatImporter.FileReport("satcat.tsv", "unchanged", 0, 0)), 0, 0, 0, 0, 300);
+                List.of(new GcatImporter.FileReport("satcat.tsv", "unchanged", 0, 0)), 0, 0, 0, 0, 0, 300);
 
         /** The workflow reads GCAT's fields where they always were; the delays sit beside them. */
         @Test void addsTheDelaysBesideGcatsReport() throws Exception {
