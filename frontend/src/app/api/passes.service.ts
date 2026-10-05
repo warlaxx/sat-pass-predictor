@@ -27,8 +27,14 @@ export class PassesApi {
   /** The query that produced what is currently on screen, or undefined before the first. */
   readonly lastQuery = computed(() => this.query());
 
+  /**
+   * Asking again with the query already on screen computes again: the window starts now,
+   * so the same form an hour later is a different answer. The signal would see no change
+   * in the same object and leave the old result in place.
+   */
   search(query: PassQuery): void {
-    this.query.set(query);
+    if (this.query() === query) this.resource.reload();
+    else this.query.set(query);
   }
 
   reload(): void {
