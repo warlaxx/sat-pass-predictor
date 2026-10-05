@@ -65,6 +65,8 @@ class SeparationRepositoryPostgresTest {
             gcat.upsert(objects, IMPORTED);
             gcat.saveFile(file, new GcatSource.Validators("\"v1\"", null), objects.size(), IMPORTED);
         }
+        // As the importer does once both files are in: a row's parent may be in another file.
+        gcat.reclassify(IMPORTED);
         separations = new SeparationRepository(new JdbcTemplate(source));
     }
 

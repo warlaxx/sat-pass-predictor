@@ -1033,7 +1033,8 @@ phase 3.2 says someone wants it.
   simply point at the stage that carried them. **Working definition: a separation is a
   row whose parent is an `S…` object and whose `SDate` is not its launch day** — 106 so
   far in 2026 across both files, from a Shenzhou orbital module to debris shed by a
-  Yaogan satellite. Phase 3.1 refines it on real cases.
+  Yaogan satellite. Phase 3.1 refines it on real cases (below, "The definition of a
+  separation, refined").
 - Dates have variable precision and an uncertainty mark: `2026 May?`,
   `2026 Jun 19 2200?`, `2026 Jul 11 0402:25`. Both must survive the import; rounding
   `2026 May?` to 1 May would invent a fact.
@@ -1088,6 +1089,45 @@ evidence, a missing parent) on real GCAT rows; `SeparationControllerTest`; page 
 both pages; the list and three event pages checked by hand against the live import.
 **In production on 2 October 2026**, with six-digit catalogue numbers: the 62 fragments
 of Yaogan 50 link to their own pages, which show their passes.
+
+### The definition of a separation, refined (ABD-12, 5 October 2026)
+
+Twenty-two real rows were classified by hand against the production import, and the
+working definition was wrong both ways. It counted **1 802 objects that are launches**:
+satellites a Briz-M, Blok DM or Delta third stage delivered past midnight UTC (Ekspress-AT2,
+Meteosat 5, Molniya-3), the ullage motors those stages shed, and ten rows GCAT itself marks
+spurious (`Z`: "CSSHQ subsat duplicate", radar errors). It missed **real separations**:
+cubesats released by a tug on its launch day (SHERPA-FX 1, Unisat-5), and every object
+released by a parent of the auxiliary catalogue, such as Torga, Cesario and Florbela, set
+free in August and September 2026 by `A11919` weeks after their launch.
+
+What a row is depends on its parent, read from the parent's GCAT type
+([SatType](https://planet4589.org/space/gcat/web/intro/type.html)):
+
+- **The parent belongs to the launch vehicle** — a stage (`R`), an adapter, fairing,
+  motor or ejection mechanism (`C` with `A`, `F`, `M`, `V` in fourth place), a carrier
+  permanently attached to the stage (`A` in third place: Transporter-1, GRACE), or a
+  vehicle hanging on GCAT's launch vehicle database (parent `R…`: Starship, whose 26
+  Starlinks of 28 September 2026 would otherwise be 26 one-object events at the top of
+  the list): a separation only **two days or more after the launch**. Releases of launch
+  hardware cluster under one day and thin out after two.
+- **The parent is in the auxiliary catalogue** (`A…`), whose rows NextPass does not
+  import (ABD-13): the same two days.
+- **The parent is a spacecraft and the object a payload**: always, launch day included —
+  a deployer emptying.
+- **The parent is a spacecraft and the object a component or debris**: after the launch
+  day, as before. The rare breakup on the launch day (Kosmos-249, 1968) is missed.
+- Never for rows GCAT marks spurious (`Z`), deleted (`X`) or alias.
+- Vague dates stay in, read at their earliest: `2024?` debris of Meteor-2 counts, a
+  `2026 Jul?` release from a stage launched on 7 July 2026 does not.
+
+**Count:** 28 372 → 27 694 objects (1 802 out, 1 124 in, 916 of them from auxiliary
+parents), 3 323 → 3 423 events; 106 → 134 objects in 2026. The rule lives in
+`GcatObject.isSeparation`, with the cases in `SeparationRuleTest`. Since it needs the
+parent's row, the import no longer decides `is_separation` row by row:
+`GcatRepository.reclassify` decides every row again with its parent after both files, on
+every run — even a `304` night — so the first nightly import after the deployment applies
+it, and `reclassifiedSeparations` in its report says how many rows moved.
 
 ## Phase 3.2 — Measure GCAT's delay, meet real users (the decision point)
 

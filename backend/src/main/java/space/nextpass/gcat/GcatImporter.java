@@ -42,6 +42,9 @@ public class GcatImporter {
             int newObjects,
             int updatedObjects,
             int newSeparations,
+            // Rows whose is_separation the run changed: the new separations among them, and
+            // every old row a change of the rule or of a parent moved.
+            int reclassifiedSeparations,
             long durationMs) {}
 
     public static class AlreadyRunningException extends RuntimeException {
@@ -89,6 +92,8 @@ public class GcatImporter {
                 log.info("GCAT {}: {} ({} rows, {} written, {} unparsed cells)",
                         file, report.status(), report.rows(), fileWritten[0], report.unparsedCells());
             }
+            // After both files: a row's parent may be in the other one.
+            int reclassified = transaction.execute(status -> repository.reclassify(runAt));
             int inserted = repository.countFirstSeen(runAt);
             boolean anyImported = reports.stream().anyMatch(r -> r.status().equals("imported"));
             return new Report(
@@ -98,6 +103,7 @@ public class GcatImporter {
                     inserted,
                     written - inserted,
                     repository.countNewSeparations(runAt),
+                    reclassified,
                     Duration.between(runAt, clock.instant()).toMillis());
         } finally {
             running.unlock();

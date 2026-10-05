@@ -73,11 +73,13 @@ class GcatParserTest {
         Map<String, GcatObject> objects = new LinkedHashMap<>(parse("satcat.tsv"));
         objects.putAll(parse("satcat100k.tsv"));
 
+        // The excerpts hold none of the parents: each is judged as an uncatalogued one.
         List<String> separations = objects.values().stream()
-                .filter(GcatObject::isSeparation).map(GcatObject::jcat).toList();
+                .filter(o -> o.isSeparation((GcatObject.Parent) null)).map(GcatObject::jcat).toList();
 
-        // Not S00001 (no parent), S69998 (its parent is a stage), S100961 (a stage of a
-        // stage), nor S03600 (debris of Kosmos-249 on its launch day).
+        // Not S00001 (no parent), S69998 (released on its launch day by an uncatalogued
+        // parent, the stage), S100961 (its parent is a launch vehicle), nor S03600 (debris of
+        // Kosmos-249 on its launch day). SeparationRuleTest holds the cases with a parent.
         assertThat(separations).containsExactly(
                 "S16013", "S69237", "S69328", "S69731", "S100000", "S100810");
     }
