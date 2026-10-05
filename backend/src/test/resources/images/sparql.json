@@ -1,0 +1,21 @@
+{
+  "head": {"vars": ["norad", "image"]},
+  "results": {"bindings": [
+    {"norad": {"type": "literal", "value": "20580"},
+     "image": {"type": "uri", "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Hubble%202009%20close-up.jpg"}},
+    {"norad": {"type": "literal", "value": "25544"},
+     "image": {"type": "uri", "value": "http://commons.wikimedia.org/wiki/Special:FilePath/ISS%20March%202009.jpg"}},
+    {"norad": {"type": "literal", "value": "25544"},
+     "image": {"type": "uri", "value": "http://commons.wikimedia.org/wiki/Special:FilePath/International%20Space%20Station%20after%20undocking.jpg"}},
+    {"norad": {"type": "literal", "value": "43013"},
+     "image": {"type": "uri", "value": "http://commons.wikimedia.org/wiki/Special:FilePath/C%2B%2B%20sat%20%28model%29.png"}},
+    {"norad": {"type": "literal", "value": "44000"},
+     "image": {"type": "uri", "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Nc%20render.jpg"}},
+    {"norad": {"type": "literal", "value": "1999-025A"},
+     "image": {"type": "uri", "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Wrong%20number.jpg"}},
+    {"norad": {"type": "literal", "value": "400000"},
+     "image": {"type": "uri", "value": "http://commons.wikimedia.org/wiki/Special:FilePath/Too%20large.jpg"}},
+    {"norad": {"type": "literal", "value": "45000"},
+     "image": {"type": "uri", "value": "http://example.org/not-commons.jpg"}}
+  ]}
+}

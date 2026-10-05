@@ -16,6 +16,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import space.nextpass.delays.DelayMeasurement;
+import space.nextpass.images.ImageImport;
 import space.nextpass.gcat.GcatImportException;
 import space.nextpass.gcat.GcatImporter;
 
@@ -112,6 +113,42 @@ class IngestControllerTest {
                     .andExpect(jsonPath("$.status").value("unchanged"))
                     .andExpect(jsonPath("$.delays.status").value("failed"))
                     .andExpect(jsonPath("$.delays.detail").value("connection refused"));
+        }
+    }
+
+    @Nested
+    @WebMvcTest(controllers = IngestController.class, properties = "ingest.token=s3cret")
+    class WithImages {
+        @Autowired MockMvc mvc;
+        @MockitoBean Clock clock;
+        @MockitoBean GcatImporter importer;
+        @MockitoBean ImageImport images;
+
+        static final GcatImporter.Report GCAT = new GcatImporter.Report("unchanged",
+                List.of(new GcatImporter.FileReport("satcat.tsv", "unchanged", 0, 0)), 0, 0, 0, 0, 0, 300);
+
+        @Test void addsTheImagesBesideGcatsReport() throws Exception {
+            when(importer.run()).thenReturn(GCAT);
+            when(images.run()).thenReturn(new ImageImport.Report("imported", null, 1712, 3, 41_000));
+
+            mvc.perform(post("/internal/import").header("Authorization", "Bearer s3cret"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("unchanged"))
+                    .andExpect(jsonPath("$.images.status").value("imported"))
+                    .andExpect(jsonPath("$.images.images").value(1712))
+                    .andExpect(jsonPath("$.images.removed").value(3));
+        }
+
+        /** The database failing under the images still leaves GCAT imported and the job green. */
+        @Test void aFailedImageImportKeepsTheImport() throws Exception {
+            when(importer.run()).thenReturn(GCAT);
+            when(images.run()).thenThrow(new IllegalStateException("connection refused"));
+
+            mvc.perform(post("/internal/import").header("Authorization", "Bearer s3cret"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("unchanged"))
+                    .andExpect(jsonPath("$.images.status").value("failed"))
+                    .andExpect(jsonPath("$.images.detail").value("connection refused"));
         }
     }
 

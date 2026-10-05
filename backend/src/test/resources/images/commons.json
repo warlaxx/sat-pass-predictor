@@ -1,0 +1,49 @@
+{
+  "batchcomplete": true,
+  "query": {
+    "normalized": [
+      {"fromencoded": false, "from": "File:Hubble 2009 close-up.jpg", "to": "File:Hubble 2009 close-up.jpg"},
+      {"fromencoded": false, "from": "File:ISS March 2009.jpg", "to": "File:ISS March 2009.jpg"},
+      {"fromencoded": false, "from": "File:C++ sat (model).png", "to": "File:C++ sat (model).png"}
+    ],
+    "pages": [
+      {"ns": 6, "title": "File:Hubble 2009 close-up.jpg", "missing": false, "imagerepository": "local",
+       "imageinfo": [{
+         "thumburl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Hubble_2009_close-up.jpg/500px-Hubble_2009_close-up.jpg",
+         "thumbwidth": 500, "thumbheight": 332,
+         "url": "https://upload.wikimedia.org/wikipedia/commons/8/85/Hubble_2009_close-up.jpg",
+         "descriptionurl": "https://commons.wikimedia.org/wiki/File:Hubble_2009_close-up.jpg",
+         "extmetadata": {
+           "Artist": {"value": "<a href=\"https://www.nasa.gov\" class=\"extiw\">NASA</a> &amp; ESA", "source": "commons-desc-page"},
+           "License": {"value": "pd", "source": "commons-templates", "hidden": ""},
+           "LicenseShortName": {"value": "Public domain", "source": "commons-desc-page", "hidden": ""}
+         }}]},
+      {"ns": 6, "title": "File:ISS March 2009.jpg", "missing": false,
+       "imageinfo": [{
+         "thumburl": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ISS.jpg/500px-ISS.jpg",
+         "thumbwidth": 500, "thumbheight": 333,
+         "descriptionurl": "https://commons.wikimedia.org/wiki/File:ISS_March_2009.jpg",
+         "extmetadata": {
+           "Artist": {"value": "<span>Crew of\nSTS-132</span>"},
+           "License": {"value": "cc-by-sa-4.0"},
+           "LicenseShortName": {"value": "CC BY-SA 4.0"},
+           "LicenseUrl": {"value": "https://creativecommons.org/licenses/by-sa/4.0"}
+         }}]},
+      {"ns": 6, "title": "File:C++ sat (model).png", "missing": false,
+       "imageinfo": [{
+         "thumburl": "https://evil.example.org/thumb/500px-model.png",
+         "thumbwidth": 500, "thumbheight": 500,
+         "descriptionurl": "https://commons.wikimedia.org/wiki/File:C%2B%2B_sat_(model).png",
+         "extmetadata": {"License": {"value": "cc0"}, "LicenseShortName": {"value": "CC0"}}
+         }]},
+      {"ns": 6, "title": "File:Nc render.jpg", "missing": false,
+       "imageinfo": [{
+         "thumburl": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Nc_render.jpg/500px-Nc_render.jpg",
+         "thumbwidth": 500, "thumbheight": 281,
+         "descriptionurl": "https://commons.wikimedia.org/wiki/File:Nc_render.jpg",
+         "extmetadata": {"License": {"value": "cc-by-nc-2.0"}, "LicenseShortName": {"value": "CC BY-NC 2.0"}}
+         }]},
+      {"ns": 6, "title": "File:Deleted.jpg", "missing": true}
+    ]
+  }
+}
