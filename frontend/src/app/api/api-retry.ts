@@ -1,7 +1,7 @@
 import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
-import { finalize, retry, throwError, timeout, timer } from 'rxjs';
+import { defer, finalize, retry, throwError, timeout, timer } from 'rxjs';
 
 /** Past this, a request that has not answered is a sleeping server, and the page says so. */
 export const SLOW_AFTER_MS = 5_000;
@@ -65,15 +65,19 @@ export class ApiWaiting {
  */
 export const apiRetryInterceptor: HttpInterceptorFn = (request, next) => {
   if (!isPlatformBrowser(inject(PLATFORM_ID)) || request.method !== 'GET' || !isApi(request)) return next(request);
-  const stop = inject(ApiWaiting).start();
-  return next(request).pipe(
-    timeout({ each: ATTEMPT_TIMEOUT_MS, with: () => throwError(() => timedOut(request)) }),
-    retry({
-      count: RETRY_DELAYS_MS.length,
-      delay: (error, attempt) => (isTransient(error) ? timer(RETRY_DELAYS_MS[attempt - 1]) : throwError(() => error)),
-    }),
-    finalize(stop),
-  );
+  const waiting = inject(ApiWaiting);
+  // The clock starts on subscription, so that finalize always stops the clock it started.
+  return defer(() => {
+    const stop = waiting.start();
+    return next(request).pipe(
+      timeout({ each: ATTEMPT_TIMEOUT_MS, with: () => throwError(() => timedOut(request)) }),
+      retry({
+        count: RETRY_DELAYS_MS.length,
+        delay: (error, attempt) => (isTransient(error) ? timer(RETRY_DELAYS_MS[attempt - 1]) : throwError(() => error)),
+      }),
+      finalize(stop),
+    );
+  });
 };
 
 function isApi(request: HttpRequest<unknown>): boolean {
