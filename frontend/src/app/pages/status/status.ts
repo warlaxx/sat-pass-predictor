@@ -6,7 +6,7 @@ import { firstValueFrom, timeout } from 'rxjs';
 import { Reveal } from '../../motion/reveal';
 import { formatAge } from '../../format';
 import { ServiceStatus } from '../../shared/service-status';
-import { PLANS_LINK } from '../../shared/site';
+import { PLANS_LINK, REPOSITORY_URL } from '../../shared/site';
 
 export type ProbeState = 'checking' | 'ok' | 'slow' | 'down';
 
@@ -29,8 +29,9 @@ export const CATALOGUE_STALE_S = 2 * 86_400;
  * Neither calls /api/passes - a status page read a hundred times a day must not spend the
  * anonymous budget the predictor lives on.
  *
- * This is a snapshot, not an uptime history. There is no external monitor yet, and the
- * page says so rather than drawing ninety green bars it could not back.
+ * This is a snapshot, not an uptime history. The history is kept by the probe of
+ * .github/workflows/uptime.yml (ABD-29): its runs and the `incident` issues it opens are
+ * public on GitHub, and the page links there rather than redrawing them.
  */
 @Component({
   selector: 'app-status',
@@ -59,6 +60,8 @@ export class StatusPage {
   private readonly http = inject(HttpClient);
   private readonly serviceStatus = inject(ServiceStatus);
   protected readonly plans = PLANS_LINK;
+  protected readonly historyUrl = `${REPOSITORY_URL}/actions/workflows/uptime.yml`;
+  protected readonly incidentsUrl = `${REPOSITORY_URL}/issues?q=label%3Aincident`;
 
   protected readonly backend = signal<ProbeResult>({ state: 'checking', detail: $localize`Asking the backend…` });
   protected readonly catalogue = signal<ProbeResult>({ state: 'checking', detail: $localize`Searching the catalogue…` });

@@ -46,7 +46,8 @@ backend/pom.xml verify` with JDK 25 and a dedicated PostgreSQL `TEST_DATABASE_UR
 `TEST_DATABASE_USERNAME`, `TEST_DATABASE_PASSWORD`; database tests otherwise skip.
 Run `npm run build` and `npm test -- --watch=false` in `frontend` (Node ≥ 22.22.3 or 24),
 then `node --test scripts/seo-files.test.mjs` there and
-`node --test scripts/account-dashboard.test.mjs` at the repository root.
+`node --test scripts/account-dashboard.test.mjs scripts/uptime.test.mjs` at the repository
+root.
 Do not put `.env` secrets in documentation or commits.
 
 ## Linear: keep the issues in step with the work, always

@@ -56,7 +56,7 @@
       <li i18n><b>Cold starts.</b> The backend runs on an instance that sleeps after a quiet period; the first call then takes up to about thirty seconds. Every call after it is fast.</li>
       <li i18n><b>Orbital elements.</b> If CelesTrak cannot be reached, predictions keep using the last elements fetched, with their real age shown on every result, for up to seven days. After that a satellite is refused rather than predicted badly.</li>
       <li i18n><b>Shared demo budget.</b> The predictor on this site shares one anonymous quota across all visitors; on a busy day it can run out before midnight UTC. <a [routerLink]="plans.path" [fragment]="plans.fragment">API keys have their own.</a></li>
-      <li i18n><b>No uptime history yet.</b> There is no external monitor behind this page, so it shows the present only, and no availability commitment is made.</li>
+      <li i18n><b>Uptime history.</b> Apart from this page, a probe outside our hosts checks the website and the backend about every five minutes, and the database about every half hour. A check that fails twice in a row opens an incident, closed once it answers again. Both are public: <a [href]="historyUrl" rel="noopener">every check</a> and <a [href]="incidentsUrl" rel="noopener">every incident</a>. No availability commitment is made.</li>
     </ul>
   </div>
 </section>

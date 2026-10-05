@@ -807,6 +807,15 @@ Unglamorous, non-optional, and cheaper before the first payment than after.
   answer once someone pays.
 - **Uptime monitoring and a public status page.** Being able to point at ninety days of
   green is a sales argument for an API, and the cheapest one available.
+  *Started (ABD-29, 5 October 2026):* `uptime.yml` checks the website and
+  `/actuator/health/liveness` every 5 minutes, and `/actuator/health` and `/api/separations`
+  every 30: those read PostgreSQL, and Neon's free 100 compute-hours a month would not cover
+  a database probed awake around the clock (744 h at 0.25 CU is 186). A check failing twice,
+  a minute apart, opens a GitHub issue labelled `incident`, which notifies the owner and
+  closes itself once the checks answer; `daily-import.yml` does the same when the import
+  fails. The repository being public, the runs and the incidents are the history `/status`
+  links to. GitHub delays and pauses schedules, so an outside service (UptimeRobot, Better
+  Stack) is still worth adding on top once someone holds its account.
 - **Alerting on the TLE chain.** Every source dark means every prediction stale. Today that
   is a log line; for a paying customer it is an incident.
 - **A backup of the database and a restore that has been run at least once.** A backup never

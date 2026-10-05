@@ -26,6 +26,10 @@ concurrency:
   group: daily-import
   cancel-in-progress: false
 
+# issues: write for the incident steps below; nothing else here needs the token.
+permissions:
+  issues: write
+
 # Explicit bash adds pipefail, without which `curl | tee` would hide a failed import and
 # the job would report success.
 defaults:
@@ -84,6 +88,40 @@ jobs:
           fi
           curl -sS --fail-with-body --max-time 60 -X POST "$VERCEL_DEPLOY_HOOK" > /dev/null
           echo "Redeployment requested."
+
+      # Nobody watches a nightly job (ABD-29): a failure opens an issue labelled `incident`,
+      # which GitHub notifies the owner of, and the next successful night closes it. The
+      # issue list rather than `gh issue list --search`, whose index lags behind.
+      - name: Raise an incident
+        if: failure() && steps.config.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Daily import failed"
+          number=$(gh issue list --label incident --state open --limit 100 --json number,title \
+            --jq "map(select(.title == \"$title\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "Failed again: $RUN_URL"
+          else
+            gh label create incident --color B60205 --description "Outage raised by a monitoring workflow" 2>/dev/null || true
+            gh issue create --title "$title" --label incident --body "@$OWNER The nightly import failed. The separation pages keep the last data imported until a run succeeds; this issue closes itself then. Run: $RUN_URL"
+          fi
+
+      - name: Close the incident
+        if: success() && steps.config.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Daily import failed"
+          for number in $(gh issue list --label incident --state open --limit 100 --json number,title \
+              --jq "map(select(.title == \"$title\")) | .[].number"); do
+            gh issue close "$number" --reason completed --comment "The import succeeded again: $RUN_URL"
+          done
 
       - name: Summary
         if: always() && steps.config.outputs.ready == 'true'

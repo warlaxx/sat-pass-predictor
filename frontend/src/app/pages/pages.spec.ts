@@ -200,6 +200,15 @@ describe('StatusPage', () => {
     expect(fixture.nativeElement.querySelector('#status-title').textContent).toContain('not answering');
     expect(fixture.nativeElement.textContent).toContain('NORAD numbers still work');
   });
+
+  it('links to the public uptime history and its incidents', async () => {
+    const fixture = await render(StatusPage);
+    const links = [...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('.prose a[href^="https://github.com"]')];
+    expect(links.map((a) => a.getAttribute('href'))).toEqual([
+      'https://github.com/warlaxx/sat-pass-predictor/actions/workflows/uptime.yml',
+      'https://github.com/warlaxx/sat-pass-predictor/issues?q=label%3Aincident',
+    ]);
+  });
 });
 
 describe('AlertsPage', () => {
