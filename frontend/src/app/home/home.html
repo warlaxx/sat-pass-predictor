@@ -1,4 +1,6 @@
-<app-hero [query]="form()" [response]="response()" [loading]="loading()" (compute)="computeFromHero()" />
+<app-hero [query]="form()" [response]="heroResponse()" [loading]="loading()" [pending]="featuredPending()"
+          [locating]="locating()" [locationError]="heroLocationError()"
+          (compute)="computeFromHero()" (locate)="useMyPosition('hero')" />
 
 <section id="query" class="console-band wrap" aria-labelledby="query-title">
   <form class="query" (submit)="$event.preventDefault(); search()">
@@ -89,7 +91,7 @@
     @if (satelliteError(); as failure) {
       <p class="location-error" role="alert">{{ failure }}</p>
     }
-    @if (locationError(); as failure) {
+    @if (consoleLocationError(); as failure) {
       <p class="location-error" role="status">{{ failure }}</p>
     }
   </form>

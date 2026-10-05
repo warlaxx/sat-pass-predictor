@@ -23,6 +23,14 @@ describe('App shell', () => {
   async function at(url: string) {
     const fixture = TestBed.createComponent(App);
     await TestBed.inject(Router).navigateByUrl(url);
+    // The home page asks for the hero's featured passes as it opens (ABD-31): answered
+    // here with the API down, since a pending request would keep the page from settling.
+    TestBed.tick();
+    await Promise.resolve();
+    TestBed.tick();
+    for (const request of TestBed.inject(HttpTestingController).match('/api/featured-pass')) {
+      request.flush(null, { status: 503, statusText: 'Service Unavailable' });
+    }
     await fixture.whenStable();
     return fixture;
   }
@@ -35,7 +43,7 @@ describe('App shell', () => {
     expect(fixture.nativeElement.querySelector('header .brand').textContent).toContain('NextPass');
   });
 
-  it('opens on the predictor, idle, without a request nobody asked for', async () => {
+  it('opens on the predictor, idle, without a search nobody asked for', async () => {
     const fixture = await at('/');
     expect(fixture.nativeElement.querySelector('app-home .state').textContent).toContain('Pick a satellite');
     TestBed.inject(HttpTestingController).verify();

@@ -40,4 +40,21 @@ export class PassesApi {
   reload(): void {
     this.resource.reload();
   }
+
+  private readonly featuredWanted = signal(false);
+
+  /**
+   * The next passes of the ISS over Lyon, for the home page's countdown (ABD-31).
+   *
+   * A request of its own rather than a search: `/api/featured-pass` takes no parameter
+   * and is not metered, so a visitor who asked for nothing spends none of the quota the
+   * whole site shares, and does not count as a search. It stays idle until asked for -
+   * the prerender must not bake a pass into the HTML that would be stale on arrival.
+   */
+  readonly featured = httpResource<PassesResponse>(() => this.featuredWanted() ? '/api/featured-pass' : undefined);
+
+  /** Asks for the featured passes once; later calls keep the answer already on screen. */
+  loadFeatured(): void {
+    this.featuredWanted.set(true);
+  }
 }

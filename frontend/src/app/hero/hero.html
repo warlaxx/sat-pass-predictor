@@ -43,6 +43,15 @@
           <div><dt i18n>Duration</dt><dd class="num">—</dd></div>
         </dl>
       }
+      <div class="card-foot">
+        <p class="note">{{ note() }}</p>
+        <button type="button" class="btn outline locate" [disabled]="locating()" (click)="locate.emit()">
+          @if (locating()) {<ng-container i18n>Locating…</ng-container>} @else {<ng-container i18n>Use my position</ng-container>}
+        </button>
+      </div>
+      @if (locationError(); as failure) {
+        <p class="location-error" role="status">{{ failure }}</p>
+      }
     </section>
   </div>
 

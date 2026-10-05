@@ -127,6 +127,20 @@ h1 span { color: var(--signal); }
 }
 
 .facts div:last-child { border-right: 0; }
+.card-foot {
+  align-items: center;
+  border-top: 1px solid rgb(255 255 255 / 7%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+  padding: 12px 20px;
+}
+
+.note { color: var(--ink-3); flex: 1 1 200px; font-size: 13px; margin: 0; }
+.locate { flex: none; }
+.location-error { color: var(--lit); font-size: 13px; margin: 0; padding: 0 20px 12px; }
+
 dt { color: var(--ink-3); font-size: 12px; }
 dd { font-size: 15px; margin: 0; }
 
