@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PassDto, PassesResponse } from '../api/passes.model';
@@ -58,6 +58,8 @@ export class Hero {
   readonly query = input.required<PassQuery>();
   readonly response = input<PassesResponse>();
   readonly loading = input(false);
+  /** The call to action asks the page to compute: the form it would point to holds the query. */
+  readonly compute = output<void>();
 
   private readonly now = signal(Date.now());
 
