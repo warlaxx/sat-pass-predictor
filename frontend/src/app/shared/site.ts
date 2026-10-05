@@ -60,18 +60,18 @@ export const DEMO_LIMITS = { daily: 200, perMinute: 20 } as const;
 export const BATCH_LIMITS = { satellites: 10, sites: 10, predictions: 25 } as const;
 
 /**
- * The operator of the site, as French law requires it to be published (LCEN art. 6).
+ * The operator of the site, as French law requires it to be published (LCEN art. 1-1).
  *
- * Deliberately empty: these are facts about a person or a company, not something code
- * may invent. The legal page renders a visible "to be completed" marker for every blank
+ * The publisher is a private individual, so there is no legal form, SIREN or VAT number
+ * to publish; add them here, and to the legal page, the day a business is registered to
+ * sell the paid plans. Deliberately empty: these are facts about a person, not something
+ * code may invent. The legal page renders a visible "to be completed" marker for every blank
  * field, so a deployment cannot look finished while it is not.
  */
 export const OPERATOR = {
   name: '',
-  legalForm: '',
-  siren: '',
   address: '',
+  telephone: '',
   email: 'contact@nextpass.space',
   publicationDirector: '',
-  vatNumber: '',
 } as const;
