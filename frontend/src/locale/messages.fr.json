@@ -769,7 +769,6 @@
     "1386084489178491935": "Cela peut prendre jusqu'à 30 secondes ; la page se remplira d'elle-même.",
     "39489756812320254": "Version en vigueur : {$INTERPOLATION}.",
     "3432340878641587903": "Ce site est édité par un particulier, en son nom propre : aucune société n'est derrière.",
-    "4736032522753683365": " Le code source est publié sur {$START_LINK}GitHub{$CLOSE_LINK} selon les conditions qui y sont indiquées. Les éléments orbitaux proviennent de CelesTrak ; les côtes de Natural Earth, dans le domaine public. Le catalogue d'objets spatiaux des pages de séparations est réutilisé sous licence CC BY 4.0, crédité en bas de ces pages. Les textes, visuels et l'identité graphique de NextPass ne peuvent être reproduits sans autorisation, sauf dans les cas permis par la loi, comme une courte citation mentionnant sa source. ",
     "663834402655023259": "Acceptation",
     "1158390045678247755": "Utiliser le site ou l'API vaut acceptation des présentes conditions. Si vous ne les acceptez pas, n'utilisez pas le service.",
     "8434444705650490540": "Une clé utilisée en violation de ces règles peut être révoquée, et son compte fermé.",
@@ -803,6 +802,19 @@
     "7066680876739112324": " Des satellites qui en libèrent d’autres, des lanceurs qui se vident, des corps qui se fragmentent. Chaque événement dit quand l’objet libéré passe au-dessus de vous. ",
     "4741056376038878520": "Chargement des derniers événements…",
     "806357103162308778": "Les derniers événements n’ont pas pu être chargés. La liste complète peut quand même s’ouvrir.",
-    "919314364730460250": "Toutes les séparations"
+    "919314364730460250": "Toutes les séparations",
+    "3718762962708168944": "Petit satellite (cubesat)",
+    "3828345209188230825": "Coiffe",
+    "1173669440612878612": "Moteur-fusée",
+    "5162194368522420215": "Matériel de lancement (adaptateur, distributeur)",
+    "3207103288776404675": "Objet spatial",
+    "1948742401977091277": "Illustration : {$kind}",
+    "3077679800511999705": "Illustration",
+    "8760031162484388867": "Photographie : {$name}",
+    "7944113311807396515": "Photo : {$author}",
+    "5750485945694679561": "Photo",
+    "5916509558103174858": "Photo : {$author}, {$licence}, Wikimedia Commons",
+    "6547493873659812814": " Le code source est publié sur {$START_LINK}GitHub{$CLOSE_LINK} selon les conditions qui y sont indiquées. Les éléments orbitaux proviennent de CelesTrak ; les côtes de Natural Earth, dans le domaine public. Le catalogue d'objets spatiaux des pages de séparations est réutilisé sous licence CC BY 4.0, crédité en bas de ces pages. Les photographies d'objets spatiaux proviennent de Wikimedia Commons, chacune sous sa propre licence libre et créditée à côté ; les dessins marqués « Illustration » sont ceux de NextPass. Les textes, visuels et l'identité graphique de NextPass ne peuvent être reproduits sans autorisation, sauf dans les cas permis par la loi, comme une courte citation mentionnant sa source. ",
+    "7685183216320342083": "{$START_BOLD_TEXT}Les photographies d'objets spatiaux{$CLOSE_BOLD_TEXT} proviennent de Wikimedia Commons et sont chargées par les serveurs de ce site, pas directement par votre navigateur depuis Wikimedia."
   }
 }

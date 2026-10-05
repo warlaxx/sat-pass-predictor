@@ -9,6 +9,7 @@ import { SeparationEvent, SpaceObject } from '../../api/separations.model';
 import { visibleWindow } from '../../calendar/ics';
 import { Reveal } from '../../motion/reveal';
 import { NextPass } from '../../next-pass/next-pass';
+import { ObjectVisual } from '../../object-visual/object-visual';
 import { PassTable } from '../../pass-table/pass-table';
 import { requestPosition } from '../../shared/geolocation';
 import { Seo } from '../../shared/seo';
@@ -36,7 +37,7 @@ type Sighting =
  */
 @Component({
   selector: 'app-separation',
-  imports: [DatePipe, DecimalPipe, RouterLink, Reveal, NextPass, PassTable],
+  imports: [DatePipe, DecimalPipe, RouterLink, Reveal, NextPass, ObjectVisual, PassTable],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'page' },
   templateUrl: './separation.html',
@@ -61,6 +62,15 @@ export class SeparationPage {
   protected readonly subject = computed<SpaceObject | undefined>(() => {
     const event = this.event();
     return event?.childCount === 1 ? event.children[0] : undefined;
+  });
+
+  /**
+   * Several objects: their kind, drawn, never one of them photographed as if it were all
+   * of them. The first object stands for the kind; a fragmentation's are all debris.
+   */
+  protected readonly groupVisual = computed<SpaceObject | undefined>(() => {
+    const first = this.event()?.children[0];
+    return first && !this.subject() ? { ...first, image: undefined } : undefined;
   });
 
   protected readonly parentName = computed(() => {
