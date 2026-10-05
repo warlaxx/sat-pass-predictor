@@ -1,17 +1,34 @@
 import { describe, beforeEach, afterEach, it, expect, vi } from 'vitest';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { HomePage, queryFromUrl } from './home';
+import { PassesResponse } from '../api/passes.model';
 
 /**
- * The shell before anything has been asked of the backend.
+ * Lets a freshly created page settle. It asks for the hero's featured passes as it opens,
+ * and a pending request keeps it from ever being stable: they are answered with `body`,
+ * or with the API down when a test is about something else.
+ */
+async function settle(fixture: ComponentFixture<HomePage>, body?: PassesResponse): Promise<void> {
+  TestBed.tick();
+  await Promise.resolve();
+  TestBed.tick();
+  for (const request of TestBed.inject(HttpTestingController).match('/api/featured-pass')) {
+    if (body) request.flush(body);
+    else request.flush(null, { status: 503, statusText: 'Service Unavailable' });
+  }
+  await fixture.whenStable();
+}
+
+/**
+ * The shell before the reader has asked anything of the backend.
  *
- * The HTTP layer is a double and no request is expected: the point of this test is that
- * the page is useful with an empty resource. A first render that fires a request nobody
- * asked for would show up here as an unexpected call.
+ * The HTTP layer is a double. The only request a first render may make is the hero's
+ * featured passes, which are not metered (ABD-31); a search nobody asked for would spend
+ * the quota the whole site shares, and shows up here as a call to /api/passes.
  */
 describe('HomePage', () => {
   beforeEach(async () => {
@@ -28,14 +45,38 @@ describe('HomePage', () => {
 
   it('starts on the idle state rather than a spinner', async () => {
     const fixture = TestBed.createComponent(HomePage);
-    await fixture.whenStable();
+    await settle(fixture);
     const state = fixture.nativeElement.querySelector('.state') as HTMLElement;
     expect(state.textContent).toContain('Pick a satellite');
   });
 
+  it('counts down to the ISS over Lyon as it opens, without searching or filling the result', async () => {
+    const rise = Date.now() + 3_600_000;
+    const point = (offset: number) => ({
+      instant: new Date(rise + offset * 1000).toISOString(), azimuthDeg: 300, elevationDeg: 40, rangeKm: 800,
+      rangeRateKmS: 0, dopplerHz: null, subPoint: { latitudeDeg: 45, longitudeDeg: 5, altitudeKm: 420 },
+      illuminated: true, visible: true,
+    });
+    const fixture = TestBed.createComponent(HomePage);
+    await settle(fixture, {
+      satellite: { noradId: 25544, name: 'ISS (ZARYA)' },
+      tle: { epoch: new Date().toISOString(), ageSeconds: 3600, source: 'test', fetchedAt: new Date().toISOString(), line1: '', line2: '' },
+      observer: { latitudeDeg: 45.7578, longitudeDeg: 4.832, altitudeM: 170 },
+      minElevationDeg: 10, frequencyMhz: null, computedAt: new Date().toISOString(),
+      passes: [{ aos: point(0), culmination: point(200), los: point(400), durationSeconds: 400, track: [point(0), point(200), point(400)] }],
+    });
+
+    TestBed.inject(HttpTestingController).expectNone('/api/passes');
+    const card = fixture.nativeElement.querySelector('app-hero .card') as HTMLElement;
+    expect(card.textContent).toContain('ISS (ZARYA) over Lyon');
+    expect(card.querySelector('.countdown')!.textContent).toMatch(/T−0[01]:\d\d:\d\d/);
+    // The reader has computed nothing: the console still says what to do.
+    expect(fixture.nativeElement.querySelector('.state').textContent).toContain('Pick a satellite');
+  });
+
   it('offers the Lyon defaults, which are the ones the API applies', async () => {
     const fixture = TestBed.createComponent(HomePage);
-    await fixture.whenStable();
+    await settle(fixture);
     const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
     expect(inputs[0].value).toBe('25544');
     expect(inputs[1].value).toBe('45.7578');
@@ -73,7 +114,7 @@ describe('HomePage geolocation', () => {
 
   async function clickLocate() {
     const fixture = TestBed.createComponent(HomePage);
-    await fixture.whenStable();
+    await settle(fixture);
     (fixture.nativeElement.querySelector('.console-foot button.outline') as HTMLButtonElement).click();
     await fixture.whenStable();
     return fixture;
@@ -134,7 +175,39 @@ describe('HomePage geolocation', () => {
 
     await clickLocate();
 
-    TestBed.inject(HttpTestingController).expectNone(() => true);
+    TestBed.inject(HttpTestingController).expectNone('/api/passes');
+  });
+
+  it('computes for the located position in one click from the hero, before any search', async () => {
+    installGeolocation({
+      getCurrentPosition: (onSuccess) =>
+        onSuccess({ coords: { latitude: 48.856_61, longitude: 2.352_22, altitude: 35 } } as GeolocationPosition),
+    });
+    const fixture = TestBed.createComponent(HomePage);
+    await settle(fixture);
+
+    (fixture.nativeElement.querySelector('app-hero .locate') as HTMLButtonElement).click();
+    await Promise.resolve();
+    TestBed.tick();
+
+    const located = TestBed.inject(HttpTestingController).expectOne(request => request.url === '/api/passes');
+    expect(located.request.params.get('lat')).toBe('48.8566');
+    expect(located.request.params.get('lon')).toBe('2.3522');
+  });
+
+  it('says why the hero could not locate, in the hero', async () => {
+    installGeolocation({
+      getCurrentPosition: (_onSuccess, onError) =>
+        onError?.({ code: 1, message: 'denied' } as GeolocationPositionError),
+    });
+    const fixture = TestBed.createComponent(HomePage);
+    await settle(fixture);
+
+    (fixture.nativeElement.querySelector('app-hero .locate') as HTMLButtonElement).click();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('app-hero .location-error').textContent).toContain('Permission refused');
+    expect(fixture.nativeElement.querySelector('#query .location-error')).toBeNull();
   });
 
   it('computes again for the located position when a result is on screen', async () => {
@@ -143,7 +216,7 @@ describe('HomePage geolocation', () => {
         onSuccess({ coords: { latitude: 48.856_61, longitude: 2.352_22, altitude: 35 } } as GeolocationPosition),
     });
     const fixture = TestBed.createComponent(HomePage);
-    await fixture.whenStable();
+    await settle(fixture);
     (fixture.nativeElement.querySelector('form.query') as HTMLFormElement)
       .dispatchEvent(new Event('submit', { cancelable: true }));
     TestBed.tick();
@@ -171,7 +244,7 @@ describe('HomePage geolocation', () => {
 
   it('refuses to compute while the satellite field holds a name nobody chose', async () => {
     const fixture = TestBed.createComponent(HomePage);
-    await fixture.whenStable();
+    await settle(fixture);
     const satellite = fixture.nativeElement.querySelector('input') as HTMLInputElement;
     satellite.value = 'iss';
     satellite.dispatchEvent(new Event('input'));
@@ -185,7 +258,7 @@ describe('HomePage geolocation', () => {
 
   it('asks for the Doppler shift only when a downlink frequency is given', async () => {
     const fixture = TestBed.createComponent(HomePage);
-    await fixture.whenStable();
+    await settle(fixture);
     const frequency = fixture.nativeElement.querySelector('input.w-freq') as HTMLInputElement;
     const submit = () => {
       fixture.nativeElement.querySelector('form.query').dispatchEvent(new Event('submit', { cancelable: true }));
@@ -207,7 +280,7 @@ describe('HomePage geolocation', () => {
 
   it('computes from the hero button and brings the console into view', async () => {
     const fixture = TestBed.createComponent(HomePage);
-    await fixture.whenStable();
+    await settle(fixture);
     const console = fixture.nativeElement.querySelector('#query') as HTMLElement;
     const scrolled = vi.fn();
     console.scrollIntoView = scrolled;
@@ -221,7 +294,7 @@ describe('HomePage geolocation', () => {
 
   it('computes again when the same query is asked twice', async () => {
     const fixture = TestBed.createComponent(HomePage);
-    await fixture.whenStable();
+    await settle(fixture);
     const http = TestBed.inject(HttpTestingController);
     const hero = fixture.nativeElement.querySelector('app-hero .ctas button') as HTMLButtonElement;
     (fixture.nativeElement.querySelector('#query') as HTMLElement).scrollIntoView = vi.fn();
@@ -238,7 +311,7 @@ describe('HomePage geolocation', () => {
 
   it('writes the URL of a search without sending the reader back to the top', async () => {
     const fixture = TestBed.createComponent(HomePage);
-    await fixture.whenStable();
+    await settle(fixture);
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
 
     fixture.nativeElement.querySelector('form.query').dispatchEvent(new Event('submit', { cancelable: true }));
@@ -276,7 +349,8 @@ describe('a shared link', () => {
     });
     const fixture = TestBed.createComponent(HomePage);
     TestBed.tick();
-    const request = TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/passes');
+    const http = TestBed.inject(HttpTestingController);
+    const request = http.expectOne((r) => r.url === '/api/passes');
     expect(request.request.params.get('noradId')).toBe('48274');
     request.flush({
       satellite: { noradId: 48274, name: 'CSS (TIANHE)' },
@@ -285,6 +359,7 @@ describe('a shared link', () => {
       minElevationDeg: 10, frequencyMhz: null, computedAt: '2026-09-30T01:00:00Z', passes: [],
     });
     await fixture.whenStable();
+    http.expectNone('/api/featured-pass');
     const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
     expect(inputs[1].value).toBe('43.3');
     expect(fixture.nativeElement.querySelector('.state').textContent).toContain('No pass above 10');
