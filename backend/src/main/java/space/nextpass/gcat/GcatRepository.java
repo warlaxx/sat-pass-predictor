@@ -1,13 +1,16 @@
 package space.nextpass.gcat;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 
 /**
  * The GCAT tables of {@code V5__gcat_objects.sql}.
@@ -21,6 +24,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * <h2>first_seen_at is set once</h2>
  * The insert writes it, the update never touches it: it records the first import that had
  * the row, which phase 3.2 compares with the event's own date to measure GCAT's delay.
+ *
+ * <h2>is_separation is decided after the rows, not with them</h2>
+ * Whether a row is a separation depends on its parent's type (ABD-12), and the parent may
+ * come later in the file, or in the other file. The upsert writes {@code false} for a new
+ * row and never compares the column; {@link #reclassify} then decides every row with its
+ * parent, on every run - so a change of the rule, or of a parent, reaches the table even on
+ * a night when GCAT did not change.
  */
 public class GcatRepository {
 
@@ -29,11 +39,11 @@ public class GcatRepository {
             launch_text, launch_at, launch_precision, parent, parent_text,
             separation_text, separation_at, separation_precision, separation_uncertain,
             primary_body, decay_text, decay_at, status, owner, state,
-            mass_kg, perigee_km, apogee_km, inclination_deg, op_orbit, alt_names, is_separation""";
+            mass_kg, perigee_km, apogee_km, inclination_deg, op_orbit, alt_names""";
 
     private static final String UPSERT = """
-            INSERT INTO gcat_objects (jcat, %1$s, first_seen_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO gcat_objects (jcat, %1$s, is_separation, first_seen_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, false, ?, ?)
             ON CONFLICT (jcat) DO UPDATE SET (%1$s, updated_at) = (%2$s, EXCLUDED.updated_at)
             WHERE (%3$s) IS DISTINCT FROM (%2$s)""".formatted(
                     COLUMNS,
@@ -51,6 +61,36 @@ public class GcatRepository {
         Timestamp now = Timestamp.from(runAt);
         int[][] counts = jdbc.batchUpdate(UPSERT, objects, objects.size(), (ps, o) -> bind(ps, o, now));
         return Arrays.stream(counts).flatMapToInt(Arrays::stream).filter(n -> n > 0).sum();
+    }
+
+    /**
+     * Decides {@code is_separation} again for every row that has a parent or was a
+     * separation, with {@link GcatObject#isSeparation(String, String, GcatDate, GcatDate, GcatObject.Parent)},
+     * and writes only the rows whose answer changed. Returns how many.
+     */
+    public int reclassify(Instant runAt) {
+        Timestamp now = Timestamp.from(runAt);
+        List<Object[]> changed = new ArrayList<>();
+        jdbc.query("""
+                SELECT o.jcat, o.type, o.parent, o.launch_at, o.launch_precision,
+                       o.separation_at, o.separation_precision, o.is_separation,
+                       p.jcat AS parent_row, p.type AS parent_type, p.parent AS parent_parent
+                FROM gcat_objects o LEFT JOIN gcat_objects p ON p.jcat = o.parent
+                WHERE o.parent IS NOT NULL OR o.is_separation""",
+                (RowCallbackHandler) rs -> {
+                    boolean separation = GcatObject.isSeparation(rs.getString("type"), rs.getString("parent"),
+                            date(rs, "launch_at", "launch_precision"),
+                            date(rs, "separation_at", "separation_precision"),
+                            rs.getString("parent_row") == null ? null
+                                    : new GcatObject.Parent(rs.getString("parent_type"), rs.getString("parent_parent")));
+                    if (separation != rs.getBoolean("is_separation")) {
+                        changed.add(new Object[] {separation, now, rs.getString("jcat")});
+                    }
+                });
+        if (!changed.isEmpty()) {
+            jdbc.batchUpdate("UPDATE gcat_objects SET is_separation = ?, updated_at = ? WHERE jcat = ?", changed);
+        }
+        return changed.size();
     }
 
     public GcatSource.Validators validators(String file) {
@@ -121,9 +161,15 @@ public class GcatRepository {
         ps.setObject(i++, o.inclinationDeg(), Types.DOUBLE);
         ps.setString(i++, o.opOrbit());
         ps.setString(i++, o.altNames());
-        ps.setBoolean(i++, o.isSeparation());
         ps.setTimestamp(i++, now);
         ps.setTimestamp(i, now);
+    }
+
+    /** The date as the rule reads it: its start and its precision; uncertainty plays no part. */
+    private static GcatDate date(ResultSet rs, String at, String precision) throws SQLException {
+        Timestamp start = rs.getTimestamp(at);
+        return start == null ? null
+                : new GcatDate(start.toInstant(), GcatDate.Precision.valueOf(rs.getString(precision)), false);
     }
 
     private static Timestamp at(GcatDate date) {
