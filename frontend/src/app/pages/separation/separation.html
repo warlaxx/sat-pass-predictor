@@ -79,6 +79,7 @@
     <ol class="lineage">
       @if (loaded.grandparent; as g) {
         <li class="node">
+          <app-object-visual [object]="g" />
           <span class="label">{{ role(g.role) }}</span>
           <span class="name">{{ g.name }}</span>
           <span class="num muted">{{ g.piece }}@if (g.owner) { · {{ g.owner }}}@if (g.massKg) { · {{ g.massKg | number }} kg}</span>
@@ -86,6 +87,7 @@
       }
       @if (loaded.parent; as p) {
         <li class="node">
+          <app-object-visual [object]="p" />
           <span class="label"><ng-container i18n>Parent</ng-container> · {{ role(p.role) }}</span>
           <span class="name">{{ p.name }}</span>
           <span class="num muted">{{ p.piece }}@if (p.owner) { · {{ p.owner }}}@if (p.massKg) { · {{ p.massKg | number }} kg}</span>
@@ -104,6 +106,11 @@
         </li>
       }
       <li class="node current">
+        @if (subj) {
+          <app-object-visual [object]="subj" />
+        } @else if (groupVisual(); as group) {
+          <app-object-visual [object]="group" />
+        }
         <span class="label" i18n>This event</span>
         @if (subj) {
           <span class="name">{{ subj.name }}</span>
@@ -156,13 +163,18 @@
             <tr>
               @let cell = cellOf(child);
               <th scope="row">
-                {{ child.name }} <span class="num muted">{{ child.piece }}</span>
-                @if (cell?.designationMayDiffer) {
-                  <span class="muted flagged" i18n>· designation may not be the parent's launch</span>
-                }
-                @if (cell?.port; as port) {
-                  <span class="muted port" i18n>· port <span class="num">{{ port }}</span></span>
-                }
+                <div class="object-cell">
+                  <app-object-visual [object]="child" variant="thumb" />
+                  <span>
+                    {{ child.name }} <span class="num muted">{{ child.piece }}</span>
+                    @if (cell?.designationMayDiffer) {
+                      <span class="muted flagged" i18n>· designation may not be the parent's launch</span>
+                    }
+                    @if (cell?.port; as port) {
+                      <span class="muted port" i18n>· port <span class="num">{{ port }}</span></span>
+                    }
+                  </span>
+                </div>
               </th>
               <td class="num">
                 @if (linkable(child)) {

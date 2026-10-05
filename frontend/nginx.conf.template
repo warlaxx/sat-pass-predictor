@@ -24,6 +24,16 @@ server {
         proxy_read_timeout 60s;
     }
 
+    # The objects' photographs (ABD-47), fetched from Wikimedia by this server rather than
+    # by the browser. ^~ so that no regex rule below wins.
+    location ^~ /commons-images/ {
+        proxy_pass https://upload.wikimedia.org/;
+        proxy_set_header Host upload.wikimedia.org;
+        proxy_ssl_server_name on;
+        proxy_set_header User-Agent "NextPass/1.0 (https://www.nextpass.space/legal)";
+        add_header Cache-Control "public, max-age=604800";
+    }
+
     location ~* \.(?:js|css)$ {
         add_header Cache-Control "public, max-age=31536000, immutable";
         try_files $uri =404;

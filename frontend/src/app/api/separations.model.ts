@@ -41,6 +41,21 @@ export interface Evidence {
 
 export type ObjectRole = 'payload' | 'rocket-stage' | 'component' | 'debris' | 'other';
 
+/**
+ * A free photograph of the object, from Wikimedia Commons (ABD-45), and the credit its
+ * licence requires beside it: author, licence (linked when there is a text to link to)
+ * and the file's page. `url` is a thumbnail on upload.wikimedia.org, 500 pixels wide.
+ */
+export interface ObjectImage {
+  readonly url: string;
+  readonly width: number | null;
+  readonly height: number | null;
+  readonly author: string | null;
+  readonly licence: string;
+  readonly licenceUrl: string | null;
+  readonly sourceUrl: string;
+}
+
 export interface SpaceObject {
   readonly id: string;
   readonly noradId: number | null;
@@ -55,6 +70,8 @@ export interface SpaceObject {
   readonly orbit: RecordedOrbit;
   readonly inOrbit: boolean;
   readonly evidence: Evidence;
+  /** Absent when no free photograph exists: most stages, adapters and debris. */
+  readonly image?: ObjectImage;
 }
 
 export interface SeparationSummary {
