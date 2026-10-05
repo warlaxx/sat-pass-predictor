@@ -796,6 +796,15 @@ Unglamorous, non-optional, and cheaper before the first payment than after.
 - **Leave the free Render plan.** It sleeps; a sleeping instance answers the first call in
   thirty seconds. A hobbyist shrugs, an integration times out and opens a support ticket.
   The first paid tier pays for the paid instance — that is the actual reason to have one.
+  *Until then (ABD-28, 5 October 2026):* a GitHub Action (`keep-awake.yml`) calls
+  `/actuator/health/liveness` every 5 minutes, so the free instance never reaches its
+  15 idle minutes. Chosen over the $7 Starter plan because nothing pays for it yet and the
+  750 free hours cover one service all month. The audit of 3 October measured 20 s on
+  `/api/passes` and a 502 after 120 s on `/api/separations` for the first visitor, 0.9 s
+  once awake. The liveness group leaves PostgreSQL alone (the full `/actuator/health`
+  would keep the database compute up too) and counts neither as usage nor against a quota.
+  It keeps the instance up, it does not make it reliable: the paid plan is still the
+  answer once someone pays.
 - **Uptime monitoring and a public status page.** Being able to point at ninety days of
   green is a sales argument for an API, and the cheapest one available.
 - **Alerting on the TLE chain.** Every source dark means every prediction stale. Today that
