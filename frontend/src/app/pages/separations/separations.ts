@@ -3,10 +3,10 @@ import { DecimalPipe, isPlatformBrowser } from '@angular/common';
 import { HttpErrorResponse, httpResource } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { ProblemDetail } from '../../api/passes.model';
-import { SeparationKind, SeparationSummary, SeparationsResponse } from '../../api/separations.model';
+import { SeparationKind, SeparationsResponse } from '../../api/separations.model';
 import { Reveal } from '../../motion/reveal';
 import { countUsage } from '../../shared/usage';
-import { isGeostationary, orbitLabel, precisionLabel, recordedDateShort } from './separation-format';
+import { EventRow, eventRow } from './separation-format';
 
 /** Enough for several months of events; the list is grouped by month below. */
 export const SEPARATIONS_LIMIT = 60;
@@ -52,13 +52,13 @@ export class SeparationsPage {
   protected readonly months = computed(() => {
     const filter = this.filter();
     const monthName = new Intl.DateTimeFormat(this.locale, { timeZone: 'UTC', month: 'long', year: 'numeric' });
-    const groups: { label: string; events: ReturnType<SeparationsPage['row']>[] }[] = [];
+    const groups: { label: string; events: EventRow[] }[] = [];
     for (const event of this.response()?.events ?? []) {
       if (filter !== 'ALL' && event.kind !== filter) continue;
       const label = event.date.at ? monthName.format(new Date(event.date.at)) : event.date.text;
       let group = groups.find((g) => g.label === label);
       if (!group) groups.push(group = { label, events: [] });
-      group.events.push(this.row(event));
+      group.events.push(eventRow(event, this.locale));
     }
     return groups;
   });
@@ -113,27 +113,5 @@ export class SeparationsPage {
   /** Counted when the table opens, not when it closes again. */
   protected countTable(details: HTMLDetailsElement): void {
     if (details.open) countUsage('list-show-table');
-  }
-
-  private row(event: SeparationSummary) {
-    const child = event.children === 1
-      ? event.firstChildName ?? event.id
-      : event.kind === 'FRAGMENTATION'
-        ? $localize`:Children of a fragmentation:${event.children}:count: fragments`
-        : $localize`:Children of a release:${event.children}:count: objects`;
-    return {
-      ...event,
-      child,
-      parent: event.parentName ?? $localize`:Parent missing from the catalogue:An uncatalogued object`,
-      who: [event.parentOwner, event.parentState].filter(Boolean).join(' · '),
-      date: recordedDateShort(event.date, this.locale),
-      precision: precisionLabel(event.date),
-      orbit: isGeostationary(event.orbit) ? 'GEO' : orbitLabel(event.orbit),
-      see: !event.inOrbit
-        ? $localize`:Whether an object can be seen:No longer in orbit`
-        : isGeostationary(event.orbit)
-          ? $localize`:Whether an object can be seen:Holds a fixed point in the sky`
-          : $localize`:Whether an object can be seen:Passes over you`,
-    };
   }
 }

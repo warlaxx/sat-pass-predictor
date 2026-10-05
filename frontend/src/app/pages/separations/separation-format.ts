@@ -1,4 +1,4 @@
-import { ObjectRole, RecordedDate, RecordedOrbit } from '../../api/separations.model';
+import { ObjectRole, RecordedDate, RecordedOrbit, SeparationSummary } from '../../api/separations.model';
 
 /**
  * How a recorded date reads, with exactly the precision it was recorded with and no
@@ -131,4 +131,38 @@ export function parentCell(text: string | null): ParentCell | undefined {
   const match = /^([A-Z]\d+)(\*?)(?:\s+(\S.*?))?\s*$/.exec(text ?? '');
   if (!match) return undefined;
   return { id: match[1], designationMayDiffer: match[2] === '*', port: match[3] ?? null };
+}
+
+/** One event as a list row reads it: who released what, when, and whether it can be seen. */
+export interface EventRow extends Omit<SeparationSummary, 'date' | 'orbit'> {
+  readonly child: string;
+  readonly parent: string;
+  readonly who: string;
+  /** The short date, with its own precision. */
+  readonly date: string;
+  readonly precision: string;
+  readonly orbit: string;
+  readonly see: string;
+}
+
+export function eventRow(event: SeparationSummary, locale: string): EventRow {
+  const child = event.children === 1
+    ? event.firstChildName ?? event.id
+    : event.kind === 'FRAGMENTATION'
+      ? $localize`:Children of a fragmentation:${event.children}:count: fragments`
+      : $localize`:Children of a release:${event.children}:count: objects`;
+  return {
+    ...event,
+    child,
+    parent: event.parentName ?? $localize`:Parent missing from the catalogue:An uncatalogued object`,
+    who: [event.parentOwner, event.parentState].filter(Boolean).join(' · '),
+    date: recordedDateShort(event.date, locale),
+    precision: precisionLabel(event.date),
+    orbit: isGeostationary(event.orbit) ? 'GEO' : orbitLabel(event.orbit),
+    see: !event.inOrbit
+      ? $localize`:Whether an object can be seen:No longer in orbit`
+      : isGeostationary(event.orbit)
+        ? $localize`:Whether an object can be seen:Holds a fixed point in the sky`
+        : $localize`:Whether an object can be seen:Passes over you`,
+  };
 }

@@ -17,6 +17,7 @@ import { SkyPanorama } from '../sky-panorama/sky-panorama';
 import { NextPass } from '../next-pass/next-pass';
 import { PassProfile } from '../pass-profile/pass-profile';
 import { Hero } from '../hero/hero';
+import { LatestSeparations } from './latest-separations';
 import { facingAzimuth } from '../sky-panorama/panorama-geometry';
 import { groupIntoNights } from '../pass-ribbon/nights';
 import { compassPoint, utcOffsetLabel } from '../format';
@@ -55,7 +56,7 @@ export function queryFromUrl(params: { get(name: string): string | null }): Pass
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile, Hero],
+  imports: [RouterLink, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile, Hero, LatestSeparations],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './home.scss',
   templateUrl: './home.html',

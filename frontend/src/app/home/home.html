@@ -193,6 +193,8 @@
   </section>
 }
 
+<app-latest-separations appReveal />
+
 <section class="features wrap" appReveal aria-labelledby="features-title">
   <div class="features-head">
     <h2 id="features-title" i18n>One pass, read four ways.</h2>
@@ -210,3 +212,8 @@
 </section>
 
 <app-discovery appReveal [query]="form()" (open)="inspect($event)" />
+
+<!-- The licence's attribution, for the separations above; the copy never names the source. -->
+<p class="wrap credit" i18n>
+  Separation data: GCAT, Jonathan C. McDowell, planet4589.org — CC BY 4.0.
+</p>
