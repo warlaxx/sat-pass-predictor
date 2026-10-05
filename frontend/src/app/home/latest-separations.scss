@@ -1,5 +1,10 @@
 :host { display: block; }
 
+/* The shell's column, repeated: home.scss's .wrap does not reach into this component. */
+.wrap {
+  padding-inline: max(var(--gutter), (100% - var(--column)) / 2);
+}
+
 .latest {
   align-items: start;
   display: flex;
