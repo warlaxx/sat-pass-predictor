@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import space.nextpass.delays.DelayMeasurement;
 import space.nextpass.gcat.GcatImportException;
 import space.nextpass.gcat.GcatImporter;
+import space.nextpass.images.ImageImport;
 
 /**
  * Entry point of the daily import, called by .github/workflows/daily-import.yml.
@@ -38,6 +39,9 @@ import space.nextpass.gcat.GcatImporter;
  * {@link DelayMeasurement}). The report keeps GCAT's fields at the top level and adds
  * {@code delays}; whatever happens to the measurement, the GCAT import stands and the
  * answer stays 200.
+ *
+ * <p>Then the objects' photographs (ABD-45, {@link ImageImport}), under {@code images},
+ * on the same terms: a failure there is reported, never fatal.
  */
 @Hidden
 @RestController
@@ -45,21 +49,25 @@ public class IngestController {
 
     private static final Logger log = LoggerFactory.getLogger(IngestController.class);
 
-    /** GCAT's report, unchanged at the top level, and the delay measurement beside it. */
-    public record Report(@JsonUnwrapped GcatImporter.Report gcat, DelayMeasurement.Report delays) {}
+    /** GCAT's report, unchanged at the top level, and the later steps beside it. */
+    public record Report(@JsonUnwrapped GcatImporter.Report gcat, DelayMeasurement.Report delays,
+                         ImageImport.Report images) {}
 
     private final byte[] token;
     private final ObjectProvider<GcatImporter> gcat;
     private final ObjectProvider<DelayMeasurement> delays;
+    private final ObjectProvider<ImageImport> images;
     private final Clock clock;
 
     public IngestController(@Value("${ingest.token:}") String token,
                             ObjectProvider<GcatImporter> gcat,
                             ObjectProvider<DelayMeasurement> delays,
+                            ObjectProvider<ImageImport> images,
                             Clock clock) {
         this.token = token.getBytes(StandardCharsets.UTF_8);
         this.gcat = gcat;
         this.delays = delays;
+        this.images = images;
         this.clock = clock;
     }
 
@@ -90,7 +98,7 @@ public class IngestController {
             return problem(HttpStatus.BAD_GATEWAY, e.getMessage());
         }
         return ResponseEntity.ok().header("Cache-Control", "no-store")
-                .body(new Report(report, measure(measurement, started)));
+                .body(new Report(report, measure(measurement, started), images(images.getIfAvailable())));
     }
 
     private static DelayMeasurement.Report measure(DelayMeasurement measurement, Instant started) {
@@ -103,6 +111,19 @@ public class IngestController {
             // Space-Track failures are already absorbed inside; this is the database.
             log.warn("Delay measurement failed, GCAT import kept", e);
             return DelayMeasurement.Report.failed(e.getMessage());
+        }
+    }
+
+    private static ImageImport.Report images(ImageImport images) {
+        if (images == null) {
+            return null;
+        }
+        try {
+            return images.run();
+        } catch (RuntimeException e) {
+            // Wikimedia's failures are already absorbed inside; this is the database.
+            log.warn("Image import failed, GCAT import kept", e);
+            return ImageImport.Report.failed(e.getMessage());
         }
     }
 

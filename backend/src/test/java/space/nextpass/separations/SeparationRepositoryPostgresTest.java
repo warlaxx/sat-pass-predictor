@@ -130,6 +130,29 @@ class SeparationRepositoryPostgresTest {
         assertThat(event.updatedAt()).isEqualTo(IMPORTED);
     }
 
+    /** ABD-45: an object with a photograph carries it and its credit; the others carry none. */
+    @Test
+    void anObjectWithAPhotographCarriesItsCredit() {
+        jdbc.update("""
+                INSERT INTO object_images (norad_id, file, thumb_url, thumb_width, thumb_height, author,
+                                           licence, licence_url, description_url, updated_at)
+                VALUES (100685, 'USA 667.jpg',
+                        'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/USA_667.jpg/500px-USA_667.jpg',
+                        500, 375, 'U.S. Space Force', 'Public domain', NULL,
+                        'https://commons.wikimedia.org/wiki/File:USA_667.jpg', now())""");
+        try {
+            Separations.Event event = separations.event("S100685").orElseThrow();
+
+            assertThat(event.children().getFirst().image()).isEqualTo(new Separations.Image(
+                    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/USA_667.jpg/500px-USA_667.jpg",
+                    500, 375, "U.S. Space Force", "Public domain", null,
+                    "https://commons.wikimedia.org/wiki/File:USA_667.jpg"));
+            assertThat(event.parent().image()).isNull();
+        } finally {
+            jdbc.update("DELETE FROM object_images");
+        }
+    }
+
     @Test
     void aParentMissingFromTheCatalogueIsNullNotAFailure() {
         Separations.Event event = separations.event("S69731").orElseThrow();

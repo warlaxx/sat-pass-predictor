@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import space.nextpass.separations.Separations.Date;
 import space.nextpass.separations.Separations.Event;
 import space.nextpass.separations.Separations.Evidence;
+import space.nextpass.separations.Separations.Image;
 import space.nextpass.separations.Separations.Kind;
 import space.nextpass.separations.Separations.Month;
 import space.nextpass.separations.Separations.Orbit;
@@ -57,6 +58,13 @@ public class SeparationRepository {
             jcat, satcat, name, payload_name, piece, type, owner, state, mass_kg,
             launch_text, launch_at, launch_precision, perigee_km, apogee_km, inclination_deg,
             op_orbit, decay_text, parent_text, separation_text, status""";
+
+    /** The object's photograph, when it has one (ABD-45, {@code V8__object_images.sql}). */
+    private static final String IMAGE = """
+            , i.thumb_url, i.thumb_width, i.thumb_height, i.author, i.licence, i.licence_url,
+            i.description_url""";
+
+    private static final String WITH_IMAGE = " FROM gcat_objects o LEFT JOIN object_images i ON i.norad_id = o.satcat";
 
     private final JdbcTemplate jdbc;
 
@@ -141,7 +149,9 @@ public class SeparationRepository {
                         new Date(separationText, instant(rs, "at"), rs.getString("precision"), rs.getBoolean("uncertain"))),
                 parentId, separationText);
         List<SpaceObject> children = jdbc.query(
-                "SELECT " + COLUMNS + " " + members + " ORDER BY o.satcat NULLS LAST, o.jcat LIMIT ?",
+                "SELECT " + COLUMNS + IMAGE + WITH_IMAGE
+                        + " WHERE o.parent = ? AND o.separation_text = ? AND " + VISIBLE
+                        + " ORDER BY o.satcat NULLS LAST, o.jcat LIMIT ?",
                 (rs, row) -> object(rs), parentId, separationText, MAX_CHILDREN);
         SpaceObject parent = find(parentId).orElse(null);
         SpaceObject grandparent = parent == null ? null : find(parentOf(parentId)).orElse(null);
@@ -165,7 +175,7 @@ public class SeparationRepository {
         if (jcat == null) {
             return Optional.empty();
         }
-        return jdbc.query("SELECT " + COLUMNS + " FROM gcat_objects o WHERE o.jcat = ?",
+        return jdbc.query("SELECT " + COLUMNS + IMAGE + WITH_IMAGE + " WHERE o.jcat = ?",
                 (rs, row) -> object(rs), jcat).stream().findFirst();
     }
 
@@ -189,7 +199,17 @@ public class SeparationRepository {
                 rs.getString("decay_text") == null,
                 new Evidence(rs.getString("jcat"), integer(rs, "satcat"), rs.getString("piece"),
                         rs.getString("name"), rs.getString("payload_name"), rs.getString("parent_text"),
-                        rs.getString("separation_text"), rs.getString("owner"), rs.getString("status")));
+                        rs.getString("separation_text"), rs.getString("owner"), rs.getString("status")),
+                image(rs));
+    }
+
+    private static Image image(ResultSet rs) throws SQLException {
+        String url = rs.getString("thumb_url");
+        if (url == null) {
+            return null;
+        }
+        return new Image(url, integer(rs, "thumb_width"), integer(rs, "thumb_height"), rs.getString("author"),
+                rs.getString("licence"), rs.getString("licence_url"), rs.getString("description_url"));
     }
 
     /** The first letter of the record's type: payload, rocket stage, component, debris. */

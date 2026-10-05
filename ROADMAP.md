@@ -1138,6 +1138,24 @@ parent's row, the import no longer decides `is_separation` row by row:
 every run — even a `304` night — so the first nightly import after the deployment applies
 it, and `reclassifiedSeparations` in its report says how many rows moved.
 
+### A picture for each object (ABD-45 → ABD-47, 5 October 2026)
+
+No free source has a photograph of every object. Measured on 5 October 2026: Wikidata
+links 7 491 items to a NORAD number (`P377`), **1 908 of them with an image** (`P18`, a
+Wikimedia Commons file); SatNOGS DB has 1 049 images whose licence is not established
+(ABD-48); Launch Library 2 describes 46 crewed vehicles; Gunter's Space Page is the best
+coverage and is all rights reserved. Stages, adapters, fairings and debris — most of what
+separates — are almost never photographed.
+
+So: **a photograph when a free one exists, an illustration of the object's kind
+otherwise.** The nightly request, after GCAT, asks Wikidata for every NORAD number with an
+image, then Commons for each file's author and licence, 50 files a request with a pause
+between them, and keeps public domain, CC0, CC BY and CC BY-SA (`Licences`). Wikimedia
+rate-limits its APIs since 2026 (200 requests a minute for a client naming itself in its
+User-Agent, ten otherwise); a refusal changes nothing, and the report says `unavailable`.
+The pages show each photograph with its author, licence and a link to the file: unlike
+GCAT, credited once in the footer, CC BY asks for the credit beside the work.
+
 ## Phase 3.2 — Measure GCAT's delay, meet real users (the decision point)
 
 How long between a separation and its appearance in GCAT, compared with Space-Track's
