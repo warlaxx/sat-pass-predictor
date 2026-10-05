@@ -776,6 +776,8 @@
     "889231934249531184": "{$ICU}, qui n’est peut-être pas celle du lancement du parent (signalée ci-dessous) : les objets libérés depuis une station spatiale, par exemple, reçoivent une désignation tirée du lancement de la station. Leurs dates et désignations de lancement sont à prendre avec prudence.",
     "8891739789520724075": "{VAR_PLURAL, plural, =1 {L’un de ces objets a une désignation de lancement} other {{INTERPOLATION} de ces objets ont une désignation de lancement}}",
     "6586274776203057095": "· désignation peut-être différente du lancement du parent",
-    "4122708660676573132": "· point {$START_TAG_SPAN}{$INTERPOLATION}{$CLOSE_TAG_SPAN}"
+    "4122708660676573132": "· point {$START_TAG_SPAN}{$INTERPOLATION}{$CLOSE_TAG_SPAN}",
+    "3692681254975339325": "Le serveur se réveille.",
+    "1386084489178491935": "Cela peut prendre jusqu'à 30 secondes ; la page se remplira d'elle-même."
   }
 }
