@@ -4,10 +4,10 @@
   <div class="scrim" aria-hidden="true"></div>
 
   <div class="copy">
-    <p class="eyebrow" i18n><i aria-hidden="true"></i>Live · SGP4 · Orekit · CelesTrak elements</p>
+    <p class="eyebrow" i18n><i aria-hidden="true"></i>Live · free · no account</p>
     <h1 id="hero-title" i18n>Know the second it crosses <span>your sky.</span></h1>
     <p class="lede" i18n>
-      Pass predictions for any satellite in the catalogue, from any point on Earth. Rise, peak and set, with sunlight, Doppler and a sky chart built for eyes adapting to the dark.
+      When the ISS and thousands of other satellites pass over you tonight, where to look and for how long, and what has just separated in orbit.
     </p>
     <div class="ctas">
       <button type="button" class="btn primary" [disabled]="loading()" (click)="compute.emit()">
@@ -18,7 +18,7 @@
         </svg>
         <ng-container i18n>Compute passes</ng-container>
       </button>
-      <a class="btn outline" routerLink="/developers" i18n>Read the API guide</a>
+      <a class="btn outline" routerLink="/separations" i18n>See what just separated</a>
     </div>
 
     <!-- Not a live region: a reader announcing every second would drown the page. -->

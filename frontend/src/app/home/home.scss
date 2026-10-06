@@ -172,6 +172,9 @@
 }
 
 .features-head p { color: var(--ink-2); font-size: 17px; margin: 0; max-width: 48ch; }
+.features-copy { display: grid; gap: 14px; }
+.features-head p.proof { color: var(--ink-3); font-size: 14px; }
+.features-head p.proof a { color: var(--ink-2); }
 
 .feature-grid {
   border-top: 1px solid var(--line);
