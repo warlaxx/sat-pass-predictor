@@ -3,6 +3,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { PassDto } from '../api/passes.model';
 import { compassPoint, formatCountdown } from '../format';
 import { nextPassState } from './next-pass-state';
+import { formatMagnitude, passBrightness, verdictLabel } from '../shared/brightness';
 
 /**
  * "Next pass in 2 h 14 min": the answer to the question people actually open the page
@@ -40,6 +41,9 @@ import { nextPassState } from './next-pass-state';
                 peaks at {{ s.pass.culmination.elevationDeg | number: '1.0-0' }}° towards {{ compass(s.pass.culmination.azimuthDeg) }}</ng-container>
                 @if (s.visibleFrom) {
                   · <span class="lit" i18n>potentially visible from {{ s.visibleFrom | date: 'HH:mm' }}</span>
+                  @if (brightness(s.pass); as b) {
+                    · <span [class.lit]="b.verdict !== 'too-faint'"><ng-container i18n>magnitude {{ magnitude(b.magnitude) }}</ng-container>, {{ verdict(b.verdict) }}</span>
+                  }
                 } @else {
                   · <ng-container i18n>not visible to the eye</ng-container>
                 }
@@ -91,6 +95,10 @@ import { nextPassState } from './next-pass-state';
   `,
 })
 export class NextPass {
+  protected readonly brightness = passBrightness;
+  protected readonly magnitude = formatMagnitude;
+  protected readonly verdict = verdictLabel;
+
   readonly passes = input.required<readonly PassDto[]>();
   readonly select = output<string>();
 

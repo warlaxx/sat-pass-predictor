@@ -27,6 +27,11 @@ export interface TrackPointDto {
   readonly illuminated: boolean;
   /** Sunlit with observer Sun elevation ≤ -6°; not a brightness/weather guarantee. */
   readonly visible: boolean;
+  /**
+   * Estimated visual magnitude (ABD-35): lower is brighter. Absent in shadow, and for any
+   * satellite without an established standard magnitude (all but the ISS for now).
+   */
+  readonly magnitude?: number;
 }
 
 export interface SubPointDto {

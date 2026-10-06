@@ -16,4 +16,19 @@ describe('pass visibility labels', () => {
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain(visible ? 'potentially visible' : 'no favourable sample');
   });
+
+  /** ABD-35: with a magnitude, the row says how bright and what it takes to see it. */
+  it('shows the brightest visible magnitude and its verdict', async () => {
+    const point: TrackPointDto = {
+      instant: '2026-09-19T18:00:00Z', azimuthDeg: 0, elevationDeg: 60, rangeKm: 450, rangeRateKmS: 0, dopplerHz: null,
+      subPoint: { latitudeDeg: 45, longitudeDeg: 5, altitudeKm: 420 },
+      illuminated: true, visible: true, magnitude: -3.2,
+    };
+    const pass: PassDto = { aos: point, culmination: point, los: point, durationSeconds: 300, track: [point] };
+    const fixture = TestBed.createComponent(PassTable);
+    fixture.componentRef.setInput('passes', [pass]);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.textContent).toContain('mag −3.2');
+    expect(fixture.nativeElement.textContent).toContain('naked eye');
+  });
 });
