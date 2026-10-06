@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { robotsTxt, siteOrigin, sitemapXml } from './seo-files.mjs';
 import { fetchSnapshot, snapshotApi } from './separations-snapshot.mjs';
+import { previewPath, renderPreview } from './og-images.mjs';
 
 const root = new URL('../', import.meta.url);
 const ng = createRequire(import.meta.url).resolve('@angular/cli/bin/ng.js');
@@ -41,6 +42,16 @@ if (build.status !== 0) process.exit(build.status ?? 1);
 const output = new URL('dist/frontend/', root);
 const browser = new URL('browser/', output);
 const { routes } = JSON.parse(readFileSync(new URL('prerendered-routes.json', output), 'utf8'));
+
+// ABD-33: a link preview per prerendered event and language, where its page names it.
+const previews = new URL('og/separations/', browser);
+mkdirSync(previews, { recursive: true });
+for (const event of Object.values(separations)) {
+  for (const language of ['en', 'fr']) {
+    writeFileSync(new URL(`.${previewPath(event.id, language)}`, browser), await renderPreview(event, language));
+  }
+}
+console.log(`Link previews: ${Object.keys(separations).length * 2} images.`);
 
 writeFileSync(new URL('robots.txt', browser), robotsTxt(origin));
 const sitemap = new URL('sitemap.xml', browser);

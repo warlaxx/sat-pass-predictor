@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DOCUMENT, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Discovery, Opportunity } from '../discovery/discovery';
+import { ShareButton } from '../share/share-button';
 import { SatellitePicker } from '../satellite-picker/satellite-picker';
 import { Reveal } from '../motion/reveal';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -56,7 +57,7 @@ export function queryFromUrl(params: { get(name: string): string | null }): Pass
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile, Hero, LatestSeparations],
+  imports: [RouterLink, ShareButton, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile, Hero, LatestSeparations],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './home.scss',
   templateUrl: './home.html',
@@ -64,6 +65,7 @@ export function queryFromUrl(params: { get(name: string): string | null }): Pass
 export class HomePage {
   private readonly api = inject(PassesApi);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly maxHours = MAX_WINDOW_HOURS;
   protected readonly frequencyBounds = { min: MIN_FREQUENCY_MHZ, max: MAX_FREQUENCY_MHZ };
@@ -316,6 +318,42 @@ export class HomePage {
   protected computeFromHero(): void {
     this.search();
     document.getElementById('query')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /**
+   * A link that reopens this very pass (ABD-33): the satellite, place and threshold of
+   * the result on screen - which may come from the discovery list rather than the form -
+   * the window of the form, and the pass itself. Nothing but the coordinates chosen.
+   */
+  protected shareUrl(pass: PassDto): string {
+    const loaded = this.response();
+    const url = new URL(this.document.location.href);
+    url.search = '';
+    url.hash = '';
+    if (loaded) {
+      const query: PassQuery = {
+        ...this.form(),
+        noradId: loaded.satellite.noradId,
+        lat: loaded.observer.latitudeDeg,
+        lon: loaded.observer.longitudeDeg,
+        alt: loaded.observer.altitudeM,
+        minElevation: loaded.minElevationDeg,
+      };
+      for (const [field, name] of Object.entries(URL_FIELDS)) {
+        const value = query[field as keyof PassQuery];
+        if (value !== undefined) url.searchParams.set(name, String(value));
+      }
+    }
+    url.searchParams.set('pass', pass.aos.instant);
+    return url.toString();
+  }
+
+  /** What a share sheet shows above the link: the satellite and when it passes. */
+  protected shareTitle(pass: PassDto): string {
+    const name = this.response()?.satellite.name ?? '';
+    const when = new Date(pass.aos.instant).toLocaleString(this.document.documentElement.lang || undefined,
+      { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return $localize`:Title of a shared pass:${name}:satellite: passes over me on ${when}:when:`;
   }
 
   /** The URL of the result on screen, so that copying the address shares the result. */

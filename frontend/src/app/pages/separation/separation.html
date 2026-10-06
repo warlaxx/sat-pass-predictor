@@ -14,6 +14,9 @@
   @if (lede(); as sentence) {
     <p class="lede">{{ sentence }}</p>
   }
+  @if (loaded) {
+    <div class="actions"><app-share-button [title]="heading()" /></div>
+  }
 </section>
 
 @if (problem(); as failure) {
