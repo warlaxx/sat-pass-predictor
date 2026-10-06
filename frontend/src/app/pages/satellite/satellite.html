@@ -25,6 +25,9 @@
     @if (id()) {
       <a class="btn primary" routerLink="/" [queryParams]="predictorParams()" i18n>Open in the predictor</a>
       <a class="btn outline" routerLink="/alerts" [queryParams]="{ norad: id() }" i18n>Set up reminders</a>
+      @if (id() === 25544) {
+        <a class="btn outline" routerLink="/iss" i18n>The ISS over your city</a>
+      }
     }
   </div>
 </section>
