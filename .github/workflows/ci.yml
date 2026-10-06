@@ -127,6 +127,10 @@ jobs:
         working-directory: frontend
         run: node --test scripts/separations-snapshot.test.mjs
 
+      - name: Verify the separations' link previews
+        working-directory: frontend
+        run: node --test scripts/og-images.test.mjs
+
       - name: Verify account dashboard interactions
         run: node --test scripts/account-dashboard.test.mjs
 

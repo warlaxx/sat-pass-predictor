@@ -167,6 +167,7 @@
             <span class="num span">{{ pass.aos.instant | date: 'HH:mm' }} → {{ pass.los.instant | date: 'HH:mm' }}</span>
             <span class="zone" i18n>local time ({{ zone(pass) }})</span>
           </div>
+          <div class="share"><app-share-button [small]="true" [title]="shareTitle(pass)" [url]="shareUrl(pass)" /></div>
           <p class="key">
             <span i18n><i class="stroke track"></i>trajectory</span>
             <span i18n><i class="stroke threshold"></i>{{ loaded.minElevationDeg }}° threshold</span>

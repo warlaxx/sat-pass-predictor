@@ -30,6 +30,13 @@ export interface PageMeta {
   readonly noindex?: boolean;
   /** Structured data for this page, as schema.org JSON-LD. */
   readonly jsonLd?: object;
+  /**
+   * The page's own link preview, a path under the site (ABD-33: a separation's card);
+   * the site's image otherwise. Only an image that exists at that path belongs here.
+   */
+  readonly image?: string;
+  /** What the page's own preview shows, for those who cannot see it. */
+  readonly imageAlt?: string;
 }
 
 /**
@@ -55,7 +62,7 @@ export class Seo {
     this.meta.updateTag({ property: 'og:type', content: 'website' });
     this.meta.updateTag({ property: 'og:locale', content: LANGUAGES[this.language].ogLocale });
     this.meta.updateTag({ property: 'og:locale:alternate', content: LANGUAGES[this.other()].ogLocale });
-    this.shareImage();
+    this.shareImage(page.image, page.imageAlt);
 
     if (page.description) {
       this.meta.updateTag({ name: 'description', content: page.description });
@@ -102,15 +109,15 @@ export class Seo {
   }
 
   /** A large preview when the image has an absolute address, the small card otherwise. */
-  private shareImage(): void {
+  private shareImage(path?: string, imageAlt?: string): void {
     if (!SITE_ORIGIN) {
       for (const selector of ['property="og:image"', 'property="og:image:width"', 'property="og:image:height"',
         'property="og:image:alt"', 'name="twitter:image"']) this.meta.removeTag(selector);
       this.meta.updateTag({ name: 'twitter:card', content: 'summary' });
       return;
     }
-    const url = `${SITE_ORIGIN}/og/${this.language}.png`;
-    const alt = $localize`:Alt text of the link preview image:NextPass: when the ISS passes over you tonight, on a sky chart`;
+    const url = `${SITE_ORIGIN}${path ?? `/og/${this.language}.png`}`;
+    const alt = (path && imageAlt) || $localize`:Alt text of the link preview image:NextPass: when the ISS passes over you tonight, on a sky chart`;
     this.meta.updateTag({ property: 'og:image', content: url });
     this.meta.updateTag({ property: 'og:image:width', content: String(SHARE_IMAGE.width) });
     this.meta.updateTag({ property: 'og:image:height', content: String(SHARE_IMAGE.height) });
