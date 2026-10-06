@@ -127,6 +127,21 @@
   white-space: nowrap;
 }
 
+.place { cursor: default; }
+.place-name { color: var(--ink); font: 500 17px var(--font-body); }
+
+.advanced { border-top: 1px solid var(--line-soft); padding-top: 4px; }
+.advanced summary {
+  color: var(--ink-2);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 10px 0;
+  width: fit-content;
+}
+.advanced summary:hover { color: var(--ink); }
+.advanced summary:focus-visible { border-radius: 4px; outline: 2px solid var(--accent); outline-offset: 4px; }
+.advanced[open] summary { margin-bottom: 8px; }
+
 .console-foot {
   align-items: center;
   display: flex;
