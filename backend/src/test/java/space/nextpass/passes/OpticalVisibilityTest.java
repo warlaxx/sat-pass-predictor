@@ -1,6 +1,7 @@
 package space.nextpass.passes;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 import space.nextpass.OrekitTest;
 import space.nextpass.TleFixtures;
@@ -68,5 +69,46 @@ class OpticalVisibilityTest {
         assertThat(favourable).as("sunlit satellite above a dark observer").isPositive();
         assertThat(shadow).as("eclipsed samples").isPositive();
         assertThat(transition).as("eclipse changes during a pass").isPositive();
+    }
+
+    /**
+     * ABD-35: every sunlit sample of the ISS carries a magnitude, recomputed here from an
+     * independent phase angle; a sample in shadow carries none.
+     */
+    @Test
+    void estimatesTheMagnitudeOfEverySunlitSample() {
+        var tle = TleFixtures.iss();
+        var passes = service.predictPasses(tle, new ObserverLocation(45.7578, 4.8320, 170),
+                tle.getDate().toInstant(context.getTimeScales()), Duration.ofHours(48), 10);
+        var frame = context.getFrames().getITRF(IERSConventions.IERS_2010, false);
+        var earth = new OneAxisEllipsoid(Constants.WGS84_EARTH_EQUATORIAL_RADIUS,
+                Constants.WGS84_EARTH_FLATTENING, frame);
+        var observer = earth.transform(new GeodeticPoint(Math.toRadians(45.7578), Math.toRadians(4.8320), 170));
+        var sun = context.getCelestialBodies().getSun();
+        var propagator = TLEPropagator.selectExtrapolator(tle);
+        int estimated = 0;
+        double brightest = Double.POSITIVE_INFINITY;
+        for (var pass : passes) {
+            for (var point : pass.track()) {
+                if (!point.illuminated()) {
+                    assertThat(point.magnitude()).isNull();
+                    continue;
+                }
+                var date = new AbsoluteDate(point.instant(), context.getTimeScales().getUTC());
+                var satellite = propagator.propagate(date).getPosition(frame);
+                double phase = Vector3D.angle(sun.getPosition(date, frame).subtract(satellite),
+                        observer.subtract(satellite));
+                assertThat(point.magnitude()).isCloseTo(
+                        Brightness.magnitude(-1.8, point.rangeKm(), phase), within(0.01));
+                // Never brighter than the ISS can be. No upper bound: a back-lit sphere fades
+                // fast (+4.5 here), one of the model's documented limits.
+                assertThat(point.magnitude()).isGreaterThan(-4.5);
+                brightest = Math.min(brightest, point.magnitude());
+                estimated++;
+            }
+        }
+        assertThat(estimated).isPositive();
+        // Two days over Lyon hold at least one bright ISS pass.
+        assertThat(brightest).isLessThan(0.0);
     }
 }
