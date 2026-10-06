@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { PassDto } from '../api/passes.model';
 import { compassPoint, elevationColour, formatDuration, isRemarkable, shadowEntry, utcOffsetLabel } from '../format';
+import { formatMagnitude, passBrightness, verdictLabel } from '../shared/brightness';
 
 /**
  * The full list of passes, and the accessible equivalent of the two visualisations to
@@ -64,8 +65,13 @@ import { compassPoint, elevationColour, formatDuration, isRemarkable, shadowEntr
             <td class="num dim">{{ point(pass.los.azimuthDeg) }}</td>
             <td class="num">{{ duration(pass) }}</td>
             <td class="remarks">
-              @if (potentiallyVisible(pass)) {
-                <span class="chip lit" title="At least one sample is sunlit with the Sun 6° below your horizon; weather and brightness are not modelled" i18n-title i18n>potentially visible</span>
+              @if (brightness(pass); as b) {
+                <span class="chip num" [class.lit]="b.verdict !== 'too-faint'" [class.quiet]="b.verdict === 'too-faint'"
+                      title="Estimated brightness at its best while visible: lower is brighter; weather is not modelled" i18n-title>
+                  <ng-container i18n>mag {{ magnitude(b.magnitude) }}</ng-container> · {{ verdict(b.verdict) }}
+                </span>
+              } @else if (potentiallyVisible(pass)) {
+                <span class="chip lit" title="At least one sample is sunlit with the Sun 6° below your horizon; weather is not modelled, brightness only for the ISS" i18n-title i18n>potentially visible</span>
               } @else {
                 <span class="chip quiet" i18n>no favourable sample</span>
               }
@@ -206,6 +212,10 @@ export class PassTable {
   protected remarkable(pass: PassDto): boolean {
     return isRemarkable(pass.culmination.elevationDeg);
   }
+
+  protected readonly brightness = passBrightness;
+  protected readonly magnitude = formatMagnitude;
+  protected readonly verdict = verdictLabel;
 
   protected potentiallyVisible(pass: PassDto): boolean {
     return pass.track.some(point => point.visible);

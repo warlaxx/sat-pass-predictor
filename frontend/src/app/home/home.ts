@@ -70,6 +70,29 @@ export class HomePage {
   protected readonly maxHours = MAX_WINDOW_HOURS;
   protected readonly frequencyBounds = { min: MIN_FREQUENCY_MHZ, max: MAX_FREQUENCY_MHZ };
   protected readonly form = signal<PassQuery>(DEFAULT_QUERY);
+
+  /**
+   * The advanced settings, folded for a beginner (ABD-37). They open by themselves when
+   * any of them is not the default, so a shared link never hides what it changed.
+   */
+  protected readonly advancedOpen = signal(false);
+
+  /**
+   * What the satellite field shows first: the default satellite by its name, so a
+   * beginner reads "ISS (ZARYA)", not a catalogue number (ABD-37). A shared link's other
+   * satellite keeps its number, the only name the page knows for it before a search.
+   */
+  protected readonly satelliteText = computed(() =>
+    this.form().noradId === DEFAULT_QUERY.noradId ? DEFAULT_SATELLITE_NAME : String(this.form().noradId));
+
+  /** The place in words: Lyon while it is the default, the coordinates once it is not. */
+  protected readonly placeLabel = computed(() => {
+    const { lat, lon } = this.form();
+    if (lat === DEFAULT_QUERY.lat && lon === DEFAULT_QUERY.lon) {
+      return $localize`:The default observer of the form:Lyon (default)`;
+    }
+    return `${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+  });
   protected readonly selected = signal<string | undefined>(undefined);
 
   protected readonly resource = this.api.resource;
@@ -155,6 +178,7 @@ export class HomePage {
     this.linked = linked !== undefined;
     if (linked) {
       this.form.set(linked);
+      this.advancedOpen.set(hasAdvancedSettings(linked));
       this.api.search(linked);
       const pass = params.get('pass');
       if (pass) this.selected.set(pass);
@@ -369,4 +393,15 @@ export class HomePage {
   protected reload(): void {
     this.api.reload();
   }
+}
+
+/** The name CelesTrak gives the default satellite, as the hero's card writes it. */
+const DEFAULT_SATELLITE_NAME = 'ISS (ZARYA)';
+
+/** True when a query sets anything the advanced settings hold, besides the place. */
+export function hasAdvancedSettings(query: PassQuery): boolean {
+  return query.alt !== DEFAULT_QUERY.alt
+    || query.hours !== DEFAULT_QUERY.hours
+    || query.minElevation !== DEFAULT_QUERY.minElevation
+    || query.frequencyMhz !== undefined;
 }

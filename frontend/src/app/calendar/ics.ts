@@ -81,7 +81,7 @@ function event(response: PassesResponse, pass: PassDto, window: VisibleWindow): 
     $localize`Peak ${stamp(peak.instant)}:time: UTC, ${elevation}:elevation:° towards ${compassPoint(peak.azimuthDeg)}:direction:`,
     $localize`Set ${stamp(pass.los.instant)}:time: UTC towards ${compassPoint(pass.los.azimuthDeg)}:direction:`,
     $localize`Elements epoch ${stamp(tle.epoch)}:time: UTC (${tle.source}:source:). Times drift as the elements age.`,
-    $localize`Potentially visible: sunlit satellite, Sun at least 6° below the horizon. Weather and brightness are not modelled.`,
+    $localize`Potentially visible: sunlit satellite, Sun at least 6° below the horizon. Weather is not modelled.`,
   ].join('\n');
   return [
     'BEGIN:VEVENT',

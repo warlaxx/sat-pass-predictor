@@ -23,7 +23,9 @@ import java.time.Instant;
  * @param subPoint     the point on the ground directly below the satellite
  * @param illuminated true when the entire solar disc is clear of Earth's limb
  * @param visible     potentially visible: illuminated and observer's Sun at or below
- *                    -6 degrees. Weather, brightness and obstructions are not modelled.
+ *                    -6 degrees. Weather and obstructions are not modelled.
+ * @param magnitude   estimated visual magnitude (ABD-35, {@code Brightness}), null when
+ *                    the satellite is in shadow or its standard magnitude is unknown
  */
 public record TrackPoint(
         Instant instant,
@@ -33,9 +35,20 @@ public record TrackPoint(
         double rangeRateKmS,
         SubSatellitePoint subPoint,
         boolean illuminated,
-        boolean visible) {
+        boolean visible,
+        Double magnitude) {
+
+    /** A sample without a brightness estimate. */
+    public TrackPoint(Instant instant, double azimuthDeg, double elevationDeg, double rangeKm,
+                      double rangeRateKmS, SubSatellitePoint subPoint, boolean illuminated, boolean visible) {
+        this(instant, azimuthDeg, elevationDeg, rangeKm, rangeRateKmS, subPoint, illuminated, visible, null);
+    }
 
     public TrackPoint {
+        if (magnitude != null && (!illuminated || !Double.isFinite(magnitude))) {
+            throw new IllegalArgumentException("a magnitude needs an illuminated sample and a finite value: "
+                    + magnitude);
+        }
         if (visible && !illuminated) {
             throw new IllegalArgumentException("a visible sample must be illuminated");
         }

@@ -127,6 +127,21 @@
   white-space: nowrap;
 }
 
+.place { cursor: default; }
+.place-name { color: var(--ink); font: 500 17px var(--font-body); }
+
+.advanced { border-top: 1px solid var(--line-soft); padding-top: 4px; }
+.advanced summary {
+  color: var(--ink-2);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 10px 0;
+  width: fit-content;
+}
+.advanced summary:hover { color: var(--ink); }
+.advanced summary:focus-visible { border-radius: 4px; outline: 2px solid var(--accent); outline-offset: 4px; }
+.advanced[open] summary { margin-bottom: 8px; }
+
 .console-foot {
   align-items: center;
   display: flex;
@@ -172,6 +187,9 @@
 }
 
 .features-head p { color: var(--ink-2); font-size: 17px; margin: 0; max-width: 48ch; }
+.features-copy { display: grid; gap: 14px; }
+.features-head p.proof { color: var(--ink-3); font-size: 14px; }
+.features-head p.proof a { color: var(--ink-2); }
 
 .feature-grid {
   border-top: 1px solid var(--line);
@@ -409,3 +427,5 @@
 .credit { color: var(--ink-3); font-size: 13px; margin: 0; padding-block: 48px; }
 
 .title-block .share { margin-top: 12px; }
+.cities-link { color: var(--ink-3); font-size: 14px; margin-top: 8px; }
+.cities-link a { color: var(--ink-2); }

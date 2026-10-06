@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import space.nextpass.access.AccessService;
 import space.nextpass.access.AccessWebConfiguration;
+import space.nextpass.domain.ObserverLocation;
 import space.nextpass.passes.PassQueryService;
 import java.time.Clock;
 import java.time.Duration;
@@ -74,5 +75,28 @@ class FeaturedPassControllerTest {
         when(clock.instant()).thenReturn(later.plusSeconds(60));
         mockMvc.perform(get("/api/featured-pass")).andExpect(status().isOk());
         verify(passQueryService, times(2)).findPasses(anyInt(), any(), any(), anyDouble());
+    }
+
+    /** ABD-34: a featured city, at its own coordinates, still unmetered. */
+    @Test
+    void servesAFeaturedCity() throws Exception {
+        when(clock.instant()).thenReturn(NOW.plusSeconds(7200));
+        when(passQueryService.findPasses(anyInt(), any(), any(), anyDouble())).thenReturn(PassFixtures.prediction());
+
+        mockMvc.perform(get("/api/featured-pass").param("city", "paris"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", "max-age=60, public"));
+
+        verify(passQueryService).findPasses(25544, new ObserverLocation(48.8566, 2.3522, 35), Duration.ofHours(48), 10.0);
+        verifyNoInteractions(access);
+    }
+
+    /** Only the fifty places: anything else would compute for free wherever a caller likes. */
+    @Test
+    void refusesAnUnknownCity() throws Exception {
+        mockMvc.perform(get("/api/featured-pass").param("city", "atlantis"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.title").value("Unknown city"));
+        verifyNoInteractions(passQueryService);
     }
 }

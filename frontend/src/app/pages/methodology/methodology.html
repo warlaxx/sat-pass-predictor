@@ -149,7 +149,38 @@
       <p i18n>
         A point is <code>visible</code> when the satellite is sunlit <b>and</b> the Sun is at
         least 6° below the observer's horizon (civil twilight). It is a geometric condition,
-        not a promise: brightness, clouds and light pollution are not modelled.
+        not a promise: clouds and light pollution are not modelled.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="brightness">
+  <div class="section-head">
+    <h2 id="brightness" i18n>How bright, roughly</h2>
+  </div>
+  <div class="split">
+    <div class="prose">
+      <h3 i18n>The model</h3>
+      <p i18n>
+        Each sunlit point of an ISS pass carries an estimated visual magnitude: lower is brighter, and
+        Sirius is −1.5. It treats the station as a sphere that reflects light evenly, the model observing
+        guides use: its standard magnitude (−1.8, at 1,000 km and half lit), five magnitudes fainter
+        for every tenfold distance, and a phase term for the angle between the Sun and you seen from the
+        station.
+      </p>
+      <p i18n>
+        A pass is marked <b>naked eye</b> at magnitude +3 or brighter, which a town sky still shows,
+        <b>binoculars</b> up to +7, and too faint beyond.
+      </p>
+    </div>
+    <div class="prose">
+      <h3 i18n>Its limits</h3>
+      <p i18n>
+        A station with solar panels is not a sphere: a real pass can be a magnitude brighter or fainter,
+        flares are not predicted, and a back-lit station fades faster in the model than in the sky. The
+        haze near the horizon is ignored. Only the ISS has a magnitude for now: a generic value would be
+        wrong by several magnitudes for most other objects, so they get none rather than a misleading one.
       </p>
     </div>
   </div>
