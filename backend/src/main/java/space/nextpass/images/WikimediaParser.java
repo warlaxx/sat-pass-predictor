@@ -27,6 +27,13 @@ final class WikimediaParser {
 
     static final String THUMB_HOST = "upload.wikimedia.org";
 
+    /**
+     * Where Commons has pointed its thumbnails since 2026 ({@code
+     * https://thumb.wikimedia.org/wikipedia/commons/thumb/…?utm_source=…}). The same path
+     * is served by {@value #THUMB_HOST}, which the site's rewrite proxies (ABD-50).
+     */
+    static final String NEW_THUMB_HOST = "thumb.wikimedia.org";
+
     private static final JsonMapper JSON = JsonMapper.builder().build();
     private static final Pattern TAG = Pattern.compile("<[^>]*>");
     private static final Pattern SPACE = Pattern.compile("\\s+");
@@ -60,7 +67,8 @@ final class WikimediaParser {
      * One Commons {@code imageinfo} answer, by the title it was asked for ({@code
      * File:Hubble_2009_close-up.jpg}): Commons normalises titles, and says how in
      * {@code query.normalized}. Missing files are left out; so are thumbnails anywhere but
-     * on {@value #THUMB_HOST}, which the site's rewrite serves.
+     * on Wikimedia's two thumbnail hosts, kept as a path on {@value #THUMB_HOST}, which the
+     * site's rewrite serves ({@link #thumbUrl}).
      */
     static Map<String, CommonsFile> commons(String body) {
         JsonNode root = read(body, "Commons");
@@ -85,8 +93,8 @@ final class WikimediaParser {
                 continue;
             }
             String title = page.path("title").asString("");
-            String thumb = text(info.path("thumburl"));
-            if (thumb == null || !onThumbHost(thumb)) {
+            String thumb = thumbUrl(text(info.path("thumburl")));
+            if (thumb == null) {
                 continue;
             }
             JsonNode meta = info.path("extmetadata");
@@ -129,12 +137,25 @@ final class WikimediaParser {
         return text.length() <= max ? text : text.substring(0, max - 1).strip() + "…";
     }
 
-    private static boolean onThumbHost(String url) {
+    /**
+     * A Commons thumbnail as {@code https://upload.wikimedia.org/wikipedia/commons/…},
+     * without the tracking query Commons now appends; null for any other host or path.
+     */
+    static String thumbUrl(String url) {
+        if (url == null) {
+            return null;
+        }
         try {
             URI uri = URI.create(url);
-            return "https".equals(uri.getScheme()) && THUMB_HOST.equals(uri.getHost());
+            boolean wikimedia = THUMB_HOST.equals(uri.getHost()) || NEW_THUMB_HOST.equals(uri.getHost());
+            String path = uri.getRawPath();
+            if (!"https".equals(uri.getScheme()) || !wikimedia || path == null
+                    || !path.startsWith("/wikipedia/commons/")) {
+                return null;
+            }
+            return "https://" + THUMB_HOST + path;
         } catch (IllegalArgumentException e) {
-            return false;
+            return null;
         }
     }
 

@@ -4,7 +4,8 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { HomePage, queryFromUrl } from './home';
+import { HomePage, hasAdvancedSettings, queryFromUrl } from './home';
+import { DEFAULT_QUERY } from '../api/passes.query';
 import { PassesResponse } from '../api/passes.model';
 
 /**
@@ -74,11 +75,25 @@ describe('HomePage', () => {
     expect(fixture.nativeElement.querySelector('.state').textContent).toContain('Pick a satellite');
   });
 
+  /** ABD-37: a beginner sees a satellite, a place and the button; the rest is folded. */
+  it('folds the advanced settings and names the place in words', async () => {
+    const fixture = TestBed.createComponent(HomePage);
+    await settle(fixture);
+    const details = fixture.nativeElement.querySelector('details.advanced') as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(details.querySelector('summary')!.textContent).toContain('Advanced settings');
+    // Latitude, longitude, altitude, window, threshold and downlink are all inside.
+    expect(details.querySelectorAll('input').length).toBe(6);
+    expect(fixture.nativeElement.querySelector('.place-name').textContent).toContain('Lyon (default)');
+  });
+
   it('offers the Lyon defaults, which are the ones the API applies', async () => {
     const fixture = TestBed.createComponent(HomePage);
     await settle(fixture);
     const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
-    expect(inputs[0].value).toBe('25544');
+    // The default satellite by name; its number is beside it (ABD-37).
+    expect(inputs[0].value).toBe('ISS (ZARYA)');
+    expect(fixture.nativeElement.querySelector('.satellite .unit').textContent).toContain('NORAD 25544');
     expect(inputs[1].value).toBe('45.7578');
   });
 });
@@ -338,6 +353,15 @@ describe('a shared link', () => {
     expect(queryFromUrl(params({ norad: '25544', freq: '145.8' }))?.frequencyMhz).toBe(145.8);
   });
 
+  it('opens the advanced settings only when they hold something other than the defaults', () => {
+    expect(hasAdvancedSettings(DEFAULT_QUERY)).toBe(false);
+    // A place alone is shown in words, without unfolding anything.
+    expect(hasAdvancedSettings({ ...DEFAULT_QUERY, lat: 48.85, lon: 2.35 })).toBe(false);
+    expect(hasAdvancedSettings({ ...DEFAULT_QUERY, hours: 72 })).toBe(true);
+    expect(hasAdvancedSettings({ ...DEFAULT_QUERY, minElevation: 25 })).toBe(true);
+    expect(hasAdvancedSettings({ ...DEFAULT_QUERY, frequencyMhz: 145.8 })).toBe(true);
+  });
+
   it('opens on its result: the form is filled and the prediction requested once', async () => {
     await TestBed.configureTestingModule({
       imports: [HomePage],
@@ -363,5 +387,7 @@ describe('a shared link', () => {
     const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
     expect(inputs[1].value).toBe('43.3');
     expect(fixture.nativeElement.querySelector('.state').textContent).toContain('No pass above 10');
+    expect(fixture.nativeElement.querySelector('.place-name').textContent).toContain('43.3000°, 5.4000°');
+    expect((fixture.nativeElement.querySelector('details.advanced') as HTMLDetailsElement).open).toBe(false);
   });
 });

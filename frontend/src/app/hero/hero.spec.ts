@@ -37,6 +37,18 @@ describe('Hero', () => {
     });
   });
 
+  /** ABD-38: the hero speaks to an observer; the engineering lives lower down and on /methodology. */
+  it('promises what a visitor gets, without acronyms', async () => {
+    const fixture = TestBed.createComponent(Hero);
+    fixture.componentRef.setInput('query', DEFAULT_QUERY);
+    await fixture.whenStable();
+    const copy = (fixture.nativeElement.querySelector('.copy') as HTMLElement);
+    const intro = copy.querySelector('.eyebrow')!.textContent! + copy.querySelector('.lede')!.textContent!;
+    expect(intro).not.toMatch(/SGP4|Orekit|CelesTrak|Doppler/);
+    expect(intro).toContain('ISS');
+    expect(copy.querySelector('a.btn')!.getAttribute('href')).toBe('/separations');
+  });
+
   it('ticks towards nothing before the first search, and says so', async () => {
     const fixture = TestBed.createComponent(Hero);
     fixture.componentRef.setInput('query', DEFAULT_QUERY);
