@@ -153,6 +153,19 @@ describe('HomePage geolocation', () => {
     expect(inputs[3].value).toBe('197');
   });
 
+  it('opens the advanced settings when the device measures an altitude, so it is not used unseen', async () => {
+    installGeolocation({
+      getCurrentPosition: (onSuccess) =>
+        onSuccess({
+          coords: { latitude: 45.76, longitude: 4.84, altitude: 197.4 },
+        } as GeolocationPosition),
+    });
+
+    const fixture = await clickLocate();
+
+    expect((fixture.nativeElement.querySelector('details.advanced') as HTMLDetailsElement).open).toBe(true);
+  });
+
   it('keeps the altitude that was typed when the device does not measure one', async () => {
     installGeolocation({
       getCurrentPosition: (onSuccess) =>
@@ -161,10 +174,11 @@ describe('HomePage geolocation', () => {
         } as GeolocationPosition),
     });
 
-    const inputs = (await clickLocate()).nativeElement
-      .querySelectorAll('input') as NodeListOf<HTMLInputElement>;
+    const fixture = await clickLocate();
+    const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
 
     expect(inputs[3].value).toBe('170');
+    expect((fixture.nativeElement.querySelector('details.advanced') as HTMLDetailsElement).open).toBe(false);
   });
 
   it('says so when the permission is refused, and leaves the fields alone', async () => {

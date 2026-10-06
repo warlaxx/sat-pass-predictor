@@ -282,6 +282,8 @@ export class HomePage {
           lon: position.lon,
           alt: position.alt ?? query.alt,
         }));
+        // A measured altitude lands in a folded field: show it rather than compute with it unseen.
+        if (hasAdvancedSettings(this.form())) this.advancedOpen.set(true);
         if ((from === 'hero' || this.searched()) && this.satelliteResolved()) this.search();
       },
       (error: Error) => this.locationError.set(error.message),
