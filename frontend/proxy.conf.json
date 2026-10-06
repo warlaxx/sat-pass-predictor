@@ -12,5 +12,13 @@
     "pathRewrite": {
       "^/status-probe/health": "/actuator/health"
     }
+  },
+  "/commons-images": {
+    "target": "https://upload.wikimedia.org",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/commons-images": ""
+    }
   }
 }

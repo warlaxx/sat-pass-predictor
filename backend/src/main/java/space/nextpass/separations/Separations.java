@@ -1,5 +1,6 @@
 package space.nextpass.separations;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
 import java.util.List;
 
@@ -33,6 +34,7 @@ public final class Separations {
      * @param noradId the NORAD catalogue number, null when there is none
      * @param role payload, rocket stage, component or debris, from the record's type
      * @param inOrbit false once the record says it re-entered, landed or was deorbited
+     * @param image a free photograph of the object, left out of the JSON when there is none
      */
     public record SpaceObject(
             String id,
@@ -47,7 +49,18 @@ public final class Separations {
             Date launch,
             Orbit orbit,
             boolean inOrbit,
-            Evidence evidence) {}
+            Evidence evidence,
+            @JsonInclude(JsonInclude.Include.NON_NULL) Image image) {}
+
+    /**
+     * A photograph from Wikimedia Commons (ABD-45) and the credit its licence requires:
+     * the page shows {@code author}, {@code licence} (linked to {@code licenceUrl} when
+     * there is one) and a link to {@code sourceUrl}, the file's page on Commons.
+     *
+     * @param url a thumbnail on upload.wikimedia.org, 500 pixels wide
+     */
+    public record Image(String url, Integer width, Integer height, String author, String licence,
+                        String licenceUrl, String sourceUrl) {}
 
     /** The fields of the record an event page quotes as evidence, verbatim. */
     public record Evidence(String id, Integer satcat, String piece, String name, String payloadName,

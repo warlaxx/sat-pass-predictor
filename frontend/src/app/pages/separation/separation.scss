@@ -32,6 +32,7 @@
 .node.current .label { color: var(--accent); }
 .node .name { font-size: 20px; font-weight: 600; }
 .node .muted { font-size: 13px; }
+.node app-object-visual { margin-bottom: 8px; }
 
 .compare, .objects { border-collapse: collapse; width: 100%; }
 .compare th, .compare td, .objects th, .objects td {
@@ -45,6 +46,7 @@
 .compare thead th.child { color: var(--accent); }
 .compare tbody th { color: var(--ink-2); }
 .objects td, .objects th { padding-right: 16px; }
+.objects .object-cell { align-items: center; display: flex; gap: 12px; }
 
 .record {
   background: var(--panel);
@@ -70,4 +72,6 @@
 @media (width < 640px) {
   .node + .node::before { content: '↓'; left: 50%; top: -22px; transform: translateX(-50%); }
   .lineage { gap: 28px; }
+  /* Three full-width pictures would push the event below the fold. */
+  .node app-object-visual { max-width: 200px; }
 }
