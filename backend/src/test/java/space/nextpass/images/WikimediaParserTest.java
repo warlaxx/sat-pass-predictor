@@ -48,6 +48,10 @@ class WikimediaParserTest {
         assertThat(hubble.descriptionUrl()).isEqualTo("https://commons.wikimedia.org/wiki/File:Hubble_2009_close-up.jpg");
 
         CommonsFile iss = files.get("File:ISS March 2009.jpg");
+        // Commons now answers on thumb.wikimedia.org with a tracking query (ABD-50): the
+        // same path on upload.wikimedia.org, without the query.
+        assertThat(iss.thumbUrl()).isEqualTo(
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/ISS.jpg/500px-ISS.jpg");
         assertThat(iss.author()).isEqualTo("Crew of STS-132");
         assertThat(iss.licence()).isEqualTo("CC BY-SA 4.0");
         assertThat(iss.licenceUrl()).isEqualTo("https://creativecommons.org/licenses/by-sa/4.0");
@@ -69,6 +73,21 @@ class WikimediaParserTest {
         assertThatThrownBy(() -> WikimediaParser.commons("{\"error\":{\"code\":\"maxlag\",\"info\":\"Waiting\"}}"))
                 .isInstanceOf(ImageSourceException.class)
                 .hasMessageContaining("maxlag");
+    }
+
+    @Test
+    void thumbnailsComeFromWikimediaCommonsOnly() {
+        assertThat(WikimediaParser.thumbUrl(
+                "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/80/ISS_March_2009.jpg/500px-ISS_March_2009.jpg?utm_source=x"))
+                .isEqualTo("https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/ISS_March_2009.jpg/500px-ISS_March_2009.jpg");
+        // Percent-encoding is kept as it is.
+        assertThat(WikimediaParser.thumbUrl(
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/C%2B%2B.png/500px-C%2B%2B.png"))
+                .isEqualTo("https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/C%2B%2B.png/500px-C%2B%2B.png");
+        assertThat(WikimediaParser.thumbUrl("https://evil.example.org/wikipedia/commons/a.jpg")).isNull();
+        assertThat(WikimediaParser.thumbUrl("http://upload.wikimedia.org/wikipedia/commons/a.jpg")).isNull();
+        assertThat(WikimediaParser.thumbUrl("https://thumb.wikimedia.org/wikipedia/en/a.jpg")).isNull();
+        assertThat(WikimediaParser.thumbUrl(null)).isNull();
     }
 
     @Test

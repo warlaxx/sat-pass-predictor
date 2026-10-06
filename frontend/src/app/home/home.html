@@ -216,7 +216,14 @@
 <section class="features wrap" appReveal aria-labelledby="features-title">
   <div class="features-head">
     <h2 id="features-title" i18n>One pass, read four ways.</h2>
-    <p i18n>Each view answers a different question, and the pass list is always the text equivalent of the globe and the sky chart.</p>
+    <div class="features-copy">
+      <p i18n>Each view answers a different question, and the pass list is always the text equivalent of the globe and the sky chart.</p>
+      <!-- The engineering proof, kept for those who look for it, out of the hero (ABD-38). -->
+      <p class="proof" i18n>
+        Computed with Orekit from public orbital elements, and checked against Skyfield to within a hundredth of a degree.
+        <a routerLink="/methodology">How it is computed</a> · <a routerLink="/developers">API guide</a>
+      </p>
+    </div>
   </div>
   <div class="feature-grid">
     @for (feature of features; track feature.title; let index = $index) {
