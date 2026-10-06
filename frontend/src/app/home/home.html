@@ -18,60 +18,76 @@
         <span class="caption" id="q-satellite" i18n>Satellite</span>
         <span class="entry">
           <app-satellite-picker label="Satellite name or NORAD catalogue number" i18n-label
-                                describedBy="q-satellite" [initial]="'' + form().noradId"
+                                describedBy="q-satellite" [initial]="satelliteText()"
                                 (changed)="setSatellite($event)" />
           <span class="unit" aria-hidden="true">@if (satelliteResolved()) {NORAD {{ form().noradId }}} @else {<ng-container i18n>choose</ng-container>}</span>
         </span>
       </div>
-      <label class="field">
-        <span class="caption" i18n>Latitude</span>
-        <span class="entry">
-          <input class="num" type="number" step="0.0001" min="-90" max="90" required
-                 [value]="form().lat" (input)="patch('lat', $any($event.target).value)">
-          <span class="unit" aria-hidden="true" i18n>° lat</span>
-        </span>
-      </label>
-      <label class="field">
-        <span class="caption" i18n>Longitude</span>
-        <span class="entry">
-          <input class="num" type="number" step="0.0001" min="-180" max="180" required
-                 [value]="form().lon" (input)="patch('lon', $any($event.target).value)">
-          <span class="unit" aria-hidden="true" i18n>° lon</span>
-        </span>
-      </label>
-      <label class="field">
-        <span class="caption" i18n>Altitude</span>
-        <span class="entry">
-          <input class="num" type="number" step="1" min="-500" max="9000" required
-                 [value]="form().alt" (input)="patch('alt', $any($event.target).value)">
-          <span class="unit" aria-hidden="true">m</span>
-        </span>
-      </label>
-      <label class="field">
-        <span class="caption" i18n>Window</span>
-        <span class="entry">
-          <input class="num" type="number" min="1" [max]="maxHours" required
-                 [value]="form().hours" (input)="patch('hours', $any($event.target).value)">
-          <span class="unit" aria-hidden="true">h</span>
-        </span>
-      </label>
-      <label class="field">
-        <span class="caption" i18n>Threshold <span class="visually-hidden">(minimum elevation)</span></span>
-        <span class="entry">
-          <input class="num" type="number" step="0.5" min="0" max="89" required
-                 [value]="form().minElevation" (input)="patch('minElevation', $any($event.target).value)">
-          <span class="unit" aria-hidden="true">°</span>
-        </span>
-      </label>
-      <label class="field">
-        <span class="caption" i18n>Downlink <span class="optional">(optional)</span><span class="visually-hidden">, for the Doppler shift</span></span>
-        <span class="entry">
-          <input class="num w-freq" type="number" step="any" [min]="frequencyBounds.min" [max]="frequencyBounds.max"
-                 placeholder="145.800" [value]="form().frequencyMhz ?? ''" (input)="setFrequency($any($event.target).value)">
-          <span class="unit" aria-hidden="true">MHz</span>
-        </span>
-      </label>
+      <!-- The place in words; the coordinates themselves are under the advanced settings (ABD-37). -->
+      <div class="field place" aria-live="polite">
+        <span class="caption" i18n>Place</span>
+        <span class="entry"><span class="place-name">{{ placeLabel() }}</span></span>
+      </div>
     </div>
+
+    <!--
+      A beginner needs a satellite, a place and the button. The rest folds away, and opens
+      by itself when a link or an earlier choice set any of it (ABD-37). A native <details>:
+      keyboard and screen readers know it without help.
+    -->
+    <details class="advanced" [open]="advancedOpen()" (toggle)="advancedOpen.set($any($event.target).open)">
+      <summary i18n>Advanced settings</summary>
+      <div class="fields">
+        <label class="field">
+          <span class="caption" i18n>Latitude</span>
+          <span class="entry">
+            <input class="num" type="number" step="0.0001" min="-90" max="90" required
+                   [value]="form().lat" (input)="patch('lat', $any($event.target).value)">
+            <span class="unit" aria-hidden="true" i18n>° lat</span>
+          </span>
+        </label>
+        <label class="field">
+          <span class="caption" i18n>Longitude</span>
+          <span class="entry">
+            <input class="num" type="number" step="0.0001" min="-180" max="180" required
+                   [value]="form().lon" (input)="patch('lon', $any($event.target).value)">
+            <span class="unit" aria-hidden="true" i18n>° lon</span>
+          </span>
+        </label>
+        <label class="field">
+          <span class="caption" i18n>Altitude</span>
+          <span class="entry">
+            <input class="num" type="number" step="1" min="-500" max="9000" required
+                   [value]="form().alt" (input)="patch('alt', $any($event.target).value)">
+            <span class="unit" aria-hidden="true">m</span>
+          </span>
+        </label>
+        <label class="field">
+          <span class="caption" i18n>Window</span>
+          <span class="entry">
+            <input class="num" type="number" min="1" [max]="maxHours" required
+                   [value]="form().hours" (input)="patch('hours', $any($event.target).value)">
+            <span class="unit" aria-hidden="true">h</span>
+          </span>
+        </label>
+        <label class="field">
+          <span class="caption" i18n>Threshold <span class="visually-hidden">(minimum elevation)</span></span>
+          <span class="entry">
+            <input class="num" type="number" step="0.5" min="0" max="89" required
+                   [value]="form().minElevation" (input)="patch('minElevation', $any($event.target).value)">
+            <span class="unit" aria-hidden="true">°</span>
+          </span>
+        </label>
+        <label class="field">
+          <span class="caption" i18n>Downlink <span class="optional">(optional)</span><span class="visually-hidden">, for the Doppler shift</span></span>
+          <span class="entry">
+            <input class="num w-freq" type="number" step="any" [min]="frequencyBounds.min" [max]="frequencyBounds.max"
+                   placeholder="145.800" [value]="form().frequencyMhz ?? ''" (input)="setFrequency($any($event.target).value)">
+            <span class="unit" aria-hidden="true">MHz</span>
+          </span>
+        </label>
+      </div>
+    </details>
 
     <div class="console-foot">
       <button type="button" class="btn outline" [disabled]="locating()" (click)="useMyPosition()">
@@ -200,7 +216,14 @@
 <section class="features wrap" appReveal aria-labelledby="features-title">
   <div class="features-head">
     <h2 id="features-title" i18n>One pass, read four ways.</h2>
-    <p i18n>Each view answers a different question, and the pass list is always the text equivalent of the globe and the sky chart.</p>
+    <div class="features-copy">
+      <p i18n>Each view answers a different question, and the pass list is always the text equivalent of the globe and the sky chart.</p>
+      <!-- The engineering proof, kept for those who look for it, out of the hero (ABD-38). -->
+      <p class="proof" i18n>
+        Computed with Orekit from public orbital elements, and checked against Skyfield to within a hundredth of a degree.
+        <a routerLink="/methodology">How it is computed</a> · <a routerLink="/developers">API guide</a>
+      </p>
+    </div>
   </div>
   <div class="feature-grid">
     @for (feature of features; track feature.title; let index = $index) {

@@ -90,10 +90,8 @@
     "3093683807001693179": "{$START_ITALIC_TEXT}{$CLOSE_ITALIC_TEXT}fauchée d'image ~{$INTERPOLATION} km ({$INTERPOLATION_1}, {$INTERPOLATION_2}) ",
     "4766953082168190734": "{$START_ITALIC_TEXT}{$CLOSE_ITALIC_TEXT}observateur",
     "8290095120389198843": "{$START_ITALIC_TEXT}{$CLOSE_ITALIC_TEXT}satellite",
-    "6482488199357084827": "{$START_ITALIC_TEXT}{$CLOSE_ITALIC_TEXT}En direct · SGP4 · Orekit · éléments CelesTrak",
     "1306622637373188695": "Sachez à la seconde près quand il traverse {$START_TAG_SPAN}votre ciel.{$CLOSE_TAG_SPAN}",
     "9135493879323002333": "Calculer les passages",
-    "5592749865956192505": "Lire le guide de l'API",
     "7442528847786960855": "Prochain passage",
     "8542520320931879199": "Lever",
     "5036673607313153608": "Culmination",
@@ -642,7 +640,6 @@
     "4313212855328919150": "Satellite météo polaire américain dont l'imageur VIIRS couvre la Terre deux fois par jour.",
     "2154371241894825242": "Quand l'ISS ou un satellite passe chez vous ce soir : lever, culmination et coucher, visibilité, carte du ciel et globe 3D, d'après CelesTrak.",
     "5927189633338895719": "Le globe 3D n'a pas pu charger three.js. La carte du ciel et le tableau restent utilisables : c'est précisément pour cela qu'ils ne dépendent d'aucune bibliothèque externe.",
-    "1645977856446354872": " Les passages de n'importe quel satellite du catalogue, depuis n'importe quel point du globe. Lever, culmination et coucher, avec l'éclairement, le Doppler et une carte du ciel pensée pour des yeux qui s'habituent à l'obscurité. ",
     "3110018682491734187": "Passages ≥ {$INTERPOLATION}° · {$INTERPOLATION_1} en {$INTERPOLATION_2} nuits",
     "4048997179401116349": " Choisissez un satellite et un lieu. Vous obtenez un fichier d'agenda avec un événement par passage réellement observable (satellite éclairé, ciel sombre) et un rappel dix minutes avant qu'il n'apparaisse. Il fonctionne dans n'importe quel agenda, sans compte, même page fermée. ",
     "630629108068316252": " « Appeler mon endpoint vingt minutes avant le prochain passage » est sur la feuille de route pour les clients de l'API : une station sol qui doit se réveiller, un bot qui doit publier. Ce sera construit quand quelqu'un en aura besoin. D'ici là, l'{$START_LINK}API{$CLOSE_LINK} donne tous les passages des dix prochains jours en un seul appel, qu'une tâche planifiée peut transformer en ses propres alertes. ",
@@ -827,6 +824,13 @@
     "695412548618357040": "mag {$INTERPOLATION}",
     "8399008641362183228": "à l'œil nu",
     "1776878756063766298": "aux jumelles",
-    "72130534574078392": "trop faible pour être vu"
+    "72130534574078392": "trop faible pour être vu",
+    "7127864144505863678": "Lieu",
+    "8821221480638803282": "Réglages avancés",
+    "1904469292114179141": "Lyon (par défaut)",
+    "6791512451538600814": "{$START_ITALIC_TEXT}{$CLOSE_ITALIC_TEXT}En direct · gratuit · sans compte",
+    "8376239825315945803": "Découvrez quand l'ISS et des milliers d'autres satellites passent au-dessus de vous ce soir, où regarder et pendant combien de temps, et ce qui vient de se séparer en orbite.",
+    "4749242239491203096": "Voir les dernières séparations",
+    "7939170093507096963": " Calculé avec Orekit à partir des éléments orbitaux publics, et vérifié avec Skyfield à moins d'un centième de degré près. {$START_LINK}Comment c'est calculé{$CLOSE_LINK} · {$START_LINK_1}Guide de l'API{$CLOSE_LINK} "
   }
 }
