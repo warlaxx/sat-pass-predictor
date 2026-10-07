@@ -1,0 +1,75 @@
+name: Pass reminders
+
+# ABD-42: the hourly round of the e-mail reminders. Hourly, not daily, because each
+# subscriber's day is looked at from 15:00 in their own time zone (AlertService), and
+# because a round that could not decide - no elements, no cloud forecast - leaves the day
+# open for the next hour. Same reasons as daily-import.yml for a workflow rather than
+# @Scheduled: Render's free plan sleeps.
+#
+# Repository secrets: BACKEND_URL and IMPORT_TOKEN, the same as the import. On Render,
+# ALERTS_ENABLED=true, RESEND_API_KEY and ALERTS_FROM; without them the endpoint answers
+# 503 and this job says so in a warning rather than failing every hour.
+
+on:
+  schedule:
+    # Off the hour on purpose: GitHub delays jobs queued at :00 the most.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: pass-alerts
+  cancel-in-progress: false
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BACKEND_URL: ${{ secrets.BACKEND_URL }}
+      IMPORT_TOKEN: ${{ secrets.IMPORT_TOKEN }}
+    steps:
+      - name: Check configuration
+        id: config
+        run: |
+          if [ -z "$BACKEND_URL" ] || [ -z "$IMPORT_TOKEN" ]; then
+            echo "::warning::BACKEND_URL or IMPORT_TOKEN is not set; skipping the round."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Wake the backend
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 "$BACKEND_URL/actuator/health" || echo "000")
+            echo "Attempt $i: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "::error::The backend did not answer /actuator/health."
+          exit 1
+
+      # 503 means reminders are not switched on for this instance: a warning, not a
+      # failure, so that the job stays green until Render has its variables.
+      - name: Run the round
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          code=$(curl -sS -o report.json -w "%{http_code}" --max-time 600 -X POST \
+            -H "Authorization: Bearer $IMPORT_TOKEN" "$BACKEND_URL/internal/alerts/send")
+          cat report.json; echo
+          if [ "$code" = "503" ]; then
+            echo "::warning::E-mail reminders are not enabled on the backend (HTTP 503)."
+            exit 0
+          fi
+          [ "$code" = "200" ] || { echo "::error::The round answered HTTP $code."; exit 1; }
+          {
+            echo "## Pass reminders"
+            echo '```json'; cat report.json; echo; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

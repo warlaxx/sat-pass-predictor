@@ -53,3 +53,12 @@ services:
       # secret of the GitHub repository (see .github/workflows/daily-import.yml).
       - key: IMPORT_TOKEN
         sync: false
+      # E-mail reminders (ABD-42, docs/alerts.md). Off until ALERTS_ENABLED is true;
+      # on, they need the database of api-access, a Resend key and a sender on a domain
+      # verified in Resend. The hourly round reuses IMPORT_TOKEN.
+      - key: ALERTS_ENABLED
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: ALERTS_FROM
+        sync: false

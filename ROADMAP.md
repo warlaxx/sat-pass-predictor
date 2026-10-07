@@ -1247,6 +1247,13 @@ GCAT. GCAT is the ground truth it is tested against.
 
 Deployment, debris, breakup; RSS and an API for whoever wants to be told first.
 
+*Started from the observers' side (ABD-42, 7 October 2026):* an e-mail on the days a pass
+is worth going out for - sunlit in a dark sky, high enough, under a clear MET Norway
+forecast - sent through Resend by an hourly workflow, off until `ALERTS_ENABLED`. Asked for
+in a Reddit comment, a weak signal: confirmed sign-ups are the measure. See
+[e-mail reminders](docs/alerts.md). Push notifications (ABD-52) and "an object that just
+separated passes over you tonight" (ABD-53) wait on it.
+
 ---
 
 # Accepted limitations
