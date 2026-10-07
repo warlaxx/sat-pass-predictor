@@ -211,6 +211,24 @@ class DelayMeasurementPostgresTest {
                 .containsExactlyInAnyOrder(100961, 101000);
     }
 
+    /**
+     * ABD-13: an auxiliary-catalogue row carrying an object's number, first seen the same
+     * night, neither speaks for it ('A' sorts before 'S') nor counts as GCAT listing it.
+     */
+    @Test
+    void anAuxiliaryRowDoesNotSpeakForTheObject() {
+        gcatObject("A11999", 100961, "USA 700 ADAPTER", false, null, null, null, SECOND_NIGHT);
+        gcatObject("A12000", 101500, "STAGE OF 101500", false, null, null, null, SECOND_NIGHT);
+
+        DelayMeasurement.Report report = measurement(spaceTrack).run(SECOND_NIGHT);
+
+        assertThat(report.separations().objects()).isEqualTo(1);
+        assertThat(report.allObjects().objects()).isEqualTo(2);
+        assertThat(report.awaitingGcat()).isEqualTo(1);
+        assertThat(report.newlyMeasured()).filteredOn(delay -> delay.noradId() == 100961).singleElement()
+                .satisfies(delay -> assertThat(delay.jcat()).isEqualTo("S100961"));
+    }
+
     /** The database failing is not Space-Track failing: it is thrown, for the caller to report. */
     @Test
     void aDatabaseFailureIsNotReportedAsSpaceTrackUnavailable() {

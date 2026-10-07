@@ -1070,6 +1070,20 @@ partial changes, `first_seen_at` and a download cut halfway. **In production on
 2 October 2026:** the first run imported 70 961 objects in 53 s on the free Render instance
 and Neon; the second answered `"status": "unchanged"` in 0.3 s.
 
+*The auxiliary catalogue, for the lineage (ABD-13, 7 October 2026).* `auxcat.tsv`
+(≈ 12 000 rows, 3.4 MB, same columns) is the third file of `gcat.files`. It holds the
+stages, adapters, trunks and modules that are often a separated object's parent or
+grandparent: FRG-10D1 left the FGN-TUG-S01 tug, which rode the Transporter-15 adapter stack
+(`A11695`) on the Falcon 9 second stage (`A11696`), and the event page now names both. Its
+rows are **never listed as separations** (`GcatObject.listed`): the rule would add 6 292
+of them (27 694 → 33 986, 77 since 2024: Dragon trunks, Soyuz modules, W-series capsules),
+a change of the list that ABD-51 decides. 3 737 of its rows carry the NORAD number of the
+spacecraft they are attached to, so the photographs and the delay measure
+(`V9__catalogue_delays_satellite_rows.sql`) read the `S…` rows only. In production,
+`gcat_objects` held 70 961 rows in 28 MB before it, so it adds about 5 MB to Neon. `rcat.tsv`
+and `lcat.tsv` (suborbital and low objects, 80 000+ rows each) are not imported: an object
+whose parent is an `R…` entry is never a separation, and no page needs their rows yet.
+
 ## Phase 3.1 — Event pages from GCAT (done)
 
 One page per separation: parent, child, date with its precision, orbit, what GCAT says and
