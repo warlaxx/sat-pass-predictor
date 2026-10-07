@@ -1,0 +1,83 @@
+/*
+ * The site's footer (ABD-19: out of app.scss, which held the whole shell and went past the
+ * component style budget). The host is the full-bleed band; .wrap lines its content up on
+ * the site's column, as the shell's own bands do.
+ */
+:host {
+  display: block;
+}
+
+.wrap {
+  padding-inline: max(var(--gutter), (100% - var(--column)) / 2);
+}
+
+.footer {
+  align-items: flex-start;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 24px 80px;
+  padding-block: 56px;
+}
+
+.footer-brand {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-stretch: 87.5%;
+  font-weight: 800;
+  gap: 12px;
+  letter-spacing: -0.01em;
+}
+
+.footer-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 32px;
+  min-width: 0;
+}
+
+.columns {
+  display: grid;
+  gap: 24px 56px;
+  grid-template-columns: repeat(3, minmax(0, max-content));
+}
+
+.columns nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.columns h2 {
+  color: var(--ink-3);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-stretch: 100%;
+  font-weight: 500;
+  letter-spacing: 0;
+  margin-bottom: 4px;
+}
+
+.columns a {
+  color: var(--ink-2);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.columns a:hover { color: var(--ink); }
+
+.footer p {
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 72ch;
+}
+
+@media (width < 640px) {
+  .footer { flex-direction: column; }
+  .columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

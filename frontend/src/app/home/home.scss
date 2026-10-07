@@ -162,54 +162,6 @@
   margin: 0;
 }
 
-/* --- Features ---------------------------------------------------------------------- */
-
-.features {
-  display: flex;
-  flex-direction: column;
-  gap: 48px;
-  padding-top: 140px;
-}
-
-.features-head {
-  align-items: end;
-  display: grid;
-  gap: 24px 40px;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
-}
-
-.features-head h2 {
-  font-size: clamp(44px, 5vw, 80px);
-  font-stretch: 75%;
-  letter-spacing: -0.025em;
-  line-height: 0.92;
-  text-wrap: balance;
-}
-
-.features-head p { color: var(--ink-2); font-size: 17px; margin: 0; max-width: 48ch; }
-.features-copy { display: grid; gap: 14px; }
-.features-head p.proof { color: var(--ink-3); font-size: 14px; }
-.features-head p.proof a { color: var(--ink-2); }
-
-.feature-grid {
-  border-top: 1px solid var(--line);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.feature-grid article {
-  border-right: 1px solid var(--line-soft);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-right: 28px;
-  padding: 28px 28px 32px 0;
-}
-
-.feature-grid .num { color: var(--signal); font-size: 12px; }
-.feature-grid h3 { font-size: 26px; }
-.feature-grid p { color: var(--ink-3); font-size: 14px; line-height: 1.6; margin: 0; }
-
 /* --- States ---------------------------------------------------------------------------- */
 
 .state {
@@ -416,8 +368,6 @@
 
 @media (width < 640px) {
   .query { padding: 20px 16px; }
-  .features { padding-top: 96px; }
-  .feature-grid article { margin-right: 0; border-right: 0; border-bottom: 1px solid var(--line-soft); }
   .compute { margin-left: 0; width: 100%; }
 }
 
