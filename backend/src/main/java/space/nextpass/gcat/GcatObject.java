@@ -80,7 +80,18 @@ public record GcatObject(
      * See {@link #isSeparation(String, String, GcatDate, GcatDate, Parent)}.
      */
     public boolean isSeparation(Parent of) {
-        return isSeparation(type, parent, launch, separation, of);
+        return listed(jcat) && isSeparation(type, parent, launch, separation, of);
+    }
+
+    /**
+     * Whether a row may be listed as a separation at all: only the satellite catalogues'
+     * ({@code S…}). The auxiliary catalogue's objects ({@code A…}: stages, adapters, trunks,
+     * modules without a satellite-catalogue entry of their own) are imported for the lineage, so
+     * that an event page names the parent and grandparent (ABD-13); the rule would make
+     * about 6 300 of them separations, a change of the list that ABD-51 decides.
+     */
+    public static boolean listed(String jcat) {
+        return jcat != null && jcat.startsWith("S");
     }
 
     /**

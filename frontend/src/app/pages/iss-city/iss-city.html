@@ -1,0 +1,64 @@
+@let here = place();
+@let loaded = response();
+
+<section class="page-hero wrap" appReveal aria-labelledby="city-title">
+  <span class="kicker"><a routerLink="/iss" i18n>The ISS over your city</a></span>
+  <h1 id="city-title">{{ heading() }}</h1>
+  @if (here) {
+    <p class="lede">{{ intro() }}</p>
+    <div class="actions">
+      <a class="btn primary" routerLink="/" [queryParams]="predictorParams()" i18n>Open in the predictor</a>
+      <a class="btn outline" routerLink="/satellites/25544" i18n>About the ISS</a>
+    </div>
+  } @else {
+    <p class="lede" i18n>There is no page for “{{ city() }}”. <a routerLink="/iss">See the cities that have one</a>, or compute the passes over your own position in the predictor.</p>
+  }
+</section>
+
+@if (here) {
+  <section class="page-section wrap" appReveal aria-labelledby="passes-title">
+    <div class="section-head">
+      <h2 id="passes-title" i18n>Next passes over {{ over() }}</h2>
+      @if (loaded) {
+        <span i18n>Above {{ loaded.minElevationDeg }}° over the next {{ windowHours }} h · {{ loaded.passes.length }} passes, {{ visibleCount() }} potentially visible · times in your device's time zone</span>
+      }
+    </div>
+    @if (problem(); as failure) {
+      <div class="note" role="alert">
+        <b>{{ failure.title }}.</b> {{ failure.detail }}
+        <div class="actions"><button type="button" class="btn outline small" (click)="reload()" i18n>Try again</button></div>
+      </div>
+    } @else if (!loaded) {
+      <p class="state" role="status" i18n><span class="dot wait" aria-hidden="true"></span>Computing the next passes over {{ over() }}…</p>
+    } @else if (loaded.passes.length === 0) {
+      <p class="state" role="status" i18n>No pass above {{ loaded.minElevationDeg }}° over {{ over() }} in the next {{ windowHours }} hours.</p>
+    } @else {
+      <app-next-pass [passes]="loaded.passes" (select)="inspect($event)" />
+      <app-pass-table [passes]="loaded.passes" [observer]="loaded.observer" (select)="inspect($event)" />
+      <p class="muted" i18n>Choose a pass to open it in the predictor, with the globe and the sky chart.</p>
+    }
+  </section>
+
+  <section class="page-section wrap" appReveal aria-labelledby="faq-title">
+    <div class="section-head">
+      <h2 id="faq-title" i18n>Questions</h2>
+    </div>
+    <dl class="faq">
+      @for (item of faq(); track item.question) {
+        <div>
+          <dt>{{ item.question }}</dt>
+          <dd>{{ item.answer }}</dd>
+        </div>
+      }
+    </dl>
+  </section>
+}
+
+<nav class="page-section wrap others" aria-labelledby="others-title">
+  <h2 id="others-title" i18n>Other cities</h2>
+  <ul>
+    @for (other of others(); track other.slug) {
+      <li><a [routerLink]="['/iss', other.slug]">{{ other.name }}</a></li>
+    }
+  </ul>
+</nav>

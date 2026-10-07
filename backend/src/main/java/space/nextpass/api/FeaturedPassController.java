@@ -6,10 +6,15 @@ import io.swagger.v3.oas.annotations.Hidden;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -28,6 +33,10 @@ import org.springframework.web.bind.annotation.RestController;
  * cache's hit ratio - one of the two numbers a price is set from - is not inflated by one
  * hit per page view; and the browser is told it may keep it for as long.
  *
+ * <p>{@code ?city=paris} asks the same for one of {@link FeaturedCities}, for the pages
+ * {@code /iss/:city} (ABD-34): fifty fixed places, each kept the same way, so it computes
+ * nothing a caller chooses. An unknown city is a 404.
+ *
  * <p>Hidden from the API documentation: it is the home page's, not a contract.
  */
 @Hidden
@@ -44,6 +53,7 @@ public class FeaturedPassController {
     private final PassQueryService passQueryService;
     private final Clock clock;
     private final AtomicReference<Kept> kept = new AtomicReference<>();
+    private final Map<String, Kept> keptByCity = new ConcurrentHashMap<>();
 
     private record Kept(PassesResponse response, Instant at) {
     }
@@ -54,20 +64,46 @@ public class FeaturedPassController {
     }
 
     @GetMapping("/api/featured-pass")
-    public ResponseEntity<PassesResponse> featured() {
+    public ResponseEntity<?> featured(@RequestParam(required = false) String city) {
         Instant now = clock.instant();
-        Kept current = kept.get();
-        // Two requests racing past an expired entry both compute; the cache below makes
-        // the second one a hit, which is cheaper than a lock held across a propagation.
-        // A clock set back recomputes too: an answer from the future is not a fresh one.
-        if (current == null || now.isBefore(current.at())
-                || Duration.between(current.at(), now).compareTo(REUSE_FOR) >= 0) {
-            current = new Kept(PassesResponse.from(
-                    passQueryService.findPasses(NORAD_ID, OBSERVER, WINDOW, MIN_ELEVATION_DEG), null), now);
-            kept.set(current);
+        if (city == null) {
+            Kept current = kept.get();
+            // Two requests racing past an expired entry both compute; the cache below makes
+            // the second one a hit, which is cheaper than a lock held across a propagation.
+            // A clock set back recomputes too: an answer from the future is not a fresh one.
+            if (stale(current, now)) {
+                current = compute(OBSERVER, now);
+                kept.set(current);
+            }
+            return fresh(current);
         }
+        var observer = FeaturedCities.observer(city);
+        if (observer.isEmpty()) {
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
+                    "No featured city is called \"" + city + "\".");
+            problem.setTitle("Unknown city");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+        }
+        Kept current = keptByCity.get(city);
+        if (stale(current, now)) {
+            current = compute(observer.get(), now);
+            keptByCity.put(city, current);
+        }
+        return fresh(current);
+    }
+
+    private static boolean stale(Kept kept, Instant now) {
+        return kept == null || now.isBefore(kept.at()) || Duration.between(kept.at(), now).compareTo(REUSE_FOR) >= 0;
+    }
+
+    private Kept compute(ObserverLocation observer, Instant now) {
+        return new Kept(PassesResponse.from(
+                passQueryService.findPasses(NORAD_ID, observer, WINDOW, MIN_ELEVATION_DEG), null), now);
+    }
+
+    private static ResponseEntity<PassesResponse> fresh(Kept kept) {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.maxAge(REUSE_FOR).cachePublic())
-                .body(current.response());
+                .body(kept.response());
     }
 }

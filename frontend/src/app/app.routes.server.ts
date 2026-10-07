@@ -1,6 +1,7 @@
 import { PrerenderFallback, RenderMode, ServerRoute } from '@angular/ssr';
 import { FEATURED } from './shared/featured';
 import { separationSnapshot } from './separations-snapshot.server';
+import { ISS_CITIES } from './pages/iss-city/iss-cities';
 
 /**
  * Which pages are written to HTML at build time.
@@ -29,6 +30,13 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Prerender,
     getPrerenderParams: async () => Object.keys(separationSnapshot()).map(id => ({ id })),
     // Older events, and those imported since the build, are rendered in the browser.
+    fallback: PrerenderFallback.Client,
+  },
+  {
+    path: 'iss/:city',
+    renderMode: RenderMode.Prerender,
+    getPrerenderParams: async () => ISS_CITIES.map(city => ({ city: city.slug })),
+    // Any other name renders in the browser, and says there is no page for it.
     fallback: PrerenderFallback.Client,
   },
   { path: '**', renderMode: RenderMode.Prerender },

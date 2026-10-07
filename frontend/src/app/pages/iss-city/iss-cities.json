@@ -1,0 +1,502 @@
+[
+ {
+  "slug": "paris",
+  "lat": 48.8566,
+  "lon": 2.3522,
+  "alt": 35,
+  "en": "Paris",
+  "fr": "Paris",
+  "country": "FR",
+  "frOf": "de Paris"
+ },
+ {
+  "slug": "lyon",
+  "lat": 45.7578,
+  "lon": 4.832,
+  "alt": 170,
+  "en": "Lyon",
+  "fr": "Lyon",
+  "country": "FR",
+  "frOf": "de Lyon"
+ },
+ {
+  "slug": "marseille",
+  "lat": 43.2965,
+  "lon": 5.3698,
+  "alt": 12,
+  "en": "Marseille",
+  "fr": "Marseille",
+  "country": "FR",
+  "frOf": "de Marseille"
+ },
+ {
+  "slug": "toulouse",
+  "lat": 43.6047,
+  "lon": 1.4442,
+  "alt": 146,
+  "en": "Toulouse",
+  "fr": "Toulouse",
+  "country": "FR",
+  "frOf": "de Toulouse"
+ },
+ {
+  "slug": "nice",
+  "lat": 43.7102,
+  "lon": 7.262,
+  "alt": 10,
+  "en": "Nice",
+  "fr": "Nice",
+  "country": "FR",
+  "frOf": "de Nice"
+ },
+ {
+  "slug": "nantes",
+  "lat": 47.2184,
+  "lon": -1.5536,
+  "alt": 20,
+  "en": "Nantes",
+  "fr": "Nantes",
+  "country": "FR",
+  "frOf": "de Nantes"
+ },
+ {
+  "slug": "strasbourg",
+  "lat": 48.5734,
+  "lon": 7.7521,
+  "alt": 142,
+  "en": "Strasbourg",
+  "fr": "Strasbourg",
+  "country": "FR",
+  "frOf": "de Strasbourg"
+ },
+ {
+  "slug": "montpellier",
+  "lat": 43.6108,
+  "lon": 3.8767,
+  "alt": 27,
+  "en": "Montpellier",
+  "fr": "Montpellier",
+  "country": "FR",
+  "frOf": "de Montpellier"
+ },
+ {
+  "slug": "bordeaux",
+  "lat": 44.8378,
+  "lon": -0.5792,
+  "alt": 6,
+  "en": "Bordeaux",
+  "fr": "Bordeaux",
+  "country": "FR",
+  "frOf": "de Bordeaux"
+ },
+ {
+  "slug": "lille",
+  "lat": 50.6292,
+  "lon": 3.0573,
+  "alt": 20,
+  "en": "Lille",
+  "fr": "Lille",
+  "country": "FR",
+  "frOf": "de Lille"
+ },
+ {
+  "slug": "rennes",
+  "lat": 48.1173,
+  "lon": -1.6778,
+  "alt": 30,
+  "en": "Rennes",
+  "fr": "Rennes",
+  "country": "FR",
+  "frOf": "de Rennes"
+ },
+ {
+  "slug": "brussels",
+  "lat": 50.8503,
+  "lon": 4.3517,
+  "alt": 13,
+  "en": "Brussels",
+  "fr": "Bruxelles",
+  "country": "BE",
+  "frOf": "de Bruxelles"
+ },
+ {
+  "slug": "liege",
+  "lat": 50.6326,
+  "lon": 5.5797,
+  "alt": 66,
+  "en": "Liège",
+  "fr": "Liège",
+  "country": "BE",
+  "frOf": "de Liège"
+ },
+ {
+  "slug": "geneva",
+  "lat": 46.2044,
+  "lon": 6.1432,
+  "alt": 375,
+  "en": "Geneva",
+  "fr": "Genève",
+  "country": "CH",
+  "frOf": "de Genève"
+ },
+ {
+  "slug": "lausanne",
+  "lat": 46.5197,
+  "lon": 6.6323,
+  "alt": 495,
+  "en": "Lausanne",
+  "fr": "Lausanne",
+  "country": "CH",
+  "frOf": "de Lausanne"
+ },
+ {
+  "slug": "luxembourg",
+  "lat": 49.6116,
+  "lon": 6.1319,
+  "alt": 300,
+  "en": "Luxembourg",
+  "fr": "Luxembourg",
+  "country": "LU",
+  "frOf": "de Luxembourg"
+ },
+ {
+  "slug": "montreal",
+  "lat": 45.5019,
+  "lon": -73.5674,
+  "alt": 36,
+  "en": "Montreal",
+  "fr": "Montréal",
+  "country": "CA",
+  "frOf": "de Montréal"
+ },
+ {
+  "slug": "quebec-city",
+  "lat": 46.8139,
+  "lon": -71.208,
+  "alt": 98,
+  "en": "Quebec City",
+  "fr": "Québec",
+  "country": "CA",
+  "frOf": "de Québec"
+ },
+ {
+  "slug": "dakar",
+  "lat": 14.7167,
+  "lon": -17.4677,
+  "alt": 22,
+  "en": "Dakar",
+  "fr": "Dakar",
+  "country": "SN",
+  "frOf": "de Dakar"
+ },
+ {
+  "slug": "abidjan",
+  "lat": 5.36,
+  "lon": -4.0083,
+  "alt": 18,
+  "en": "Abidjan",
+  "fr": "Abidjan",
+  "country": "CI",
+  "frOf": "d'Abidjan"
+ },
+ {
+  "slug": "casablanca",
+  "lat": 33.5731,
+  "lon": -7.5898,
+  "alt": 27,
+  "en": "Casablanca",
+  "fr": "Casablanca",
+  "country": "MA",
+  "frOf": "de Casablanca"
+ },
+ {
+  "slug": "algiers",
+  "lat": 36.7538,
+  "lon": 3.0588,
+  "alt": 50,
+  "en": "Algiers",
+  "fr": "Alger",
+  "country": "DZ",
+  "frOf": "d'Alger"
+ },
+ {
+  "slug": "tunis",
+  "lat": 36.8065,
+  "lon": 10.1815,
+  "alt": 4,
+  "en": "Tunis",
+  "fr": "Tunis",
+  "country": "TN",
+  "frOf": "de Tunis"
+ },
+ {
+  "slug": "london",
+  "lat": 51.5074,
+  "lon": -0.1278,
+  "alt": 11,
+  "en": "London",
+  "fr": "Londres",
+  "country": "GB",
+  "frOf": "de Londres"
+ },
+ {
+  "slug": "manchester",
+  "lat": 53.4808,
+  "lon": -2.2426,
+  "alt": 38,
+  "en": "Manchester",
+  "fr": "Manchester",
+  "country": "GB",
+  "frOf": "de Manchester"
+ },
+ {
+  "slug": "birmingham",
+  "lat": 52.4862,
+  "lon": -1.8904,
+  "alt": 140,
+  "en": "Birmingham",
+  "fr": "Birmingham",
+  "country": "GB",
+  "frOf": "de Birmingham"
+ },
+ {
+  "slug": "edinburgh",
+  "lat": 55.9533,
+  "lon": -3.1883,
+  "alt": 47,
+  "en": "Edinburgh",
+  "fr": "Édimbourg",
+  "country": "GB",
+  "frOf": "d'Édimbourg"
+ },
+ {
+  "slug": "dublin",
+  "lat": 53.3498,
+  "lon": -6.2603,
+  "alt": 20,
+  "en": "Dublin",
+  "fr": "Dublin",
+  "country": "IE",
+  "frOf": "de Dublin"
+ },
+ {
+  "slug": "new-york",
+  "lat": 40.7128,
+  "lon": -74.006,
+  "alt": 10,
+  "en": "New York",
+  "fr": "New York",
+  "country": "US",
+  "frOf": "de New York"
+ },
+ {
+  "slug": "los-angeles",
+  "lat": 34.0522,
+  "lon": -118.2437,
+  "alt": 89,
+  "en": "Los Angeles",
+  "fr": "Los Angeles",
+  "country": "US",
+  "frOf": "de Los Angeles"
+ },
+ {
+  "slug": "chicago",
+  "lat": 41.8781,
+  "lon": -87.6298,
+  "alt": 181,
+  "en": "Chicago",
+  "fr": "Chicago",
+  "country": "US",
+  "frOf": "de Chicago"
+ },
+ {
+  "slug": "houston",
+  "lat": 29.7604,
+  "lon": -95.3698,
+  "alt": 15,
+  "en": "Houston",
+  "fr": "Houston",
+  "country": "US",
+  "frOf": "de Houston"
+ },
+ {
+  "slug": "phoenix",
+  "lat": 33.4484,
+  "lon": -112.074,
+  "alt": 331,
+  "en": "Phoenix",
+  "fr": "Phoenix",
+  "country": "US",
+  "frOf": "de Phoenix"
+ },
+ {
+  "slug": "philadelphia",
+  "lat": 39.9526,
+  "lon": -75.1652,
+  "alt": 12,
+  "en": "Philadelphia",
+  "fr": "Philadelphie",
+  "country": "US",
+  "frOf": "de Philadelphie"
+ },
+ {
+  "slug": "san-francisco",
+  "lat": 37.7749,
+  "lon": -122.4194,
+  "alt": 16,
+  "en": "San Francisco",
+  "fr": "San Francisco",
+  "country": "US",
+  "frOf": "de San Francisco"
+ },
+ {
+  "slug": "seattle",
+  "lat": 47.6062,
+  "lon": -122.3321,
+  "alt": 53,
+  "en": "Seattle",
+  "fr": "Seattle",
+  "country": "US",
+  "frOf": "de Seattle"
+ },
+ {
+  "slug": "boston",
+  "lat": 42.3601,
+  "lon": -71.0589,
+  "alt": 43,
+  "en": "Boston",
+  "fr": "Boston",
+  "country": "US",
+  "frOf": "de Boston"
+ },
+ {
+  "slug": "washington",
+  "lat": 38.9072,
+  "lon": -77.0369,
+  "alt": 22,
+  "en": "Washington",
+  "fr": "Washington",
+  "country": "US",
+  "frOf": "de Washington"
+ },
+ {
+  "slug": "miami",
+  "lat": 25.7617,
+  "lon": -80.1918,
+  "alt": 2,
+  "en": "Miami",
+  "fr": "Miami",
+  "country": "US",
+  "frOf": "de Miami"
+ },
+ {
+  "slug": "atlanta",
+  "lat": 33.749,
+  "lon": -84.388,
+  "alt": 320,
+  "en": "Atlanta",
+  "fr": "Atlanta",
+  "country": "US",
+  "frOf": "d'Atlanta"
+ },
+ {
+  "slug": "denver",
+  "lat": 39.7392,
+  "lon": -104.9903,
+  "alt": 1609,
+  "en": "Denver",
+  "fr": "Denver",
+  "country": "US",
+  "frOf": "de Denver"
+ },
+ {
+  "slug": "toronto",
+  "lat": 43.6532,
+  "lon": -79.3832,
+  "alt": 76,
+  "en": "Toronto",
+  "fr": "Toronto",
+  "country": "CA",
+  "frOf": "de Toronto"
+ },
+ {
+  "slug": "vancouver",
+  "lat": 49.2827,
+  "lon": -123.1207,
+  "alt": 70,
+  "en": "Vancouver",
+  "fr": "Vancouver",
+  "country": "CA",
+  "frOf": "de Vancouver"
+ },
+ {
+  "slug": "sydney",
+  "lat": -33.8688,
+  "lon": 151.2093,
+  "alt": 58,
+  "en": "Sydney",
+  "fr": "Sydney",
+  "country": "AU",
+  "frOf": "de Sydney"
+ },
+ {
+  "slug": "melbourne",
+  "lat": -37.8136,
+  "lon": 144.9631,
+  "alt": 31,
+  "en": "Melbourne",
+  "fr": "Melbourne",
+  "country": "AU",
+  "frOf": "de Melbourne"
+ },
+ {
+  "slug": "brisbane",
+  "lat": -27.4698,
+  "lon": 153.0251,
+  "alt": 27,
+  "en": "Brisbane",
+  "fr": "Brisbane",
+  "country": "AU",
+  "frOf": "de Brisbane"
+ },
+ {
+  "slug": "auckland",
+  "lat": -36.8485,
+  "lon": 174.7633,
+  "alt": 196,
+  "en": "Auckland",
+  "fr": "Auckland",
+  "country": "NZ",
+  "frOf": "d'Auckland"
+ },
+ {
+  "slug": "cape-town",
+  "lat": -33.9249,
+  "lon": 18.4241,
+  "alt": 25,
+  "en": "Cape Town",
+  "fr": "Le Cap",
+  "country": "ZA",
+  "frOf": "du Cap"
+ },
+ {
+  "slug": "johannesburg",
+  "lat": -26.2041,
+  "lon": 28.0473,
+  "alt": 1753,
+  "en": "Johannesburg",
+  "fr": "Johannesburg",
+  "country": "ZA",
+  "frOf": "de Johannesburg"
+ },
+ {
+  "slug": "singapore",
+  "lat": 1.3521,
+  "lon": 103.8198,
+  "alt": 15,
+  "en": "Singapore",
+  "fr": "Singapour",
+  "country": "SG",
+  "frOf": "de Singapour"
+ }
+]

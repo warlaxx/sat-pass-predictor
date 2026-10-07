@@ -18,6 +18,7 @@ class AccountDisabledWebTest {
     @MockitoBean Clock clock;
     @MockitoBean space.nextpass.passes.PassQueryService passes;
     @MockitoBean space.nextpass.catalog.SatelliteCatalog catalog;
+    @MockitoBean space.nextpass.weather.CloudCoverService clouds;
 
     @Test void disabledAccountsCannotStartLoginOrReadData() throws Exception {
         for (String path : new String[]{"/account/", "/account/api/me", "/oauth2/authorization/github"}) {

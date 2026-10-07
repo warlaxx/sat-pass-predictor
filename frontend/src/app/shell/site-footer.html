@@ -1,0 +1,56 @@
+<footer class="wrap footer">
+  <div class="footer-brand">
+    <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
+      <defs>
+        <radialGradient id="brand-glow-footer">
+          <stop offset="0" stop-color="#fff" stop-opacity="0.55" />
+          <stop offset="1" stop-color="#fff" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="32" height="32" rx="7" fill="#000" />
+      <circle cx="16" cy="16" r="11" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="1.6" />
+      <circle cx="16" cy="16" r="6" fill="none" stroke="#fff" stroke-opacity="0.22" stroke-width="1.2" />
+      <path d="M16 3.2V6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" />
+      <path d="M8.2 21.5C10.5 13.5 16 9.5 22.6 11.4" fill="none" stroke="var(--signal)" stroke-width="2.8" stroke-linecap="round" />
+      <circle cx="22.6" cy="11.4" r="6" fill="url(#brand-glow-footer)" />
+      <circle cx="22.6" cy="11.4" r="2.5" fill="#fff" />
+    </svg>
+    <span>NextPass</span>
+  </div>
+
+  <div class="footer-body">
+    <div class="columns">
+      <nav aria-label="Product" i18n-aria-label>
+        <h2 i18n>Product</h2>
+        <a routerLink="/" i18n>Pass predictor</a>
+        <a routerLink="/satellites" i18n>Satellites</a>
+        <a routerLink="/starlink" i18n>Starlink train</a>
+        <a routerLink="/separations" i18n>Separations</a>
+        <a routerLink="/alerts" i18n>Pass reminders</a>
+      </nav>
+      <nav aria-label="Developers" i18n-aria-label>
+        <h2 i18n>Developers</h2>
+        <a routerLink="/developers" i18n>API guide</a>
+        @if (pricingEnabled) { <a routerLink="/pricing" i18n>Plans and quotas</a> }
+        <a routerLink="/status" i18n>Service status</a>
+        <a [href]="swaggerUrl" rel="noopener" i18n>OpenAPI reference ↗</a>
+      </nav>
+      <nav aria-label="About" i18n-aria-label>
+        <h2 i18n>About</h2>
+        <a routerLink="/methodology" i18n>Methodology</a>
+        <a routerLink="/legal" fragment="notice" i18n>Legal notice</a>
+        <a routerLink="/legal" fragment="terms" i18n>Terms of use</a>
+        <a routerLink="/legal" fragment="privacy" i18n>Privacy</a>
+        @if (feedbackByMail) { <a [href]="feedbackHref()" i18n>Write to us</a> }
+        <a [href]="repositoryUrl" rel="noopener" i18n>Source code ↗</a>
+        <a [href]="otherLanguage().href" [attr.hreflang]="otherLanguage().code"
+           [attr.lang]="otherLanguage().code">{{ otherLanguage().label }}</a>
+      </nav>
+    </div>
+    <p i18n>
+      Elements from <a href="https://celestrak.org" rel="noopener">CelesTrak</a>, propagated
+      with Orekit (SGP4). No atmospheric refraction below 5&deg;. Every instant is computed in
+      UTC; local times are your browser's. Coastlines: Natural Earth 110&nbsp;m.
+    </p>
+  </div>
+</footer>

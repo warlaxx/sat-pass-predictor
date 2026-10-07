@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DOCUMENT, DestroyRef, afterNextRender, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Discovery, Opportunity } from '../discovery/discovery';
+import { ShareButton } from '../share/share-button';
 import { SatellitePicker } from '../satellite-picker/satellite-picker';
 import { Reveal } from '../motion/reveal';
 import { DatePipe, DecimalPipe } from '@angular/common';
@@ -18,6 +19,7 @@ import { NextPass } from '../next-pass/next-pass';
 import { PassProfile } from '../pass-profile/pass-profile';
 import { Hero } from '../hero/hero';
 import { LatestSeparations } from './latest-separations';
+import { HomeFeatures } from './home-features';
 import { facingAzimuth } from '../sky-panorama/panorama-geometry';
 import { groupIntoNights } from '../pass-ribbon/nights';
 import { compassPoint, utcOffsetLabel } from '../format';
@@ -56,7 +58,7 @@ export function queryFromUrl(params: { get(name: string): string | null }): Pass
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile, Hero, LatestSeparations],
+  imports: [RouterLink, ShareButton, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile, Hero, LatestSeparations, HomeFeatures],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './home.scss',
   templateUrl: './home.html',
@@ -64,10 +66,34 @@ export function queryFromUrl(params: { get(name: string): string | null }): Pass
 export class HomePage {
   private readonly api = inject(PassesApi);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly maxHours = MAX_WINDOW_HOURS;
   protected readonly frequencyBounds = { min: MIN_FREQUENCY_MHZ, max: MAX_FREQUENCY_MHZ };
   protected readonly form = signal<PassQuery>(DEFAULT_QUERY);
+
+  /**
+   * The advanced settings, folded for a beginner (ABD-37). They open by themselves when
+   * any of them is not the default, so a shared link never hides what it changed.
+   */
+  protected readonly advancedOpen = signal(false);
+
+  /**
+   * What the satellite field shows first: the default satellite by its name, so a
+   * beginner reads "ISS (ZARYA)", not a catalogue number (ABD-37). A shared link's other
+   * satellite keeps its number, the only name the page knows for it before a search.
+   */
+  protected readonly satelliteText = computed(() =>
+    this.form().noradId === DEFAULT_QUERY.noradId ? DEFAULT_SATELLITE_NAME : String(this.form().noradId));
+
+  /** The place in words: Lyon while it is the default, the coordinates once it is not. */
+  protected readonly placeLabel = computed(() => {
+    const { lat, lon } = this.form();
+    if (lat === DEFAULT_QUERY.lat && lon === DEFAULT_QUERY.lon) {
+      return $localize`:The default observer of the form:Lyon (default)`;
+    }
+    return `${lat.toFixed(4)}°, ${lon.toFixed(4)}°`;
+  });
   protected readonly selected = signal<string | undefined>(undefined);
 
   protected readonly resource = this.api.resource;
@@ -119,14 +145,6 @@ export class HomePage {
 
   protected readonly nightCount = computed(() => groupIntoNights(this.response()?.passes ?? []).length);
 
-  /** The four views of a result, as the page introduces them below the console. */
-  protected readonly features = [
-    { title: $localize`Sky chart`, text: $localize`The pass drawn across your horizon, with the elevation threshold and the direction to face.` },
-    { title: $localize`Globe`, text: $localize`Ground track coloured by sunlight on the satellite, the visibility circle and the imaging swath.` },
-    { title: $localize`Elevation profile`, text: $localize`Elevation and range over time, with the Doppler shift when you give a downlink frequency.` },
-    { title: $localize`Pass list`, text: $localize`Every pass in the window as a table, exportable to CSV and to your calendar as .ics.` },
-  ] as const;
-
   // --- Page sections ------------------------------------------------------
 
   protected readonly sections = [
@@ -153,6 +171,7 @@ export class HomePage {
     this.linked = linked !== undefined;
     if (linked) {
       this.form.set(linked);
+      this.advancedOpen.set(hasAdvancedSettings(linked));
       this.api.search(linked);
       const pass = params.get('pass');
       if (pass) this.selected.set(pass);
@@ -256,6 +275,8 @@ export class HomePage {
           lon: position.lon,
           alt: position.alt ?? query.alt,
         }));
+        // A measured altitude lands in a folded field: show it rather than compute with it unseen.
+        if (hasAdvancedSettings(this.form())) this.advancedOpen.set(true);
         if ((from === 'hero' || this.searched()) && this.satelliteResolved()) this.search();
       },
       (error: Error) => this.locationError.set(error.message),
@@ -318,6 +339,42 @@ export class HomePage {
     document.getElementById('query')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  /**
+   * A link that reopens this very pass (ABD-33): the satellite, place and threshold of
+   * the result on screen - which may come from the discovery list rather than the form -
+   * the window of the form, and the pass itself. Nothing but the coordinates chosen.
+   */
+  protected shareUrl(pass: PassDto): string {
+    const loaded = this.response();
+    const url = new URL(this.document.location.href);
+    url.search = '';
+    url.hash = '';
+    if (loaded) {
+      const query: PassQuery = {
+        ...this.form(),
+        noradId: loaded.satellite.noradId,
+        lat: loaded.observer.latitudeDeg,
+        lon: loaded.observer.longitudeDeg,
+        alt: loaded.observer.altitudeM,
+        minElevation: loaded.minElevationDeg,
+      };
+      for (const [field, name] of Object.entries(URL_FIELDS)) {
+        const value = query[field as keyof PassQuery];
+        if (value !== undefined) url.searchParams.set(name, String(value));
+      }
+    }
+    url.searchParams.set('pass', pass.aos.instant);
+    return url.toString();
+  }
+
+  /** What a share sheet shows above the link: the satellite and when it passes. */
+  protected shareTitle(pass: PassDto): string {
+    const name = this.response()?.satellite.name ?? '';
+    const when = new Date(pass.aos.instant).toLocaleString(this.document.documentElement.lang || undefined,
+      { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    return $localize`:Title of a shared pass:${name}:satellite: passes over me on ${when}:when:`;
+  }
+
   /** The URL of the result on screen, so that copying the address shares the result. */
   private writeUrl(query: PassQuery): void {
     const queryParams = Object.fromEntries(
@@ -331,4 +388,15 @@ export class HomePage {
   protected reload(): void {
     this.api.reload();
   }
+}
+
+/** The name CelesTrak gives the default satellite, as the hero's card writes it. */
+const DEFAULT_SATELLITE_NAME = 'ISS (ZARYA)';
+
+/** True when a query sets anything the advanced settings hold, besides the place. */
+export function hasAdvancedSettings(query: PassQuery): boolean {
+  return query.alt !== DEFAULT_QUERY.alt
+    || query.hours !== DEFAULT_QUERY.hours
+    || query.minElevation !== DEFAULT_QUERY.minElevation
+    || query.frequencyMhz !== undefined;
 }

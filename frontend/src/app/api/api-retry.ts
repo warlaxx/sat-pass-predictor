@@ -80,8 +80,13 @@ export const apiRetryInterceptor: HttpInterceptorFn = (request, next) => {
   });
 };
 
+/**
+ * The API, but not the cloud cover (ABD-36): a forecast is a garnish on the passes, so a
+ * slow one must neither be retried nor tell the visitor the server is waking up.
+ */
 function isApi(request: HttpRequest<unknown>): boolean {
-  return new URL(request.url, 'http://localhost').pathname.startsWith('/api/');
+  const path = new URL(request.url, 'http://localhost').pathname;
+  return path.startsWith('/api/') && !path.startsWith('/api/weather/');
 }
 
 /** A timeout, shaped like the network failure it is to the pages: status 0, no body. */

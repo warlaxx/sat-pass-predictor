@@ -64,7 +64,13 @@ public class SeparationRepository {
             , i.thumb_url, i.thumb_width, i.thumb_height, i.author, i.licence, i.licence_url,
             i.description_url""";
 
-    private static final String WITH_IMAGE = " FROM gcat_objects o LEFT JOIN object_images i ON i.norad_id = o.satcat";
+    /**
+     * Only a satellite-catalogue row ({@code S…}) takes the photograph of its NORAD number: an
+     * auxiliary row ({@code A…}, ABD-13) often carries the number of the spacecraft it is
+     * attached to, and a stage must not show the payload's picture.
+     */
+    private static final String WITH_IMAGE = " FROM gcat_objects o LEFT JOIN object_images i"
+            + " ON i.norad_id = o.satcat AND o.jcat LIKE 'S%'";
 
     private final JdbcTemplate jdbc;
 

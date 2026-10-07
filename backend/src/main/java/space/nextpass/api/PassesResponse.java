@@ -1,5 +1,6 @@
 package space.nextpass.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import space.nextpass.domain.ObserverLocation;
 import space.nextpass.domain.SatellitePass;
 import space.nextpass.domain.SubSatellitePoint;
@@ -170,12 +171,16 @@ public record PassesResponse(SatelliteDto satellite,
                                 Double dopplerHz,
                                 SubPointDto subPoint,
                                 boolean illuminated,
-                                boolean visible) {
+                                boolean visible,
+                                // ABD-35: left out when in shadow or for a satellite
+                                // without an established standard magnitude.
+                                @JsonInclude(JsonInclude.Include.NON_NULL) Double magnitude) {
 
         static TrackPointDto from(TrackPoint point, Double frequencyMhz) {
             return new TrackPointDto(point.instant(), point.azimuthDeg(), point.elevationDeg(),
                     point.rangeKm(), point.rangeRateKmS(), shiftHz(point.rangeRateKmS(), frequencyMhz),
-                    SubPointDto.from(point.subPoint()), point.illuminated(), point.visible());
+                    SubPointDto.from(point.subPoint()), point.illuminated(), point.visible(),
+                    point.magnitude() == null ? null : Math.round(point.magnitude() * 10.0) / 10.0);
         }
     }
 

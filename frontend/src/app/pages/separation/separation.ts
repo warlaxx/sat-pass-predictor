@@ -13,6 +13,9 @@ import { ObjectVisual } from '../../object-visual/object-visual';
 import { PassTable } from '../../pass-table/pass-table';
 import { requestPosition } from '../../shared/geolocation';
 import { Seo } from '../../shared/seo';
+import { currentLanguage } from '../../shared/locale';
+import { ShareButton } from '../../share/share-button';
+import { previewPath } from '../../share/preview';
 import { countUsage } from '../../shared/usage';
 import {
   ParentCell, isGeostationary, orbitLabel, parentCell, precisionLabel, recordedDateLabel, roleLabel, timeSinceLaunch,
@@ -37,7 +40,7 @@ type Sighting =
  */
 @Component({
   selector: 'app-separation',
-  imports: [DatePipe, DecimalPipe, RouterLink, Reveal, NextPass, ObjectVisual, PassTable],
+  imports: [DatePipe, DecimalPipe, RouterLink, Reveal, NextPass, ObjectVisual, PassTable, ShareButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'page' },
   templateUrl: './separation.html',
@@ -48,6 +51,7 @@ export class SeparationPage {
   private readonly seo = inject(Seo);
   private readonly locale = inject(LOCALE_ID);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly language = currentLanguage();
 
   /** The route parameter: any record of the event. */
   readonly id = input.required<string>();
@@ -185,7 +189,12 @@ export class SeparationPage {
     // The route can only name the page; the heading arrives with the event.
     effect(() => {
       const event = this.event();
-      if (event) this.seo.apply(this.router.url, { title: this.heading(), description: this.description(event) });
+      // The event's own preview exists only for the prerendered pages, which is where
+      // a crawler reads the tag: in the browser the site's image stays (ABD-33).
+      if (event) this.seo.apply(this.router.url, {
+        title: this.heading(), description: this.description(event),
+        ...(this.browser ? {} : { image: previewPath(event.id, this.language), imageAlt: this.heading() }),
+      });
     });
   }
 

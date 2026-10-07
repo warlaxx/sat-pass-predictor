@@ -4,6 +4,7 @@ import { asNoradId } from './api/satellites.service';
 import { HomePage } from './home/home';
 import { coverTransition } from './motion/route-transition';
 import { featuredSatellite } from './shared/featured';
+import { cityDescription, cityFaq, cityName, cityTitle, faqJsonLd, issCity } from './pages/iss-city/iss-cities';
 import { Seo, satelliteDescription, satelliteTitle } from './shared/seo';
 import { PRICING_ENABLED } from './shared/site';
 
@@ -22,6 +23,18 @@ const satelliteRouteDescription: Description = (route) => {
   return featured
     ? satelliteDescription(featured.name, featured.blurb)
     : $localize`:Meta description:Orbit, freshness of the elements and the next passes of one satellite.`;
+};
+
+const cityOf = (route: ActivatedRouteSnapshot) => issCity(route.paramMap.get('city'));
+
+const cityRouteTitle: ResolveFn<string> = (route) => {
+  const city = cityOf(route);
+  return city ? cityTitle(city) : $localize`:Page title:The ISS over your city`;
+};
+
+const cityRouteDescription: Description = (route) => {
+  const city = cityOf(route);
+  return city ? cityDescription(city) : $localize`:Meta description:The next passes of the ISS over fifty cities, computed as the page opens.`;
 };
 
 /**
@@ -48,6 +61,18 @@ const pages: Routes = [
     loadComponent: () => import('./pages/satellite/satellite').then((m) => m.SatellitePage),
     title: satelliteRouteTitle,
     data: { description: satelliteRouteDescription },
+  },
+  {
+    path: 'iss',
+    loadComponent: () => import('./pages/iss-cities/iss-cities').then((m) => m.IssCitiesPage),
+    title: $localize`:Page title:The ISS over your city`,
+    data: { description: $localize`:Meta description:When the International Space Station passes over Paris, London, New York, Montreal and forty-six other cities, computed live.` },
+  },
+  {
+    path: 'iss/:city',
+    loadComponent: () => import('./pages/iss-city/iss-city').then((m) => m.IssCityPage),
+    title: cityRouteTitle,
+    data: { description: cityRouteDescription },
   },
   {
     path: 'starlink',
@@ -145,6 +170,15 @@ export class SiteTitleStrategy extends TitleStrategy {
     if (path === '') return description ? this.seo.home(description) : undefined;
     const satellites = { name: $localize`:Breadcrumb:Satellites`, path: '/satellites' };
     if (path === 'starlink') return this.seo.breadcrumbs([satellites, { name: 'Starlink', path: url }]);
+    if (path === 'iss/:city') {
+      // The questions the page shows, as a FAQPage; with the trail when the origin is known.
+      const city = cityOf(route);
+      if (!city) return undefined;
+      const faq = faqJsonLd(cityFaq(city));
+      const trail = this.seo.breadcrumbs([
+        { name: $localize`:Breadcrumb:The ISS over your city`, path: '/iss' }, { name: cityName(city), path: url }]);
+      return trail ? { '@context': 'https://schema.org', '@graph': [strip(faq), strip(trail)] } : faq;
+    }
     if (path === 'satellites/:noradId') {
       // Only a featured satellite has a name before the API answers; the others go without.
       const featured = featuredOf(route);
@@ -152,4 +186,10 @@ export class SiteTitleStrategy extends TitleStrategy {
     }
     return undefined;
   }
+}
+
+/** A schema.org node without its own @context, to sit in a @graph. */
+function strip(node: object): object {
+  const { ['@context']: _, ...rest } = node as Record<string, unknown>;
+  return rest;
 }

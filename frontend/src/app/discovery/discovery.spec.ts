@@ -10,6 +10,7 @@ import { Discovery, nextOpportunity, parseSatellites } from './discovery';
 import { DEFAULT_QUERY } from '../api/passes.query';
 import { SatellitePicker } from '../satellite-picker/satellite-picker';
 import { PassesResponse, TrackPointDto } from '../api/passes.model';
+import { settleAnsweringClouds } from '../testing/clouds';
 
 export function prediction(noradId: number, minute: number, favourable = true): PassesResponse {
   const track: TrackPointDto[] = [0, 10, 20, 30].map((second, index) => ({
@@ -54,7 +55,7 @@ describe('Discovery HTTP flow', () => {
   async function start(ids = '25544, 48274') {
     const fixture = TestBed.createComponent(Discovery);
     fixture.componentRef.setInput('query', DEFAULT_QUERY);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     const input = fixture.nativeElement.querySelector('#discovery-ids') as HTMLInputElement;
     input.value = ids; input.dispatchEvent(new Event('input'));
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }));
@@ -72,7 +73,7 @@ describe('Discovery HTTP flow', () => {
     }
     const later = prediction(25544, 5), earlier = prediction(48274, 1);
     requests[0].flush(later); requests[1].flush(earlier);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     const articles = fixture.nativeElement.querySelectorAll('article');
     expect(articles[0].textContent).toContain('Satellite 48274');
     let opened: unknown;
@@ -86,7 +87,7 @@ describe('Discovery HTTP flow', () => {
     const pending = http.match(request => request.url === '/api/passes');
     pending[0].flush(prediction(25544, 1));
     pending[1].flush({ detail: 'Orbital elements unavailable' }, { status: 503, statusText: 'Unavailable' });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     expect(fixture.nativeElement.querySelectorAll('article')).toHaveLength(1);
     expect(fixture.nativeElement.textContent).toContain('Orbital elements unavailable');
   });
@@ -94,7 +95,7 @@ describe('Discovery HTTP flow', () => {
   it('distinguishes no opportunity from a failed prediction', async () => {
     const fixture = await start('25544');
     http.expectOne(request => request.url === '/api/passes').flush(prediction(25544, 1, false));
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     expect(fixture.nativeElement.textContent).toContain('no favourable sample');
     expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
   });
@@ -102,12 +103,12 @@ describe('Discovery HTTP flow', () => {
   it('adds a satellite chosen by name to the list, once', async () => {
     const fixture = TestBed.createComponent(Discovery);
     fixture.componentRef.setInput('query', DEFAULT_QUERY);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     const picker = fixture.debugElement.query(By.directive(SatellitePicker)).componentInstance as SatellitePicker;
     picker.picked.emit({ noradId: 20580, name: 'HST' });
     picker.picked.emit({ noradId: 20580, name: 'HST' });
     picker.picked.emit({ noradId: 25544, name: 'ISS (ZARYA)' });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     expect((fixture.nativeElement.querySelector('#discovery-ids') as HTMLInputElement).value).toBe('25544, 48274, 20580');
   });
 
@@ -119,7 +120,7 @@ describe('Discovery HTTP flow', () => {
     expect(requests.every(request => request.cancelled)).toBe(true);
     const replacements = http.match(request => request.url === '/api/passes');
     replacements.forEach(request => request.flush(prediction(Number(request.request.params.get('noradId')), 1)));
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     expect(fixture.nativeElement.querySelectorAll('article')).toHaveLength(2);
   });
 });
@@ -136,10 +137,10 @@ describe('discovery selection in the application', () => {
     await Promise.resolve();
     TestBed.tick();
     TestBed.inject(HttpTestingController).expectOne('/api/featured-pass').flush(null, { status: 503, statusText: 'Down' });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     const discovery = fixture.debugElement.query(By.directive(Discovery)).componentInstance as Discovery;
     discovery.open.emit(nextOpportunity(prediction(48274, 1))!);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     expect(fixture.nativeElement.querySelector('.kicker').textContent).toContain('Satellite 48274');
     expect(fixture.nativeElement.querySelectorAll('app-pass-table tbody tr')).toHaveLength(1);
     expect(fixture.nativeElement.querySelector('app-pass-viewer')).not.toBeNull();

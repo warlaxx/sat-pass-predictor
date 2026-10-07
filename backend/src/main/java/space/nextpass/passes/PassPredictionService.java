@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import org.hipparchus.geometry.euclidean.threed.Vector3D;
 import org.hipparchus.util.FastMath;
 import org.orekit.bodies.CelestialBody;
 import org.orekit.bodies.GeodeticPoint;
@@ -251,9 +252,10 @@ public class PassPredictionService {
      * date comparison, nothing to get wrong the day the sampling changes.
      */
     private SatellitePass buildPass(TLE tle, PassBoundaries pass, TopocentricFrame site) {
-        TrackPoint aos = pointAt(pass.aos(), site);
-        TrackPoint culmination = pointAt(pass.apex(), site);
-        TrackPoint los = pointAt(pass.los(), site);
+        Double standardMagnitude = Brightness.standardMagnitude(tle.getSatelliteNumber());
+        TrackPoint aos = pointAt(pass.aos(), site, standardMagnitude);
+        TrackPoint culmination = pointAt(pass.apex(), site, standardMagnitude);
+        TrackPoint los = pointAt(pass.los(), site, standardMagnitude);
 
         return new SatellitePass(aos, culmination, los,
                 sampleTrack(tle, pass, site, aos, culmination, los));
@@ -290,7 +292,8 @@ public class PassPredictionService {
         track.add(losPoint);
 
         if (!interior.isEmpty()) {
-            TrackSampler sampler = new TrackSampler(interior, site);
+            TrackSampler sampler = new TrackSampler(interior, site,
+                    Brightness.standardMagnitude(tle.getSatelliteNumber()));
             TLEPropagator propagator = TLEPropagator.selectExtrapolator(tle);
             propagator.setStepHandler(sampler);
             propagator.propagate(aos, los);
@@ -338,12 +341,14 @@ public class PassPredictionService {
 
         private final List<AbsoluteDate> dates;
         private final TopocentricFrame site;
+        private final Double standardMagnitude;
         private final List<TrackPoint> points;
         private int next;
 
-        private TrackSampler(List<AbsoluteDate> dates, TopocentricFrame site) {
+        private TrackSampler(List<AbsoluteDate> dates, TopocentricFrame site, Double standardMagnitude) {
             this.dates = dates;
             this.site = site;
+            this.standardMagnitude = standardMagnitude;
             this.points = new ArrayList<>(dates.size());
         }
 
@@ -351,7 +356,7 @@ public class PassPredictionService {
         public void handleStep(OrekitStepInterpolator interpolator) {
             AbsoluteDate stepEnd = interpolator.getCurrentState().getDate();
             while (next < dates.size() && dates.get(next).compareTo(stepEnd) <= 0) {
-                points.add(pointAt(interpolator.getInterpolatedState(dates.get(next)), site));
+                points.add(pointAt(interpolator.getInterpolatedState(dates.get(next)), site, standardMagnitude));
                 next++;
             }
         }
@@ -410,14 +415,23 @@ public class PassPredictionService {
      * on the Orekit side. The browser never recomputes it: that is the condition for the
      * globe to stay a display and not become a second propagator.
      */
-    private TrackPoint pointAt(SpacecraftState state, TopocentricFrame site) {
+    private TrackPoint pointAt(SpacecraftState state, TopocentricFrame site, Double standardMagnitude) {
         TrackingCoordinates seen = trackingCoordinates(state, site);
         GeodeticPoint sub = earth.transform(state.getPosition(), state.getFrame(), state.getDate());
 
         boolean illuminated = eclipse.g(state) > 0.0;
-        double sunElevation = site.getTrackingCoordinates(
-                sun.getPosition(state.getDate(), state.getFrame()),
-                state.getFrame(), state.getDate()).getElevation();
+        Vector3D sunPosition = sun.getPosition(state.getDate(), state.getFrame());
+        double sunElevation = site.getTrackingCoordinates(sunPosition, state.getFrame(), state.getDate()).getElevation();
+
+        // ABD-35: the phase angle, at the satellite, between the Sun and the observer.
+        Double magnitude = null;
+        if (illuminated && standardMagnitude != null) {
+            Vector3D satellite = state.getPosition();
+            Vector3D observer = site.getStaticTransformTo(state.getFrame(), state.getDate())
+                    .transformPosition(Vector3D.ZERO);
+            double phase = Vector3D.angle(sunPosition.subtract(satellite), observer.subtract(satellite));
+            magnitude = Brightness.magnitude(standardMagnitude, seen.getRange() / 1000.0, phase);
+        }
         // Civil twilight is a reproducible geometric criterion, not a brightness model.
         boolean visible = illuminated && sunElevation <= FastMath.toRadians(-6.0);
 
@@ -435,7 +449,7 @@ public class PassPredictionService {
                         FastMath.toDegrees(sub.getLatitude()),
                         FastMath.toDegrees(sub.getLongitude()),
                         sub.getAltitude() / 1000.0),
-                illuminated, visible);
+                illuminated, visible, magnitude);
     }
 
     private TrackingCoordinates trackingCoordinates(SpacecraftState state, TopocentricFrame site) {

@@ -529,6 +529,17 @@ globe renders — checked by hand in a browser, with no failed request left in t
   no quota. UIDs derive from NORAD id, AOS and observer, so re-importing the same
   prediction updates events instead of duplicating them. Times are UTC; the calendar
   application localises them.
+- [x] **Cloud cover at the peak** (ABD-36, 7 October 2026): each row of a pass table says
+  clear sky (≤ 2 oktas), partly cloudy or overcast (≥ 6 oktas), with the share, for passes
+  inside MET Norway's forecast (hourly for about 62 h, then six-hourly to 9 days; the
+  server keeps 7 days). Source: MET Norway's Locationforecast, CC BY 4.0, credited under
+  the table. Open-Meteo was the first idea; its free tier excludes sites that show ads.
+  `GET /api/weather/clouds` is unmetered and hidden from the API documentation; the server
+  rounds the place to 0.1° (≈ 11 km), keeps each cell until MET's `Expires` (5 min to 2 h),
+  asks again with `If-Modified-Since`, serves the last forecast when MET fails, and asks
+  MET for at most 60 cells a minute whatever is asked of it. The browser alone asks, so a
+  prerendered page never freezes a forecast, and the request is outside the API retry
+  interceptor: a slow forecast neither retries nor shows "the server is waking up".
 
 **Discovery scope:** this is an on-demand comparison through the existing API, not a
 catalogue scan or a new batch endpoint. Each request has its own computation time. The
@@ -1069,6 +1080,20 @@ re-download writes nothing. `GcatImporterPostgresTest` covers the conditional do
 partial changes, `first_seen_at` and a download cut halfway. **In production on
 2 October 2026:** the first run imported 70 961 objects in 53 s on the free Render instance
 and Neon; the second answered `"status": "unchanged"` in 0.3 s.
+
+*The auxiliary catalogue, for the lineage (ABD-13, 7 October 2026).* `auxcat.tsv`
+(≈ 12 000 rows, 3.4 MB, same columns) is the third file of `gcat.files`. It holds the
+stages, adapters, trunks and modules that are often a separated object's parent or
+grandparent: FRG-10D1 left the FGN-TUG-S01 tug, which rode the Transporter-15 adapter stack
+(`A11695`) on the Falcon 9 second stage (`A11696`), and the event page now names both. Its
+rows are **never listed as separations** (`GcatObject.listed`): the rule would add 6 292
+of them (27 694 → 33 986, 77 since 2024: Dragon trunks, Soyuz modules, W-series capsules),
+a change of the list that ABD-51 decides. 3 737 of its rows carry the NORAD number of the
+spacecraft they are attached to, so the photographs and the delay measure
+(`V9__catalogue_delays_satellite_rows.sql`) read the `S…` rows only. In production,
+`gcat_objects` held 70 961 rows in 28 MB before it, so it adds about 5 MB to Neon. `rcat.tsv`
+and `lcat.tsv` (suborbital and low objects, 80 000+ rows each) are not imported: an object
+whose parent is an `R…` entry is never a separation, and no page needs their rows yet.
 
 ## Phase 3.1 — Event pages from GCAT (done)
 

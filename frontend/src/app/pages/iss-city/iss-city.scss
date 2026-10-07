@@ -1,0 +1,8 @@
+.faq { display: grid; gap: 20px; margin: 0; max-width: 760px; }
+.faq dt { color: var(--ink); font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+.faq dd { color: var(--ink-2); line-height: 1.6; margin: 0; }
+
+.others h2 { font-size: 22px; margin-bottom: 16px; }
+.others ul { display: flex; flex-wrap: wrap; gap: 8px 20px; list-style: none; margin: 0; padding: 0; }
+.others a { color: var(--ink-2); font-size: 14px; }
+.others a:hover { color: var(--ink); }
