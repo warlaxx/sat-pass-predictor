@@ -19,6 +19,7 @@ import { NextPass } from '../next-pass/next-pass';
 import { PassProfile } from '../pass-profile/pass-profile';
 import { Hero } from '../hero/hero';
 import { LatestSeparations } from './latest-separations';
+import { HomeFeatures } from './home-features';
 import { facingAzimuth } from '../sky-panorama/panorama-geometry';
 import { groupIntoNights } from '../pass-ribbon/nights';
 import { compassPoint, utcOffsetLabel } from '../format';
@@ -57,7 +58,7 @@ export function queryFromUrl(params: { get(name: string): string | null }): Pass
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, ShareButton, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile, Hero, LatestSeparations],
+  imports: [RouterLink, ShareButton, Discovery, SatellitePicker, Reveal, DatePipe, DecimalPipe, TleBanner, PassRibbon, PassTable, PassViewer, Globe, SkyPanorama, NextPass, PassProfile, Hero, LatestSeparations, HomeFeatures],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './home.scss',
   templateUrl: './home.html',
@@ -143,14 +144,6 @@ export class HomePage {
   });
 
   protected readonly nightCount = computed(() => groupIntoNights(this.response()?.passes ?? []).length);
-
-  /** The four views of a result, as the page introduces them below the console. */
-  protected readonly features = [
-    { title: $localize`Sky chart`, text: $localize`The pass drawn across your horizon, with the elevation threshold and the direction to face.` },
-    { title: $localize`Globe`, text: $localize`Ground track coloured by sunlight on the satellite, the visibility circle and the imaging swath.` },
-    { title: $localize`Elevation profile`, text: $localize`Elevation and range over time, with the Doppler shift when you give a downlink frequency.` },
-    { title: $localize`Pass list`, text: $localize`Every pass in the window as a table, exportable to CSV and to your calendar as .ics.` },
-  ] as const;
 
   // --- Page sections ------------------------------------------------------
 

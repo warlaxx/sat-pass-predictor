@@ -204,74 +204,6 @@ nav#site-nav a.current { background: rgb(255 255 255 / 9%); color: var(--ink); }
 
 .menu-toggle:hover { border-color: var(--ink-3); color: var(--ink); }
 
-/* --- Footer ---------------------------------------------------------------------------- */
-
-footer {
-  align-items: flex-start;
-  border-top: 1px solid var(--line);
-  display: flex;
-  gap: 24px 80px;
-  padding-block: 56px;
-}
-
-.footer-brand {
-  align-items: center;
-  display: flex;
-  flex-shrink: 0;
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-stretch: 87.5%;
-  font-weight: 800;
-  gap: 12px;
-  letter-spacing: -0.01em;
-}
-
-.footer-body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 32px;
-  min-width: 0;
-}
-
-.columns {
-  display: grid;
-  gap: 24px 56px;
-  grid-template-columns: repeat(3, minmax(0, max-content));
-}
-
-.columns nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.columns h2 {
-  color: var(--ink-3);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-stretch: 100%;
-  font-weight: 500;
-  letter-spacing: 0;
-  margin-bottom: 4px;
-}
-
-.columns a {
-  color: var(--ink-2);
-  font-size: 14px;
-  text-decoration: none;
-}
-
-.columns a:hover { color: var(--ink); }
-
-footer p {
-  color: var(--ink-3);
-  font-size: 13px;
-  line-height: 1.6;
-  margin: 0;
-  max-width: 72ch;
-}
-
 /* --- Narrow-screen menu: a full-screen sheet ---------------------------------------- */
 
 .sheet {
@@ -383,6 +315,4 @@ footer p {
 
   .name { font-size: 18px; }
   .aside .account { display: none; }
-  footer { flex-direction: column; }
-  .columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
