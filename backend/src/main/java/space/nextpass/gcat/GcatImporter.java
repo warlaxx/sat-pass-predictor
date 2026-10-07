@@ -20,6 +20,12 @@ import org.springframework.transaction.support.TransactionTemplate;
  * would silently freeze the catalogue at 11 July 2026. The list comes from
  * {@code gcat.files}.
  *
+ * <h2>And the auxiliary catalogue</h2>
+ * {@code auxcat.tsv} (about 12 000 rows, 3.4 MB) holds what never had a satellite-catalogue
+ * entry of its own: stages, adapters, trunks, modules - often the parent or grandparent of a
+ * separated object. It is read with the same parser, so that an event page can name them
+ * (ABD-13), but its rows are never listed as separations ({@link GcatObject#listed}).
+ *
  * <h2>One transaction per file</h2>
  * A file is applied whole or not at all, together with its validators: a download cut
  * halfway leaves the previous night's rows and the previous ETag, so the next run

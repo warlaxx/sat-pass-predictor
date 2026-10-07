@@ -71,13 +71,16 @@ public class DelayRepository {
     /**
      * Objects Space-Track has catalogued since GCAT's first import and GCAT does not list
      * yet. They are the delays the summary cannot see — if this grows, GCAT's tail is
-     * longer than the 90th percentile says.
+     * longer than the 90th percentile says. Only the satellite catalogues count, as in
+     * {@code catalogue_delays} (V9): an auxiliary row sharing the number is not GCAT
+     * cataloguing the object.
      */
     public int countAwaitingGcat() {
         return jdbc.queryForObject("""
                 SELECT count(*) FROM spacetrack_debuts d
                 WHERE d.debut_at > (SELECT min(first_seen_at) FROM gcat_objects)
-                  AND NOT EXISTS (SELECT 1 FROM gcat_objects g WHERE g.satcat = d.norad_id)""",
+                  AND NOT EXISTS (SELECT 1 FROM gcat_objects g
+                                  WHERE g.satcat = d.norad_id AND g.jcat LIKE 'S%')""",
                 Integer.class);
     }
 

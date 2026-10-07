@@ -152,10 +152,11 @@ ingest:
 
 # Jonathan McDowell's GCAT (CC-BY), imported by the daily job above into the database of
 # api-access - without one there is nothing to import into. See GcatImporter for why there
-# are two files: satcat.tsv stops at catalogue number 69999.
+# are two satellite files (satcat.tsv stops at catalogue number 69999), and for auxcat.tsv,
+# read for the lineage only (ABD-13). Order matters to nothing: reclassify runs after all.
 gcat:
   base-url: ${GCAT_BASE_URL:https://planet4589.org/space/gcat/tsv/cat}
-  files: satcat.tsv,satcat100k.tsv
+  files: satcat.tsv,satcat100k.tsv,auxcat.tsv
   connect-timeout: 10s
   # Per read, not for the whole 19 MB: a stalled transfer fails, a slow one finishes.
   read-timeout: 60s

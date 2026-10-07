@@ -56,7 +56,7 @@ class SeparationRepositoryPostgresTest {
         jdbc = new JdbcTemplate(source);
 
         GcatRepository gcat = new GcatRepository(jdbc);
-        for (String file : List.of("satcat.tsv", "satcat100k.tsv", "families.tsv")) {
+        for (String file : List.of("satcat.tsv", "satcat100k.tsv", "families.tsv", "lineage.tsv", "auxcat.tsv")) {
             List<GcatObject> objects = new ArrayList<>();
             try (var reader = new BufferedReader(new InputStreamReader(
                     getClass().getResourceAsStream("/gcat/" + file), StandardCharsets.UTF_8))) {
@@ -98,8 +98,9 @@ class SeparationRepositoryPostgresTest {
                 .containsExactly("S100810", "S69731");
         assertThat(separations.latest(Kind.RELEASE, 10)).extracting(Separations.Summary::kind)
                 .containsOnly(Kind.RELEASE)
-                // S03600 left Kosmos-249 on its launch day: a launch, not a separation.
-                .hasSize(6);
+                // S03600 left Kosmos-249 on its launch day: a launch, not a separation; and
+                // A11846, a Dragon trunk, is in the auxiliary catalogue, which is not listed.
+                .hasSize(7);
     }
 
     @Test
@@ -150,6 +151,43 @@ class SeparationRepositoryPostgresTest {
             assertThat(event.parent().image()).isNull();
         } finally {
             jdbc.update("DELETE FROM object_images");
+        }
+    }
+
+    /**
+     * ABD-13: FRG-10D1 left the FGN-TUG-S01 tug, which rode the Transporter-15 adapter stack
+     * - an object of the auxiliary catalogue, unknown before auxcat.tsv was imported.
+     */
+    @Test
+    void theLineageRunsIntoTheAuxiliaryCatalogue() {
+        Separations.Event event = separations.event("S100400").orElseThrow();
+
+        assertThat(event.parent().name()).isEqualTo("FGN-TUG-S01");
+        assertThat(event.grandparent().name()).isEqualTo("Transporter-15");
+        assertThat(event.grandparent().evidence().parent()).isEqualTo("A11696");
+        assertThat(separations.event("A11846")).isEmpty();
+        assertThat(separations.event("A11695")).isEmpty();
+    }
+
+    /** An auxiliary row often carries its spacecraft's NORAD number, never its photograph. */
+    @Test
+    void anAuxiliaryRowDoesNotTakeThePhotographOfItsNumber() {
+        jdbc.update("UPDATE gcat_objects SET satcat = 100399 WHERE jcat = 'A11695'");
+        jdbc.update("""
+                INSERT INTO object_images (norad_id, file, thumb_url, thumb_width, thumb_height, author,
+                                           licence, licence_url, description_url, updated_at)
+                VALUES (100399, 'FGN-TUG-S01.jpg',
+                        'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/FGN.jpg/500px-FGN.jpg',
+                        500, 375, 'Someone', 'CC BY 4.0', NULL,
+                        'https://commons.wikimedia.org/wiki/File:FGN.jpg', now())""");
+        try {
+            Separations.Event event = separations.event("S100400").orElseThrow();
+
+            assertThat(event.parent().image()).isNotNull();
+            assertThat(event.grandparent().image()).isNull();
+        } finally {
+            jdbc.update("DELETE FROM object_images");
+            jdbc.update("UPDATE gcat_objects SET satcat = NULL WHERE jcat = 'A11695'");
         }
     }
 

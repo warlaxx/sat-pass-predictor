@@ -63,6 +63,21 @@ class SeparationRuleTest {
         assertThat(object("S100961", "R2", "2026 Oct  2", "R86832", "2026 Oct  2 0402").isSeparation(null)).isFalse();
     }
 
+    /**
+     * ABD-13: A11846, a Dragon trunk dropped a month after its launch, passes the rule; the
+     * auxiliary catalogue is imported for the lineage, and is not listed until ABD-51 says so.
+     */
+    @Test
+    void anAuxiliaryCatalogueRowIsNeverListed() {
+        assertThat(object("A11846", "C  A T", "2026 May 15", "S69103", "2026 Jun 17 1136?").isSeparation(spacecraft()))
+                .isFalse();
+        assertThat(object("S11846", "C  A T", "2026 May 15", "S69103", "2026 Jun 17 1136?").isSeparation(spacecraft()))
+                .isTrue();
+        assertThat(GcatObject.listed("S100399")).isTrue();
+        assertThat(GcatObject.listed("A11695")).isFalse();
+        assertThat(GcatObject.listed(null)).isFalse();
+    }
+
     @Test
     void anAliasIsNotASecondSeparation() {
         assertThat(object("S1", "PA", "2020 Jan  1", "S2", "2021 Jan  1").isSeparation(spacecraft())).isFalse();

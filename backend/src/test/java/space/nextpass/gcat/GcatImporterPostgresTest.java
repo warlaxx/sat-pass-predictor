@@ -54,7 +54,7 @@ class GcatImporterPostgresTest {
         String failAfterReading;
 
         FixtureSource() {
-            for (String file : List.of("satcat.tsv", "satcat100k.tsv")) {
+            for (String file : List.of("satcat.tsv", "satcat100k.tsv", "auxcat.tsv")) {
                 try (var in = getClass().getResourceAsStream("/gcat/" + file)) {
                     bodies.put(file, new String(in.readAllBytes(), StandardCharsets.UTF_8));
                 } catch (IOException e) {
@@ -109,6 +109,24 @@ class GcatImporterPostgresTest {
         importer = new GcatImporter(gcat, List.of("satcat.tsv", "satcat100k.tsv"),
                 new GcatRepository(new JdbcTemplate(source)),
                 new TransactionTemplate(new DataSourceTransactionManager(source)), clock);
+    }
+
+    /** ABD-13: auxcat.tsv comes in for the lineage; none of its rows becomes a separation. */
+    @Test
+    void theAuxiliaryCatalogueIsImportedButNeverListed() {
+        importer = new GcatImporter(gcat, List.of("satcat.tsv", "satcat100k.tsv", "auxcat.tsv"),
+                new GcatRepository(new JdbcTemplate(source)),
+                new TransactionTemplate(new DataSourceTransactionManager(source)), clock);
+
+        GcatImporter.Report report = importer.run();
+
+        assertThat(report.files()).last().isEqualTo(new GcatImporter.FileReport("auxcat.tsv", "imported", 3, 0));
+        assertThat(report.newObjects()).isEqualTo(13);
+        assertThat(report.newSeparations()).isEqualTo(6);
+        // A11846, a Dragon trunk dropped a month after launch: the rule would say yes.
+        assertThat(jdbc.queryForMap("SELECT parent, is_separation FROM gcat_objects WHERE jcat = 'A11846'"))
+                .containsEntry("parent", "S69103")
+                .containsEntry("is_separation", false);
     }
 
     @Test

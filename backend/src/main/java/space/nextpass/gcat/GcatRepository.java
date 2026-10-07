@@ -65,7 +65,8 @@ public class GcatRepository {
 
     /**
      * Decides {@code is_separation} again for every row that has a parent or was a
-     * separation, with {@link GcatObject#isSeparation(String, String, GcatDate, GcatDate, GcatObject.Parent)},
+     * separation, with {@link GcatObject#listed(String)} and
+     * {@link GcatObject#isSeparation(String, String, GcatDate, GcatDate, GcatObject.Parent)},
      * and writes only the rows whose answer changed. Returns how many.
      */
     public int reclassify(Instant runAt) {
@@ -78,7 +79,8 @@ public class GcatRepository {
                 FROM gcat_objects o LEFT JOIN gcat_objects p ON p.jcat = o.parent
                 WHERE o.parent IS NOT NULL OR o.is_separation""",
                 (RowCallbackHandler) rs -> {
-                    boolean separation = GcatObject.isSeparation(rs.getString("type"), rs.getString("parent"),
+                    boolean separation = GcatObject.listed(rs.getString("jcat"))
+                            && GcatObject.isSeparation(rs.getString("type"), rs.getString("parent"),
                             date(rs, "launch_at", "launch_precision"),
                             date(rs, "separation_at", "separation_precision"),
                             rs.getString("parent_row") == null ? null
