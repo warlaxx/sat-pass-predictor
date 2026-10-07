@@ -8,6 +8,7 @@ import { PassesResponse } from '../../api/passes.model';
 import { SeparationEvent, SeparationsResponse, SpaceObject } from '../../api/separations.model';
 import { SeparationPage } from '../separation/separation';
 import { SeparationsPage } from './separations';
+import { settleAnsweringClouds } from '../../testing/clouds';
 
 /** Real events of the record, as the backend answered them on 2 October 2026. */
 const LIST: SeparationsResponse = {
@@ -107,7 +108,7 @@ describe('SeparationsPage', () => {
   async function loaded() {
     const fixture = await render(SeparationsPage);
     TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/separations').flush(LIST);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     return { fixture, page: fixture.nativeElement as HTMLElement };
   }
 
@@ -133,7 +134,7 @@ describe('SeparationsPage', () => {
     expect([...buttons].map((b) => b.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['All 3', 'Releases 2', 'Fragmentations 1']);
 
     buttons[2].click();
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     expect(buttons[2].getAttribute('aria-pressed')).toBe('true');
     expect(page.querySelectorAll('a.event')).toHaveLength(1);
@@ -187,7 +188,7 @@ describe('SeparationPage', () => {
     const request = http.expectOne((r) => r.url === '/api/passes');
     expect(request.request.params.get('noradId')).toBe('69328');
     request.flush(prediction());
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelector('h1')!.textContent).toBe('Shenzhou 22 released Shenzhou 22 Guidao Cang');
@@ -213,7 +214,7 @@ describe('SeparationPage', () => {
     http.expectOne((r) => r.url === '/api/passes').flush(
       { type: 'https://github.com/warlaxx/sat-pass-predictor/errors/unknown-satellite', title: 'Unknown satellite', status: 404, detail: 'no TLE published' },
       { status: 404, statusText: 'Not Found' });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     const page = fixture.nativeElement as HTMLElement;
     expect(page.textContent).toContain('No public orbit to follow');
@@ -233,7 +234,7 @@ describe('SeparationPage', () => {
     http.expectOne('/api/separations/S69328').flush(fromAirlock);
     await settle();
     http.expectOne((r) => r.url === '/api/passes').flush(prediction());
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     const page = fixture.nativeElement as HTMLElement;
     const parentNode = page.querySelector('.lineage .port')!.closest('.node')!;
@@ -253,7 +254,7 @@ describe('SeparationPage', () => {
     http.expectOne('/api/separations/S69328').flush(flagged);
     await settle();
     http.expectOne((r) => r.url === '/api/passes').flush(prediction());
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelector('.designation')!.textContent).toContain('launch designation (1998-067RP) may not be its parent');
@@ -272,7 +273,7 @@ describe('SeparationPage', () => {
     };
     const fixture = await render(SeparationPage, { id: 'S70001' });
     TestBed.inject(HttpTestingController).expectOne('/api/separations/S70001').flush(deployment);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelector('.designation')!.textContent).toContain('2 of these objects have launch designations');
@@ -287,7 +288,7 @@ describe('SeparationPage', () => {
     const fixture = await render(SeparationPage, { id: 'S400000' });
     const http = TestBed.inject(HttpTestingController);
     http.expectOne('/api/separations/S400000').flush(recent);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     const page = fixture.nativeElement as HTMLElement;
     expect(page.textContent).toContain('Passes not available yet');
@@ -306,7 +307,7 @@ describe('SeparationPage', () => {
     const fixture = await render(SeparationPage, { id: 'S69731' });
     const http = TestBed.inject(HttpTestingController);
     http.expectOne('/api/separations/S69731').flush(breakup);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelector('h1')!.textContent).toBe('3 fragments separated from S40340');
@@ -330,7 +331,7 @@ describe('SeparationPage', () => {
     };
     const fixture = await render(SeparationPage, { id: 'S400000' });
     TestBed.inject(HttpTestingController).expectOne('/api/separations/S400000').flush(recent);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelectorAll('.objects tbody tr')).toHaveLength(2);
@@ -343,7 +344,7 @@ describe('SeparationPage', () => {
     TestBed.inject(HttpTestingController).expectOne('/api/separations/S1').flush(
       { type: 'https://github.com/warlaxx/sat-pass-predictor/errors/separation-not-found', title: 'Separation not found', status: 404 },
       { status: 404, statusText: 'Not Found' });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('No separation is recorded for “S1”');
   });

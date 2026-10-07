@@ -12,6 +12,7 @@ import { AlertsPage } from './alerts/alerts';
 import { LegalPage } from './legal/legal';
 import { StarlinkPage } from './starlink/starlink';
 import { OPERATOR } from '../shared/site';
+import { settleAnsweringClouds } from '../testing/clouds';
 
 const ISS_LINE_1 = '1 25544U 98067A   21035.14486477  .00001026  00000-0  26816-4 0  9998';
 const ISS_LINE_2 = '2 25544  51.6455 280.7636 0002243 335.6496 186.1723 15.48938788267977';
@@ -77,7 +78,7 @@ describe('StarlinkPage', () => {
     expect(request.request.params.get('noradId')).toBe('64001');
     expect(request.request.params.get('hours')).toBe('72');
     request.flush({ ...prediction(), satellite: { noradId: 64001, name: 'STARLINK-34001' } });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     const page = fixture.nativeElement as HTMLElement;
     const buttons = page.querySelectorAll<HTMLButtonElement>('.launches button');
@@ -95,7 +96,7 @@ describe('StarlinkPage', () => {
     http.expectOne((r) => r.url === '/api/satellites/launches').flush(launches);
     await settle();
     http.expectOne((r) => r.url === '/api/passes').flush(prediction());
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
 
     (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('.launches button')[1].click();
     TestBed.tick();
@@ -106,7 +107,7 @@ describe('StarlinkPage', () => {
     const fixture = await render(StarlinkPage);
     TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/satellites/launches')
       .flush({ catalogFetchedAt: '2026-10-01T10:00:00Z', launches: [] });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('No Starlink launch in the catalogue');
     TestBed.inject(HttpTestingController).expectNone((r) => r.url === '/api/passes');
   });
@@ -121,7 +122,7 @@ describe('SatellitePage', () => {
     expect(request.request.params.get('noradId')).toBe('25544');
     expect(request.request.params.get('hours')).toBe('72');
     request.flush(prediction());
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelector('#sat-title')!.textContent).toContain('ISS (ZARYA)');
     expect(page.querySelector('.page-hero')!.textContent).toContain('Low Earth orbit');
@@ -142,21 +143,21 @@ describe('SatellitePage', () => {
     const fixture = await render(SatellitePage, { noradId: '41866' });
     TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/passes')
       .flush({ ...prediction(), satellite: { noradId: 41866, name: 'GOES 16' } });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     expect(TestBed.inject(Title).getTitle()).toBe('GOES 16: next passes and when to see it · NextPass');
   });
 
   it('computes no pass while prerendering: they would be stale before anyone read them', async () => {
     TestBed.overrideProvider(PLATFORM_ID, { useValue: 'server' });
     const fixture = await render(SatellitePage, { noradId: '25544' });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     TestBed.inject(HttpTestingController).expectNone((r) => r.url === '/api/passes');
     expect((fixture.nativeElement as HTMLElement).querySelector('#sat-title')!.textContent).toContain('International Space Station');
   });
 
   it('refuses a number that is not one, without asking the backend', async () => {
     const fixture = await render(SatellitePage, { noradId: 'abc' });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('not a NORAD number');
     TestBed.inject(HttpTestingController).expectNone('/api/passes');
   });
@@ -167,7 +168,7 @@ describe('SatellitePage', () => {
       { type: 'x/unknown-satellite', title: 'Unknown satellite', status: 404, detail: 'No satellite 99999.' },
       { status: 404, statusText: 'Not Found' },
     );
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Unknown satellite');
   });
 });
@@ -183,7 +184,7 @@ describe('StatusPage', () => {
     http.expectOne((r) => r.url === '/api/satellites').flush({
       results: [{ noradId: 25544, name: 'ISS (ZARYA)' }], catalogFetchedAt: new Date(Date.now() - 3_600_000).toISOString(),
     });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelector('#status-title')!.textContent).toContain('All systems answering');
     expect(page.querySelectorAll('.dot.ok')).toHaveLength(3);
@@ -196,7 +197,7 @@ describe('StatusPage', () => {
     http.expectOne('/status-probe/health').flush('', { status: 502, statusText: 'Bad Gateway' });
     await new Promise((resolve) => setTimeout(resolve));
     http.expectOne((r) => r.url === '/api/satellites').flush('', { status: 503, statusText: 'Unavailable' });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     expect(fixture.nativeElement.querySelector('#status-title').textContent).toContain('not answering');
     expect(fixture.nativeElement.textContent).toContain('NORAD numbers still work');
   });
@@ -217,13 +218,13 @@ describe('AlertsPage', () => {
 
   async function search(response: PassesResponse) {
     const fixture = await render(AlertsPage);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }));
     TestBed.tick();
     const request = TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/passes');
     expect(request.request.params.get('hours')).toBe('168');
     request.flush(response);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     return fixture.nativeElement as HTMLElement;
   }
 
@@ -250,7 +251,7 @@ describe('LegalPage', () => {
 
   it('marks every missing operator fact rather than inventing one', async () => {
     const fixture = await render(LegalPage);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     const page = fixture.nativeElement as HTMLElement;
     expect(page.querySelector('.note')!.textContent).toContain('Draft');
     // One marker per blank field of OPERATOR, whichever of them have been filled in.

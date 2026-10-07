@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { PassDto } from '../api/passes.model';
+import { ChangeDetectionStrategy, Component, PLATFORM_ID, computed, inject, input, output } from '@angular/core';
+import { DatePipe, DecimalPipe, isPlatformBrowser } from '@angular/common';
+import { httpResource } from '@angular/common/http';
+import { ObserverDto, PassDto } from '../api/passes.model';
+import { CloudForecastDto } from '../api/weather.model';
 import { compassPoint, elevationColour, formatDuration, isRemarkable, shadowEntry, utcOffsetLabel } from '../format';
 import { formatMagnitude, passBrightness, verdictLabel } from '../shared/brightness';
+import { cloudsUrl, skyAt, skyLabel } from '../shared/sky';
 
 /**
  * The full list of passes, and the accessible equivalent of the two visualisations to
@@ -16,6 +19,11 @@ import { formatMagnitude, passBrightness, verdictLabel } from '../shared/brightn
  * Each row is a `<button>`-like cell with `tabindex`, so selection works from the
  * keyboard. The identity of a pass is the instant of its AOS: the API publishes no id,
  * and inventing one in the browser would make it disagree with the next response.
+ *
+ * Given the `observer`, each row also says whether the sky should be clear at the peak
+ * (ABD-36), from MET Norway's cloud cover through `/api/weather/clouds`. In the browser
+ * only - a prerendered page would freeze a forecast - and never in the way: until the
+ * forecast arrives, or if it never does, the rows simply have no sky chip.
  */
 @Component({
   selector: 'app-pass-table',
@@ -75,6 +83,10 @@ import { formatMagnitude, passBrightness, verdictLabel } from '../shared/brightn
               } @else {
                 <span class="chip quiet" i18n>no favourable sample</span>
               }
+              @if (sky(pass); as s) {
+                <span class="chip num" [class.lit]="s.verdict === 'clear'" [class.quiet]="s.verdict === 'overcast'"
+                      title="Cloud cover forecast at the peak, by MET Norway" i18n-title>{{ skyText(s.verdict) }} · {{ s.cloudPercent }}%</span>
+              }
               @if (shadow(pass); as instant) {
                 <span class="chip num lit" i18n>shadow ~{{ instant | date: 'HH:mm' }}</span>
               }
@@ -90,6 +102,9 @@ import { formatMagnitude, passBrightness, verdictLabel } from '../shared/brightn
       </tbody>
     </table>
     </div>
+    @if (anySky()) {
+      <p class="credit" i18n>Cloud forecast: <a href="https://www.met.no/en" rel="noopener">MET Norway</a>, <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener license">CC BY 4.0</a></p>
+    }
   `,
   styles: `
     /*
@@ -184,12 +199,33 @@ import { formatMagnitude, passBrightness, verdictLabel } from '../shared/brightn
     .chip.lit { color: var(--lit); }
     .chip.hot { color: var(--hot); }
     .chip.quiet { color: var(--ink-3); }
+
+    .credit { color: var(--ink-3); font-size: 12px; margin: 8px 0 0; }
+    .credit a { color: var(--ink-2); }
   `,
 })
 export class PassTable {
   readonly passes = input.required<readonly PassDto[]>();
   readonly selected = input<string | undefined>(undefined);
   readonly select = output<string>();
+  /** Where the passes are seen from: with it, each row gets the sky at its peak. */
+  readonly observer = input<ObserverDto | undefined>(undefined);
+
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly clouds = httpResource<CloudForecastDto>(() => {
+    const observer = this.observer();
+    return this.browser && observer && this.passes().length > 0
+      ? cloudsUrl(observer.latitudeDeg, observer.longitudeDeg)
+      : undefined;
+  });
+  private readonly forecast = computed(() => (this.clouds.hasValue() ? this.clouds.value() : undefined));
+  protected readonly anySky = computed(() => this.passes().some(pass => this.sky(pass) !== undefined));
+
+  protected sky(pass: PassDto) {
+    return skyAt(this.forecast(), pass.culmination.instant);
+  }
+
+  protected readonly skyText = skyLabel;
 
   /** The offset of the first pass; the table would not span a DST change unnoticed by it alone. */
   protected readonly zone = computed(() => {

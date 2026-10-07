@@ -97,6 +97,17 @@ describe('apiRetryInterceptor', () => {
     backend.verify();
   });
 
+  it('leaves the cloud cover alone: neither retried nor counted as the server waking up', () => {
+    const { http, backend, waiting } = setUp();
+    get(http, '/api/weather/clouds?lat=45.8&lon=4.8');
+
+    vi.advanceTimersByTime(SLOW_AFTER_MS);
+    expect(waiting.slow()).toBe(false);
+    backend.expectOne('/api/weather/clouds?lat=45.8&lon=4.8').flush(null, { status: 502, statusText: 'Bad Gateway' });
+    vi.advanceTimersByTime(10_000);
+    backend.verify();
+  });
+
   it('does nothing on the server', () => {
     const { http, backend } = setUp('server');
     get(http);

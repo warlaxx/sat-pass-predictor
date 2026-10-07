@@ -206,6 +206,7 @@
     </div>
     <app-pass-table
       [passes]="loaded.passes"
+      [observer]="loaded.observer"
       [selected]="selectedPass()?.aos?.instant"
       (select)="selected.set($event)"
     />

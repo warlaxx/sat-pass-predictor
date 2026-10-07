@@ -529,6 +529,17 @@ globe renders — checked by hand in a browser, with no failed request left in t
   no quota. UIDs derive from NORAD id, AOS and observer, so re-importing the same
   prediction updates events instead of duplicating them. Times are UTC; the calendar
   application localises them.
+- [x] **Cloud cover at the peak** (ABD-36, 7 October 2026): each row of a pass table says
+  clear sky (≤ 2 oktas), partly cloudy or overcast (≥ 6 oktas), with the share, for passes
+  inside MET Norway's forecast (hourly for about 62 h, then six-hourly to 9 days; the
+  server keeps 7 days). Source: MET Norway's Locationforecast, CC BY 4.0, credited under
+  the table. Open-Meteo was the first idea; its free tier excludes sites that show ads.
+  `GET /api/weather/clouds` is unmetered and hidden from the API documentation; the server
+  rounds the place to 0.1° (≈ 11 km), keeps each cell until MET's `Expires` (5 min to 2 h),
+  asks again with `If-Modified-Since`, serves the last forecast when MET fails, and asks
+  MET for at most 60 cells a minute whatever is asked of it. The browser alone asks, so a
+  prerendered page never freezes a forecast, and the request is outside the API retry
+  interceptor: a slow forecast neither retries nor shows "the server is waking up".
 
 **Discovery scope:** this is an on-demand comparison through the existing API, not a
 catalogue scan or a new batch endpoint. Each request has its own computation time. The
