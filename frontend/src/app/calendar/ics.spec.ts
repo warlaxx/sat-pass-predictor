@@ -7,6 +7,7 @@ import { HomePage } from '../home/home';
 import { THREE_LOADER } from '../globe/three-loader';
 import { buildCalendar, calendarFileName, visibleWindow } from './ics';
 import { PassesResponse, TrackPointDto } from '../api/passes.model';
+import { settleAnsweringClouds } from '../testing/clouds';
 
 /** Four samples 10 s apart; the middle two are favourable unless told otherwise. */
 function prediction(noradId: number, minute: number, favourable = true): PassesResponse {
@@ -102,11 +103,11 @@ describe('calendar export in the application', () => {
     await Promise.resolve();
     TestBed.tick();
     TestBed.inject(HttpTestingController).expectOne('/api/featured-pass').flush(null, { status: 503, statusText: 'Down' });
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     fixture.nativeElement.querySelector('form.query').dispatchEvent(new Event('submit', { cancelable: true }));
     TestBed.tick();
     TestBed.inject(HttpTestingController).expectOne(request => request.url === '/api/passes').flush(response);
-    await fixture.whenStable();
+    await settleAnsweringClouds(fixture);
     return fixture.nativeElement.querySelector('button.calendar') as HTMLButtonElement;
   }
 

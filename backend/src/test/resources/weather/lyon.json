@@ -1,0 +1,93 @@
+{
+ "type": "Feature",
+ "geometry": {
+  "type": "Point",
+  "coordinates": [
+   4.83,
+   45.76,
+   170
+  ]
+ },
+ "properties": {
+  "meta": {
+   "updated_at": "2026-10-07T09:21:33Z",
+   "units": {
+    "air_pressure_at_sea_level": "hPa",
+    "air_temperature": "celsius",
+    "cloud_area_fraction": "%",
+    "precipitation_amount": "mm",
+    "relative_humidity": "%",
+    "wind_from_direction": "degrees",
+    "wind_speed": "m/s"
+   }
+  },
+  "timeseries": [
+   {
+    "time": "2026-10-07T10:00:00Z",
+    "data": {
+     "instant": {
+      "details": {
+       "cloud_area_fraction": 100.0,
+       "air_temperature": 16.2
+      }
+     }
+    }
+   },
+   {
+    "time": "2026-10-07T11:00:00Z",
+    "data": {
+     "instant": {
+      "details": {
+       "cloud_area_fraction": 100.0,
+       "air_temperature": 16.4
+      }
+     }
+    }
+   },
+   {
+    "time": "2026-10-07T12:00:00Z",
+    "data": {
+     "instant": {
+      "details": {
+       "cloud_area_fraction": 100.0,
+       "air_temperature": 17.0
+      }
+     }
+    }
+   },
+   {
+    "time": "2026-10-10T00:00:00Z",
+    "data": {
+     "instant": {
+      "details": {
+       "cloud_area_fraction": 95.3,
+       "air_temperature": 8.5
+      }
+     }
+    }
+   },
+   {
+    "time": "2026-10-10T06:00:00Z",
+    "data": {
+     "instant": {
+      "details": {
+       "cloud_area_fraction": 100.0,
+       "air_temperature": 10.1
+      }
+     }
+    }
+   },
+   {
+    "time": "2026-10-16T12:00:00Z",
+    "data": {
+     "instant": {
+      "details": {
+       "cloud_area_fraction": 99.2,
+       "air_temperature": 16.7
+      }
+     }
+    }
+   }
+  ]
+ }
+}

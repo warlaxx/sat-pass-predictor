@@ -95,7 +95,7 @@
     @if (loaded.passes.length === 0) {
       <p class="state" role="status" i18n>No pass above {{ loaded.minElevationDeg }}° from here in the next {{ windowHours }} hours.</p>
     } @else {
-      <app-pass-table [passes]="loaded.passes" (select)="inspect($event)" />
+      <app-pass-table [passes]="loaded.passes" [observer]="loaded.observer" (select)="inspect($event)" />
       <p class="muted" i18n>Choose a pass to open it in the predictor, with the globe and the sky chart.</p>
     }
   </section>

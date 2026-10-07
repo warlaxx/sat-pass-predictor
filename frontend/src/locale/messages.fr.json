@@ -806,7 +806,6 @@
     "7944113311807396515": "Photo : {$author}",
     "5750485945694679561": "Photo",
     "5916509558103174858": "Photo : {$author}, {$licence}, Wikimedia Commons",
-    "6547493873659812814": " Le code source est publié sur {$START_LINK}GitHub{$CLOSE_LINK} selon les conditions qui y sont indiquées. Les éléments orbitaux proviennent de CelesTrak ; les côtes de Natural Earth, dans le domaine public. Le catalogue d'objets spatiaux des pages de séparations est réutilisé sous licence CC BY 4.0, crédité en bas de ces pages. Les photographies d'objets spatiaux proviennent de Wikimedia Commons, chacune sous sa propre licence libre et créditée à côté ; les dessins marqués « Illustration » sont ceux de NextPass. Les textes, visuels et l'identité graphique de NextPass ne peuvent être reproduits sans autorisation, sauf dans les cas permis par la loi, comme une courte citation mentionnant sa source. ",
     "7685183216320342083": "{$START_BOLD_TEXT}Les photographies d'objets spatiaux{$CLOSE_BOLD_TEXT} proviennent de Wikimedia Commons et sont chargées par les serveurs de ce site, pas directement par votre navigateur depuis Wikimedia.",
     "7425406005898734828": "{$satellite} passe au-dessus de moi {$when}",
     "892073694820881630": "Lien copié",
@@ -864,6 +863,13 @@
     "6791512451538600814": "{$START_ITALIC_TEXT}{$CLOSE_ITALIC_TEXT}En direct · gratuit · sans compte",
     "8376239825315945803": "Découvrez quand l'ISS et des milliers d'autres satellites passent au-dessus de vous ce soir, où regarder et pendant combien de temps, et ce qui vient de se séparer en orbite.",
     "4749242239491203096": "Voir les dernières séparations",
-    "7939170093507096963": " Calculé avec Orekit à partir des éléments orbitaux publics, et vérifié avec Skyfield à moins d'un centième de degré près. {$START_LINK}Comment c'est calculé{$CLOSE_LINK} · {$START_LINK_1}Guide de l'API{$CLOSE_LINK} "
+    "7939170093507096963": " Calculé avec Orekit à partir des éléments orbitaux publics, et vérifié avec Skyfield à moins d'un centième de degré près. {$START_LINK}Comment c'est calculé{$CLOSE_LINK} · {$START_LINK_1}Guide de l'API{$CLOSE_LINK} ",
+    "4897165777770620093": " Le code source est publié sur {$START_LINK}GitHub{$CLOSE_LINK} selon les conditions qui y sont indiquées. Les éléments orbitaux proviennent de CelesTrak ; les côtes de Natural Earth, dans le domaine public. Le catalogue d'objets spatiaux des pages de séparations est réutilisé sous licence CC BY 4.0, crédité en bas de ces pages. Les photographies d'objets spatiaux proviennent de Wikimedia Commons, chacune sous sa propre licence libre et créditée à côté ; les dessins marqués « Illustration » sont ceux de NextPass. Les prévisions de nébulosité proviennent de MET Norway, sous licence CC BY 4.0, créditées sous les tableaux de passages. Les textes, visuels et l'identité graphique de NextPass ne peuvent être reproduits sans autorisation, sauf dans les cas permis par la loi, comme une courte citation mentionnant sa source. ",
+    "2009188412587979371": "{$START_BOLD_TEXT}Les prévisions de nébulosité{$CLOSE_BOLD_TEXT} sont demandées à MET Norway par les serveurs de ce site, pas par votre navigateur : ils lui envoient le lieu des passages arrondi au dixième de degré (environ 11 km), jamais votre position exacte. La prévision pour ce lieu arrondi est gardée en mémoire, pas dans une base de données, et rien ne la relie à vous.",
+    "5194295191145748599": "Couverture nuageuse prévue au point culminant, par MET Norway",
+    "2999182297535343318": "Prévision de nébulosité : {$START_LINK}MET Norway{$CLOSE_LINK}, {$START_LINK_1}CC BY 4.0{$CLOSE_LINK}",
+    "4233916791243986796": "ciel dégagé",
+    "4622494105020111254": "partiellement nuageux",
+    "8082336779450168386": "couvert"
   }
 }
