@@ -61,7 +61,7 @@ describe('AlertLinkPage', () => {
       .flush(null, { status: 204, statusText: 'No Content' });
     TestBed.tick();
 
-    expect(page.textContent).toContain('This reminder is gone');
+    expect(page.textContent).toContain('This reminder is deleted');
   });
 
   it('offers nothing to click without a token', () => {

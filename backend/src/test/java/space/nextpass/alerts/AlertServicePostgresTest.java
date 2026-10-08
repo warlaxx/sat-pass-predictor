@@ -247,6 +247,17 @@ class AlertServicePostgresTest {
     }
 
     @Test
+    void aLinkOlderThanFortyEightHoursNoLongerConfirmsEvenBeforeThePurge() {
+        service.subscribe(request("ada@example.org", 45.7578));
+        String token = tokenOf("ada@example.org");
+
+        clock.advance(Duration.ofHours(49));
+
+        assertThat(service.confirm(token)).isEmpty();
+        assertThat(jdbc.queryForObject("SELECT confirmed_at IS NULL FROM pass_alerts", Boolean.class)).isTrue();
+    }
+
+    @Test
     void unsubscribingDeletesTheRow() {
         String token = subscribeAndConfirm("ada@example.org");
 

@@ -113,7 +113,11 @@
     <h2 id="email-title" i18n>By e-mail, only when it is worth it</h2>
     <span i18n>Checked against the cloud forecast</span>
   </div>
-  <app-email-alerts [noradId]="form().noradId" [lat]="form().lat" [lon]="form().lon" />
+  @if (satelliteResolved()) {
+    <app-email-alerts [noradId]="form().noradId" [lat]="form().lat" [lon]="form().lon" />
+  } @else {
+    <p class="muted" i18n>Choose a satellite from the suggestions above, or type its NORAD number.</p>
+  }
 </section>
 
 <section class="page-section wrap" appReveal aria-labelledby="webhooks-title">
