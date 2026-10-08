@@ -7,6 +7,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -188,6 +189,87 @@ class SeparationRepositoryPostgresTest {
         } finally {
             jdbc.update("DELETE FROM object_images");
             jdbc.update("UPDATE gcat_objects SET satcat = NULL WHERE jcat = 'A11695'");
+        }
+    }
+
+    /** ABD-15: the first import's events all share one first_seen_at; they go by separation date. */
+    @Test
+    void theFeedDatesTheFirstImportByItsSeparationDates() {
+        List<Separations.FeedEntry> newest = separations.newest(3);
+
+        assertThat(newest).extracting(Separations.FeedEntry::id).containsExactly("S100643", "S100685", "S100810");
+        Separations.FeedEntry usa667 = newest.get(1);
+        assertThat(usa667.publishedAt()).isEqualTo(Instant.parse("2026-09-01T00:00:00Z"));
+        assertThat(usa667.kind()).isEqualTo(Kind.RELEASE);
+        assertThat(usa667.parentName()).isEqualTo("USA 396");
+        assertThat(usa667.parentId()).isEqualTo("S60322");
+        assertThat(usa667.firstChildName()).isEqualTo("USA 667");
+        assertThat(usa667.children()).isEqualTo(1);
+        assertThat(usa667.date()).isEqualTo(new Separations.Date(
+                "2026 Sep?", Instant.parse("2026-09-01T00:00:00Z"), "MONTH", true));
+    }
+
+    /** One entry per event, as many as the list has: a breakup's fragments are one item. */
+    @Test
+    void theFeedHasOneEntryPerEvent() {
+        List<Separations.FeedEntry> newest = separations.newest(1000);
+
+        assertThat(newest).extracting(Separations.FeedEntry::id).doesNotHaveDuplicates()
+                .containsExactlyInAnyOrderElementsOf(
+                        separations.latest(null, 1000).stream().map(Separations.Summary::id).toList());
+        assertThat(newest).filteredOn(e -> e.id().equals("S100810")).singleElement()
+                .satisfies(e -> assertThat(e.kind()).isEqualTo(Kind.FRAGMENTATION));
+        // A parent missing from the catalogue: no name, its identifier for the title.
+        assertThat(newest).filteredOn(e -> e.id().equals("S69731")).singleElement()
+                .satisfies(e -> assertThat(e.parentName()).isNull())
+                .satisfies(e -> assertThat(e.parentId()).isNotNull());
+    }
+
+    /**
+     * The point of the feed: a separation recorded in 1999 that last night's import brought
+     * in comes first, dated last night. A record GCAT marks as an error does not.
+     */
+    @Test
+    void aSeparationImportedTonightComesFirstWhateverItsDate() {
+        Instant tonight = Instant.parse("2026-10-08T03:12:00Z");
+        String insert = """
+                INSERT INTO gcat_objects (jcat, type, name, parent, parent_text, separation_text, separation_at,
+                                          separation_precision, separation_uncertain, status, is_separation,
+                                          first_seen_at, updated_at)
+                VALUES (?, 'P', ?, 'S60322', 'S60322', '1999 Jan?', '1999-01-01T00:00:00Z',
+                        'MONTH', true, ?, true, ?, ?)""";
+        jdbc.update(insert, "S999001", "Old news", "O", Timestamp.from(tonight), Timestamp.from(tonight));
+        jdbc.update(insert, "S999002", "A duplicate", "ERR", Timestamp.from(tonight.plusSeconds(60)),
+                Timestamp.from(tonight.plusSeconds(60)));
+        try {
+            List<Separations.FeedEntry> newest = separations.newest(5);
+
+            assertThat(newest.getFirst().id()).isEqualTo("S999001");
+            assertThat(newest.getFirst().publishedAt()).isEqualTo(tonight);
+            assertThat(newest.getFirst().date().at()).isEqualTo(Instant.parse("1999-01-01T00:00:00Z"));
+            assertThat(newest.get(1).id()).isEqualTo("S100643");
+            assertThat(newest).extracting(Separations.FeedEntry::id).doesNotContain("S999002");
+        } finally {
+            jdbc.update("DELETE FROM gcat_objects WHERE jcat IN ('S999001', 'S999002')");
+        }
+    }
+
+    /** A member added to an old event later moves it back up, under the same identifier. */
+    @Test
+    void aLaterMemberDatesItsEventByTheNewestFirstSeen() {
+        Instant later = Instant.parse("2026-10-05T03:00:00Z");
+        String member = jdbc.queryForObject("""
+                SELECT max(o.jcat) FROM gcat_objects o JOIN gcat_objects f ON f.jcat = 'S100810'
+                WHERE o.parent = f.parent AND o.separation_text = f.separation_text""", String.class);
+        jdbc.update("UPDATE gcat_objects SET first_seen_at = ? WHERE jcat = ?", Timestamp.from(later), member);
+        try {
+            Separations.FeedEntry first = separations.newest(1).getFirst();
+
+            assertThat(first.id()).isEqualTo("S100810");
+            assertThat(first.publishedAt()).isEqualTo(later);
+        } finally {
+            jdbc.update("UPDATE gcat_objects SET first_seen_at = ? WHERE jcat = ?",
+                    Timestamp.from(IMPORTED), member);
         }
     }
 

@@ -49,7 +49,7 @@ public class SeparationRepository {
                    min(o.perigee_km) AS perigee, max(o.apogee_km) AS apogee,
                    min(o.inclination_deg) AS inclination, min(o.op_orbit) AS orbit_class,
                    min(o.separation_at) AS separation_at, min(o.separation_precision) AS precision,
-                   bool_or(o.separation_uncertain) AS uncertain
+                   bool_or(o.separation_uncertain) AS uncertain, max(o.first_seen_at) AS seen_at
             FROM gcat_objects o
             WHERE """ + VISIBLE + "\n" + """
             GROUP BY o.parent, o.separation_text""";
@@ -104,6 +104,37 @@ public class SeparationRepository {
                         new Orbit(number(rs, "perigee"), finite(number(rs, "apogee")),
                                 number(rs, "inclination"), rs.getString("orbit_class")),
                         rs.getBoolean("in_orbit")),
+                limit);
+    }
+
+    /**
+     * The events NextPass learnt of last, for the RSS feed (ABD-15): newest first by
+     * {@link Separations.FeedEntry#publishedAt()}, not by separation date. A separation
+     * dated years ago and catalogued last night comes first, which is the point of a feed.
+     *
+     * <p>Every row of the first import shares one {@code first_seen_at}: those events take
+     * their separation date instead, or they would all be published at the same instant.
+     * An event that gains a member later moves back up, under the same identifier.
+     */
+    public List<Separations.FeedEntry> newest(int limit) {
+        return jdbc.query("WITH ev AS (" + EVENTS + ")" + """
+                SELECT ev.*, f.name AS first_name, p.name AS parent_name,
+                       CASE WHEN ev.seen_at = (SELECT min(first_seen_at) FROM gcat_objects)
+                            THEN ev.separation_at ELSE ev.seen_at END AS published_at
+                FROM ev JOIN gcat_objects f ON f.jcat = ev.id
+                LEFT JOIN gcat_objects p ON p.jcat = ev.parent
+                ORDER BY published_at DESC, ev.id
+                LIMIT ?""",
+                (rs, row) -> new Separations.FeedEntry(
+                        rs.getString("id"),
+                        rs.getInt("debris") == rs.getInt("children") ? Kind.FRAGMENTATION : Kind.RELEASE,
+                        new Date(rs.getString("separation_text"), instant(rs, "separation_at"),
+                                rs.getString("precision"), rs.getBoolean("uncertain")),
+                        rs.getString("parent_name"),
+                        rs.getString("parent"),
+                        rs.getString("first_name"),
+                        rs.getInt("children"),
+                        instant(rs, "published_at")),
                 limit);
     }
 

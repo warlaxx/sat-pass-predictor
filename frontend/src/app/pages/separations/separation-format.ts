@@ -3,7 +3,8 @@ import { ObjectRole, RecordedDate, RecordedOrbit, SeparationSummary } from '../.
 /**
  * How a recorded date reads, with exactly the precision it was recorded with and no
  * more: `2026 Sep?` is "September 2026", never "1 September 2026". Times are UTC, the
- * record's own time scale, and say so.
+ * record's own time scale, and say so. The RSS feed writes the same English labels
+ * (backend `space.nextpass.separations.SeparationFeed.dateLabel`): change both together.
  */
 export function recordedDateLabel(date: RecordedDate, locale: string): string {
   if (!date.at || !date.precision) return date.text;
