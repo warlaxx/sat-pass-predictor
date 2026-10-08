@@ -86,6 +86,8 @@ Le Copilote ajoute une ligne par décision du propriétaire (date, ticket, déci
 | 2026-10-08 | ABD-54 | Point du Copilote chaque matin, revue complète le lundi | Le propriétaire veut un point quotidien |
 | 2026-10-08 | ABD-54 | Prénoms des agents : Claire (Copilote), Hugo (Rédacteur), Léa (Worker) | Demande du propriétaire |
 | 2026-10-08 | ABD-15 | Accepté : à faire rédiger par le Rédacteur | Premier test du pipeline |
+| 2026-10-08 | ABD-15 | Validé, en anglais seulement ; blocage par ABD-10 levé ; confié à Léa (Worker) | Peu coûteux, bon test du pipeline ; le public RSS lit l'anglais |
+| 2026-10-08 | ABD-41 | Clos (Canceled) : remplacé par des retours Reddit | 2 retours exploitables : être prévenu des beaux passages (ABD-42, ABD-52) et des séparations au-dessus de chez soi (ABD-53) |
 
 ## Mesures du pilote
 
