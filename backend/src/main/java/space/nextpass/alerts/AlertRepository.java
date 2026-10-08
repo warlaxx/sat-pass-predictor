@@ -93,12 +93,16 @@ public class AlertRepository {
         jdbc.update("UPDATE pass_alerts SET confirmation_sent_at = ? WHERE id = ?", Timestamp.from(at), id);
     }
 
-    /** Confirms once; a second click on the same link finds it confirmed and says so. */
-    public Optional<AlertSubscription> confirm(String token, Instant now) {
-        jdbc.update("UPDATE pass_alerts SET confirmed_at = ? WHERE token = ? AND confirmed_at IS NULL",
-                Timestamp.from(now), token);
-        return jdbc.query("SELECT " + COLUMNS + " FROM pass_alerts WHERE token = ?", AlertRepository::row, token)
-                .stream().findFirst();
+    /**
+     * Confirms once; a second click on the same link finds it confirmed and says so. A
+     * sign-up older than {@code createdAfter} is expired even if the hourly purge has not
+     * run yet (Render asleep, a missed workflow): the e-mail promised 48 hours.
+     */
+    public Optional<AlertSubscription> confirm(String token, Instant now, Instant createdAfter) {
+        jdbc.update("UPDATE pass_alerts SET confirmed_at = ? WHERE token = ? AND confirmed_at IS NULL AND created_at >= ?",
+                Timestamp.from(now), token, Timestamp.from(createdAfter));
+        return jdbc.query("SELECT " + COLUMNS + " FROM pass_alerts WHERE token = ? AND confirmed_at IS NOT NULL",
+                AlertRepository::row, token).stream().findFirst();
     }
 
     public boolean unsubscribe(String token) {

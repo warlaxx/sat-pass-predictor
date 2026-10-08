@@ -49,18 +49,22 @@ export class EmailAlerts {
   /** '' for any brightness; only the ISS has a magnitude NextPass knows. */
   protected readonly maxMagnitude = signal('');
   protected readonly state = signal<State>('idle');
-  /** Unknown until the backend answers; a failed check counts as closed. */
-  protected readonly open = signal<boolean | undefined>(undefined);
+  /** Unknown until the backend answers; 'error' when it could not be asked, which is not "closed". */
+  protected readonly open = signal<boolean | 'error' | undefined>(undefined);
   protected readonly failure = signal<string | undefined>(undefined);
 
   private readonly http = inject(HttpClient);
   private readonly language = currentLanguage();
 
   constructor() {
-    if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
+    if (isPlatformBrowser(inject(PLATFORM_ID))) this.check();
+  }
+
+  protected check(): void {
+    this.open.set(undefined);
     this.http.get<{ enabled: boolean }>('/api/alerts').subscribe({
       next: (status) => this.open.set(status.enabled === true),
-      error: () => this.open.set(false),
+      error: () => this.open.set('error'),
     });
   }
 

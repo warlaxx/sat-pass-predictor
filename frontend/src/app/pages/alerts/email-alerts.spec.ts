@@ -57,6 +57,26 @@ describe('EmailAlerts', () => {
     expect(page.textContent).toContain('coming soon');
   });
 
+  it('tells a failed check from closed reminders, and checks again on demand', () => {
+    const fixture = TestBed.createComponent(EmailAlerts);
+    fixture.componentRef.setInput('noradId', 25544);
+    fixture.componentRef.setInput('lat', 45.7578);
+    fixture.componentRef.setInput('lon', 4.832);
+    TestBed.tick();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/alerts').flush(null, { status: 502, statusText: 'Bad Gateway' });
+    TestBed.tick();
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.textContent).toContain('could not be reached');
+    expect(page.textContent).not.toContain('coming soon');
+
+    (page.querySelector('button') as HTMLButtonElement).click();
+    TestBed.tick();
+    http.expectOne('/api/alerts').flush({ enabled: true });
+    TestBed.tick();
+    expect(page.querySelector('form')).not.toBeNull();
+  });
+
   it('refuses an address that cannot be one without asking the server', () => {
     const page = render();
     submit(page, 'ada@example');

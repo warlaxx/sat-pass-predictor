@@ -52,7 +52,8 @@ public final class AlertEmails {
                         + satelliteName + " fait un beau passage au-dessus de " + place(alert) + "."
                 : "You (or someone who typed your address) asked for an e-mail on the days "
                         + satelliteName + " makes a good pass over " + place(alert) + ".";
-        String act = fr ? "Pour l'activer, ouvrez ce lien dans les 48 heures :" : "To turn it on, open this link within 48 hours:";
+        String act = fr ? "Pour l'activer, ouvrez ce lien dans les 48 heures et appuyez sur « Confirmer mes rappels » :"
+                : "To turn it on, open this link within 48 hours and press \"Confirm my reminders\":";
         String ignore = fr
                 ? "Sans confirmation, l'inscription et votre adresse sont effacées au bout de 48 heures. Rien d'autre ne vous sera envoyé."
                 : "Without confirmation, the sign-up and your address are deleted after 48 hours. Nothing else will be sent.";

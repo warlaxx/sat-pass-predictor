@@ -135,7 +135,8 @@ public class AlertService {
     }
 
     public Optional<AlertSubscription> confirm(String token) {
-        return valid(token) ? repository.confirm(token, clock.instant()) : Optional.empty();
+        Instant now = clock.instant();
+        return valid(token) ? repository.confirm(token, now, now.minus(UNCONFIRMED_KEPT)) : Optional.empty();
     }
 
     public boolean unsubscribe(String token) {

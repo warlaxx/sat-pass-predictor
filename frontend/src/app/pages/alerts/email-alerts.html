@@ -1,11 +1,14 @@
-@if (open() !== true) {
+@if (open() === 'error') {
+  <p class="note" role="alert" i18n>The server could not be reached to check whether e-mail reminders are open. It may be starting.</p>
+  <button type="button" class="btn outline small" (click)="check()" i18n>Try again</button>
+} @else if (open() !== true) {
   <p class="muted" [attr.role]="open() === false ? 'status' : null" i18n>
     E-mail reminders are coming soon: an e-mail only on the days a pass is sunlit in a dark sky, high enough, and the
     cloud forecast clear. Until then, the calendar file above lists every pass you can see.
   </p>
 } @else if (state() === 'sent') {
   <p class="done" role="status" i18n>
-    <b>Check your inbox.</b> A confirmation link is on its way to {{ email() }}. Nothing will be sent until you open it,
+    <b>Check your inbox.</b> A confirmation link is on its way to {{ email() }}. Nothing will be sent until you confirm,
     and the sign-up is deleted after 48 hours without it.
   </p>
   <button type="button" class="btn outline small" (click)="again()" i18n>Sign up another address</button>
