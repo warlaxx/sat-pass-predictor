@@ -31,11 +31,14 @@ Resend's free plan: **100 e-mails a day, 3 000 a month**. `alert_email_counts` k
 day under `alerts.daily-cap` (95), of which confirmations take at most
 `alerts.confirmation-cap` (30), so that a wave of sign-ups, or someone typing strangers'
 addresses in a loop, cannot starve the reminders. A reminder over budget waits for the
-next round and is reported as `budgetSpent`. The monthly 3 000 is not counted: at 95 a
-day it would run out around day 31, so watch the `sent` figure of the workflow's summary
-and move to a paid plan before that becomes real.
+next round and is reported as `budgetSpent`. The monthly 3 000 is not counted: 95 a day
+fits within it (2 945 in a 31-day month), but any other mail sent from the same Resend
+account draws on the same allowance, so watch the `sent` figure of the workflow's summary
+and move to a paid plan if the account sends anything else.
 
-Abuse limits: five subscriptions per address, one confirmation e-mail per address per ten
+Abuse limits: five confirmed subscriptions per address (unconfirmed ones do not count, and
+past five the oldest unconfirmed one makes room, so nobody can lock an address out by
+typing it), one confirmation e-mail per address per ten
 minutes, a confirmed subscription that a second sign-up never changes, and the same `202`
 whether the address is new, waiting or confirmed (the answer tells a stranger nothing).
 

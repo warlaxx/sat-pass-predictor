@@ -60,11 +60,19 @@ public class AlertRepository {
                     request.timeZone(), request.locale(), kept.id());
             return new Signup.Pending(find(kept.id()).orElseThrow(), confirmationSentAt(kept.id()));
         }
-        Long count = jdbc.queryForObject("SELECT count(*) FROM pass_alerts WHERE email = ?", Long.class,
+        // Only confirmed subscriptions count: unconfirmed ones can be typed by anyone, and
+        // five of them must not lock the owner of the address out for 48 hours.
+        Long confirmed = jdbc.queryForObject(
+                "SELECT count(*) FROM pass_alerts WHERE email = ? AND confirmed_at IS NOT NULL", Long.class,
                 request.email());
-        if (count != null && count >= maxPerEmail) {
+        if (confirmed != null && confirmed >= maxPerEmail) {
             return new Signup.TooMany();
         }
+        // Unconfirmed ones are bounded too: past the same number, the oldest makes room.
+        jdbc.update("""
+                DELETE FROM pass_alerts WHERE id IN (
+                    SELECT id FROM pass_alerts WHERE email = ? AND confirmed_at IS NULL
+                    ORDER BY created_at DESC, id DESC OFFSET ?)""", request.email(), maxPerEmail - 1);
         Long id = jdbc.queryForObject("""
                 INSERT INTO pass_alerts (email, norad_id, latitude_deg, longitude_deg, min_elevation_deg,
                     max_cloud_percent, max_magnitude, time_zone, locale, token, created_at)
@@ -139,6 +147,12 @@ public class AlertRepository {
                 INSERT INTO alert_email_counts (day, kind, count) VALUES (?, ?, 1)
                 ON CONFLICT (day, kind) DO UPDATE SET count = alert_email_counts.count + 1""", day, kind);
         return true;
+    }
+
+    /** Gives back an e-mail taken by {@link #spendEmail} that was never delivered. */
+    public synchronized void refundEmail(LocalDate day, String kind) {
+        jdbc.update("UPDATE alert_email_counts SET count = count - 1 WHERE day = ? AND kind = ? AND count > 1", day, kind);
+        jdbc.update("DELETE FROM alert_email_counts WHERE day = ? AND kind = ? AND count = 1", day, kind);
     }
 
     Optional<AlertSubscription> find(long id) {

@@ -38,6 +38,10 @@ public record AlertsProperties(boolean enabled, String resendUrl, String resendA
         if (enabled && (blank(resendApiKey) || blank(from))) {
             throw new IllegalArgumentException("alerts.enabled needs alerts.resend-api-key and alerts.from");
         }
+        // The API key travels in a header: never over plain HTTP.
+        if (!resendUrl.regionMatches(true, 0, "https://", 0, 8)) {
+            throw new IllegalArgumentException("alerts.resend-url must use HTTPS");
+        }
         if (sendFromHour < 0 || sendFromHour > 23) {
             throw new IllegalArgumentException("alerts.send-from-hour must be within [0, 23]");
         }

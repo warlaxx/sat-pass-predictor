@@ -40,6 +40,10 @@ jobs:
           if [ -z "$BACKEND_URL" ] || [ -z "$IMPORT_TOKEN" ]; then
             echo "::warning::BACKEND_URL or IMPORT_TOKEN is not set; skipping the round."
             echo "ready=false" >> "$GITHUB_OUTPUT"
+          elif [[ "${BACKEND_URL,,}" != https://* ]]; then
+            # The token travels in a header: never over plain HTTP.
+            echo "::error::BACKEND_URL must use HTTPS."
+            exit 1
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
@@ -56,8 +60,9 @@ jobs:
           echo "::error::The backend did not answer /actuator/health."
           exit 1
 
-      # 503 means reminders are not switched on for this instance: a warning, not a
-      # failure, so that the job stays green until Render has its variables.
+      # A 503 is a warning, not a failure, only when GET /api/alerts confirms reminders
+      # are switched off on this instance: the job stays green until Render has its
+      # variables. Any other 503 (no internal token, the service failing) fails the job.
       - name: Run the round
         if: steps.config.outputs.ready == 'true'
         run: |
@@ -65,8 +70,13 @@ jobs:
             -H "Authorization: Bearer $IMPORT_TOKEN" "$BACKEND_URL/internal/alerts/send")
           cat report.json; echo
           if [ "$code" = "503" ]; then
-            echo "::warning::E-mail reminders are not enabled on the backend (HTTP 503)."
-            exit 0
+            enabled=$(curl -sS --max-time 60 "$BACKEND_URL/api/alerts" | jq -r '.enabled' || echo "unknown")
+            if [ "$enabled" = "false" ]; then
+              echo "::warning::E-mail reminders are not enabled on the backend (HTTP 503)."
+              exit 0
+            fi
+            echo "::error::The round answered HTTP 503, and /api/alerts says enabled=$enabled."
+            exit 1
           fi
           [ "$code" = "200" ] || { echo "::error::The round answered HTTP $code."; exit 1; }
           {

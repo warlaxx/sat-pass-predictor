@@ -122,7 +122,12 @@ public class AlertService {
                 if (!repository.spendEmail(utcDay(now), CONFIRMATION, settings.confirmationCap(), settings.dailyCap())) {
                     yield SignupOutcome.BUSY;
                 }
-                mailer.send(emails.confirmation(pending.subscription(), satellite.name()));
+                try {
+                    mailer.send(emails.confirmation(pending.subscription(), satellite.name()));
+                } catch (Mailer.MailException e) {
+                    repository.refundEmail(utcDay(now), CONFIRMATION);
+                    throw e;
+                }
                 repository.markConfirmationSent(pending.subscription().id(), now);
                 yield SignupOutcome.PENDING;
             }
@@ -193,6 +198,7 @@ public class AlertService {
                 sent++;
                 pause();
             } catch (Mailer.MailException e) {
+                repository.refundEmail(utcDay(now), REMINDER);
                 log.warn("Reminder {} not sent: {}", alert.id(), e.getMessage());
                 failed++;
             }

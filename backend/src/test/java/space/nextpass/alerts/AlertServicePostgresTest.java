@@ -180,12 +180,39 @@ class AlertServicePostgresTest {
     }
 
     @Test
-    void anAddressHoldsAtMostItsShare() {
+    void anAddressHoldsAtMostItsShareOfConfirmedSubscriptions() {
         service(2, 95, 30);
         service.subscribe(request("ada@example.org", 10));
         service.subscribe(request("ada@example.org", 20));
+        jdbc.update("UPDATE pass_alerts SET confirmed_at = now()");
 
         assertThat(service.subscribe(request("ada@example.org", 30))).isEqualTo(AlertService.SignupOutcome.TOO_MANY);
+    }
+
+    @Test
+    void unconfirmedSignUpsTypedByAStrangerCannotLockTheOwnerOut() {
+        service(2, 95, 30);
+        for (double lat : new double[] {10, 20, 30, 40}) {
+            service.subscribe(request("ada@example.org", lat));
+        }
+
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM pass_alerts", Long.class)).isEqualTo(2);
+        clock.advance(Duration.ofMinutes(11));
+        assertThat(service.subscribe(request("ada@example.org", 45.7578))).isEqualTo(AlertService.SignupOutcome.PENDING);
+        assertThat(jdbc.queryForList("SELECT latitude_deg FROM pass_alerts ORDER BY id", Double.class))
+                .containsExactly(40.0, 45.76);
+    }
+
+    @Test
+    void aConfirmationThatFailsToGoOutGivesItsEmailBack() {
+        service = new AlertService(repository, email -> { throw new Mailer.MailException("down", null); },
+                new AlertEmails("https://www.nextpass.space", "https://www.nextpass.space"), tles, passes, clouds, clock,
+                new AlertService.Settings(15, 5, 95, 30, Duration.ZERO));
+
+        assertThatThrownBy(() -> service.subscribe(request("ada@example.org", 45.7578)))
+                .isInstanceOf(Mailer.MailException.class);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM alert_email_counts", Long.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT confirmation_sent_at IS NULL FROM pass_alerts", Boolean.class)).isTrue();
     }
 
     @Test
