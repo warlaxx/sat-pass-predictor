@@ -10,6 +10,7 @@ import { compassPoint } from '../../format';
 import { Reveal } from '../../motion/reveal';
 import { SatellitePicker } from '../../satellite-picker/satellite-picker';
 import { requestPosition } from '../../shared/geolocation';
+import { EmailAlerts } from './email-alerts';
 
 /** One request covers the whole window; ten days is the backend's own bound. */
 export const MAX_DAYS = 10;
@@ -26,15 +27,16 @@ interface AlertQuery {
 /**
  * Reminders before the passes worth going outside for.
  *
- * Today that means a calendar file: one event per potentially visible pass, each with a
- * reminder ten minutes before the satellite comes into view. It needs no account, no
- * server-side schedule and no permission to notify, and it keeps working with the tab
- * closed - which a browser notification would not. Webhooks for integrations are the
- * server-side version, and the page says plainly that they do not exist yet.
+ * Two ways. A calendar file: one event per potentially visible pass, each with a reminder
+ * ten minutes before the satellite comes into view; it needs no server-side schedule and
+ * keeps working with the tab closed, but knows nothing of the weather. And an e-mail on
+ * the days a pass is worth it, checked against the cloud forecast a few hours ahead
+ * (ABD-42, `EmailAlerts`). Webhooks for integrations are the API version, and the page
+ * says plainly that they do not exist yet.
  */
 @Component({
   selector: 'app-alerts',
-  imports: [DatePipe, DecimalPipe, RouterLink, Reveal, SatellitePicker],
+  imports: [DatePipe, DecimalPipe, EmailAlerts, RouterLink, Reveal, SatellitePicker],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'page' },
   templateUrl: './alerts.html',

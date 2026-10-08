@@ -377,7 +377,8 @@ shared and reopened. The other pages are lazy-loaded routes sharing one styleshe
 | Route | Content |
 |---|---|
 | `/satellites`, `/satellites/:noradId` | Featured satellites and catalogue search; per satellite, orbit read off the TLE, element freshness and the next 72 h of passes (one `/api/passes` call) |
-| `/alerts` | Calendar reminders (.ics) for the potentially visible passes of up to ten days |
+| `/alerts` | An e-mail on the days a pass is worth going out for, checked against the cloud forecast ([e-mail reminders](docs/alerts.md), opt-in on the backend), and calendar reminders (.ics) for the potentially visible passes of up to ten days |
+| `/alerts/confirm`, `/alerts/unsubscribe` | Where the reminder e-mails' links land; a button sends the POST, rendered in the browser only |
 | `/developers` | API guide: first call, parameters, Doppler, batch, errors, limits |
 | `/pricing` | Quotas from [billing](docs/billing.md); no price is shown while billing is disabled |
 | `/methodology` | Pipeline, Skyfield validation, error budget, what "visible" means |

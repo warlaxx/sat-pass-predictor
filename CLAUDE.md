@@ -25,6 +25,10 @@ Every backend class must live under `space.nextpass`: the component scan sees
 nothing else. Tests need Orekit data; in a worktree, point `OREKIT_DATA_PATH` at the main
 checkout's `orekit-data`.
 
+E-mail reminders (ABD-42, [docs/alerts.md](docs/alerts.md)) are implemented and off by
+default (`ALERTS_ENABLED`, Resend); no real e-mail has been sent yet. The hourly round is
+`.github/workflows/pass-alerts.yml` calling `POST /internal/alerts/send` with `IMPORT_TOKEN`.
+
 NORAD numbers run to 339999 (`TleSnapshot.MAX_NORAD_ID`, Alpha-5's `Z9999`): objects
 catalogued since July 2026 have six digits, and CelesTrak serves those only as OMM, never
 as `FORMAT=TLE` — see "Six-digit catalogue numbers" in the README.

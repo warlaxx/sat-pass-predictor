@@ -95,8 +95,20 @@ const pages: Routes = [
   {
     path: 'alerts',
     loadComponent: () => import('./pages/alerts/alerts').then((m) => m.AlertsPage),
-    title: $localize`:Page title:Satellite pass reminders in your calendar`,
-    data: { description: $localize`:Meta description:Calendar reminders before every potentially visible pass of the ISS or any satellite, as an .ics file for any calendar app.` },
+    title: $localize`:Page title:Satellite pass reminders by e-mail or calendar`,
+    data: { description: $localize`:Meta description:An e-mail on the days the ISS or any satellite makes a pass worth going out for, checked against the cloud forecast, or calendar reminders as an .ics file.` },
+  },
+  {
+    path: 'alerts/confirm',
+    loadComponent: () => import('./pages/alert-link/alert-link').then((m) => m.AlertLinkPage),
+    title: $localize`:Page title:Confirm your reminders`,
+    data: { action: 'confirm', noindex: true },
+  },
+  {
+    path: 'alerts/unsubscribe',
+    loadComponent: () => import('./pages/alert-link/alert-link').then((m) => m.AlertLinkPage),
+    title: $localize`:Page title:Stop your reminders`,
+    data: { action: 'unsubscribe', noindex: true },
   },
   {
     path: 'developers',

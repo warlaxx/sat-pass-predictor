@@ -47,7 +47,7 @@ export class LegalPage {
   protected readonly operatorEmail = OPERATOR.email;
 
   /** The date of the version in force, quoted by the terms; move it with every change of substance. */
-  protected readonly version = '2026-10-03';
+  protected readonly version = '2026-10-07';
 
   protected readonly identity: readonly IdentityLine[] = [
     { label: $localize`Publisher`, value: OPERATOR.name },

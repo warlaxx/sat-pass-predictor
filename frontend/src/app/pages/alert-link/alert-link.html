@@ -1,0 +1,47 @@
+<section class="page-hero wrap" aria-labelledby="link-title">
+  <span class="kicker" i18n>Pass reminders</span>
+  @if (action === 'confirm') {
+    <h1 id="link-title" i18n>Confirm your e-mail reminders</h1>
+  } @else {
+    <h1 id="link-title" i18n>Stop your e-mail reminders</h1>
+  }
+
+  @switch (state()) {
+    @case ('ready') {
+      @if (action === 'confirm') {
+        <p class="lede" i18n>One click turns on the reminders you asked for. Nothing is sent until you do.</p>
+        <button type="button" class="btn primary" (click)="run()" i18n>Confirm my reminders</button>
+      } @else {
+        <p class="lede" i18n>One click stops this reminder and deletes your address from it.</p>
+        <button type="button" class="btn primary" (click)="run()" i18n>Unsubscribe</button>
+      }
+    }
+    @case ('working') {
+      <p class="state" role="status" i18n><span class="dot wait" aria-hidden="true"></span>One moment…</p>
+    }
+    @case ('confirmed') {
+      @if (confirmed(); as alert) {
+        <p class="lede" role="status" i18n>
+          Done. You will get an e-mail on the days NORAD {{ alert.noradId }} passes at least {{ alert.minElevationDeg }}°
+          high over {{ alert.lat | number: '1.2-2' }}, {{ alert.lon | number: '1.2-2' }}, sunlit in a dark sky, with at most
+          {{ alert.maxCloudPercent }}% cloud forecast. Most days there is nothing worth it, and nothing comes.
+        </p>
+      }
+      <a class="btn outline" routerLink="/" i18n>See the next passes</a>
+    }
+    @case ('unsubscribed') {
+      <p class="lede" role="status" i18n>Done. This reminder is gone, and your address with it. Nothing more will be sent for it.</p>
+      <a class="btn outline" routerLink="/alerts" i18n>Back to reminders</a>
+    }
+    @case ('dead') {
+      <p class="lede" role="alert" i18n>
+        This link is unknown or has expired: sign-ups not confirmed within 48 hours are deleted. You can sign up again.
+      </p>
+      <a class="btn outline" routerLink="/alerts" i18n>Back to reminders</a>
+    }
+    @case ('failed') {
+      <p class="lede" role="alert" i18n>The server could not be reached. It may be starting: please try again in a minute.</p>
+      <button type="button" class="btn outline" (click)="run()" i18n>Try again</button>
+    }
+  }
+</section>
