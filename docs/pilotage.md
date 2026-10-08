@@ -12,9 +12,9 @@ s'écrit ici ou dans Linear. Ce qui n'est écrit nulle part est perdu.
 
 | Agent | Fichier | Déclenché par | Produit |
 | :--- | :--- | :--- | :--- |
-| Copilote | [`copilote.md`](../.claude/agents/copilote.md) | le propriétaire ; Routine du lundi 8 h 52 (Paris) | revue hebdo, conseils, relais des validations |
-| Rédacteur | [`redacteur.md`](../.claude/agents/redacteur.md) | le Copilote, à la demande | un ticket Linear détaillé, label `À valider` |
-| Worker | [`worker.md`](../.claude/agents/worker.md) | le Copilote, à la demande | une PR vers `dev` pour un ticket `Prêt pour agent` |
+| Claire (Copilote) | [`copilote.md`](../.claude/agents/copilote.md) | le propriétaire ; Routine chaque matin à 8 h 52 (Paris) | point du matin, revue hebdo le lundi, conseils, relais des validations |
+| Hugo (Rédacteur) | [`redacteur.md`](../.claude/agents/redacteur.md) | le Copilote, à la demande | un ticket Linear détaillé, label `À valider` |
+| Léa (Worker) | [`worker.md`](../.claude/agents/worker.md) | le Copilote, à la demande | une PR vers `dev` pour un ticket `Prêt pour agent` |
 
 Le Rédacteur et le Worker sont des **sous-agents** que le Copilote lance depuis sa
 session (outil Agent, type `redacteur` ou `worker`, le Worker dans un worktree isolé),
@@ -26,7 +26,7 @@ pour rien.
 
 | Routine | Identifiant | Horaire | Cible |
 | :--- | :--- | :--- | :--- |
-| NextPass · Revue hebdo du Copilote | `trig_01TC6w54Ue4hc4bLdE83KpxN` | lundi 8 h 52, Europe/Paris | la session « Copilote NextPass » |
+| NextPass · Point quotidien de Claire (Copilote) | `trig_01TC6w54Ue4hc4bLdE83KpxN` | tous les jours 8 h 52, Europe/Paris | la session « Copilote NextPass » |
 
 À venir, une fois le pipeline fiable : un agent **Ops** (logs Render, import nocturne,
 disponibilité → bugs Linear), puis un agent **Recherche produit** (hebdo, propositions
@@ -38,10 +38,10 @@ disponibilité → bugs Linear), puis un agent **Recherche produit** (hebdo, pro
 flowchart TD
     idea["Idée<br/>(label Idée)"]
     gate1{{"Propriétaire :<br/>accepte ?"}}
-    draft["Rédacteur :<br/>ticket détaillé (À valider)"]
+    draft["Hugo (Rédacteur) :<br/>ticket détaillé (À valider)"]
     gate2{{"Propriétaire :<br/>valide ?"}}
     ready["Prêt pour agent"]
-    work["Worker :<br/>PR vers dev"]
+    work["Léa (Worker) :<br/>PR vers dev"]
     review["CI + relecture"]
     dev["dev"]
     gate3{{"Propriétaire :<br/>mise en production ?"}}
@@ -83,6 +83,12 @@ Le Copilote ajoute une ligne par décision du propriétaire (date, ticket, déci
 | Date | Ticket | Décision | Raison |
 | :--- | :--- | :--- | :--- |
 | 2026-10-08 | ABD-54 | Mise en place du pilotage : Copilote, Rédacteur, Worker | Livrer plus vite en gardant la main ; Ops et Recherche produit viendront ensuite |
+| 2026-10-08 | ABD-54 | Point du Copilote chaque matin, revue complète le lundi | Le propriétaire veut un point quotidien |
+| 2026-10-08 | ABD-54 | Prénoms des agents : Claire (Copilote), Hugo (Rédacteur), Léa (Worker) | Demande du propriétaire |
+| 2026-10-08 | ABD-15 | Accepté : à faire rédiger par le Rédacteur | Premier test du pipeline |
+| 2026-10-08 | ABD-15 | Validé, en anglais seulement ; blocage par ABD-10 levé ; confié à Léa (Worker) | Peu coûteux, bon test du pipeline ; le public RSS lit l'anglais |
+| 2026-10-08 | ABD-41 | Clos (Canceled) : remplacé par des retours Reddit | 2 retours exploitables : être prévenu des beaux passages (ABD-42, ABD-52) et des séparations au-dessus de chez soi (ABD-53) |
+| 2026-10-08 | ABD-53 | Priorité basse → haute | Besoin exprimé spontanément sur Reddit ; relie séparations et passages visibles |
 
 ## Mesures du pilote
 
