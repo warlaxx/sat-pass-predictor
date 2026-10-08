@@ -1247,6 +1247,30 @@ GCAT. GCAT is the ground truth it is tested against.
 
 Deployment, debris, breakup; RSS and an API for whoever wants to be told first.
 
+*Started from the observers' side (ABD-42, 7 October 2026):* an e-mail on the days a pass
+is worth going out for - sunlit in a dark sky, high enough, under a clear MET Norway
+forecast - sent through Resend by an hourly workflow, off until `ALERTS_ENABLED`. Asked for
+in a Reddit comment, a weak signal: confirmed sign-ups are the measure. See
+[e-mail reminders](docs/alerts.md). Push notifications (ABD-52) and "an object that just
+separated passes over you tonight" (ABD-53) wait on it.
+
+*Implemented (ABD-15, 8 October 2026): the RSS feed, backend half.* `GET
+/api/separations/feed.xml`, served publicly as
+`https://www.nextpass.space/api/separations/feed.xml` through the site's `/api/` rewrite:
+RSS 2.0, in English only (the owner chose one feed, no French twin), 50 items, no key, no
+quota, cached 15 minutes like the rest of the separation API. An item is an event, never a
+fragment; its title is the event page's `<h1>` (the templates are copied from
+`separation.ts`, and each side names the other), its link and permalink `guid` the event's
+page, its description the date at its own precision and the number of objects. Its
+`pubDate` is when NextPass first saw the event's newest object - `max(first_seen_at)` -
+not the separation date, so a separation recorded years ago and catalogued last night
+comes first; events wholly from the first import (2 October 2026) take their separation
+date instead, or all of them would share one instant. An event that gains a member later
+moves back up under the same `guid`; a row reclassified by ABD-12 keeps its old
+`first_seen_at` and does not. The source is credited once, in the channel's `<copyright>`,
+with the list's footer text; no item names it. The site's origin is `separations.site-url`
+(`SITE_URL`). The discovery link, the visible link and Vercel's cache are ABD-55.
+
 ---
 
 # Accepted limitations

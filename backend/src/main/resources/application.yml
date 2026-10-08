@@ -161,6 +161,11 @@ gcat:
   # Per read, not for the whole 19 MB: a stalled transfer fails, a slow one finishes.
   read-timeout: 60s
 
+# ABD-15: the public site the separations RSS feed links to. The feed is served from it
+# too, under /api/, which the site forwards to this backend.
+separations:
+  site-url: ${SITE_URL:https://www.nextpass.space}
+
 # ABD-36: the cloud cover during a pass, from MET Norway's Locationforecast (CC BY 4.0),
 # asked by the server for a place rounded to 0.1 degree and kept until MET's Expires.
 # CloudCoverService explains the budget, which keeps an open endpoint from getting us banned.
@@ -170,6 +175,21 @@ weather:
   max-cells: 5000
   connect-timeout: 5s
   read-timeout: 10s
+
+# ABD-42: an e-mail on the days a pass is worth going out for (sunlit, high enough, clear
+# sky), sent through Resend. Off by default; on, it needs the database of api-access, a
+# Resend key and a sender on a domain verified in Resend. The round runs hourly from
+# .github/workflows/pass-alerts.yml with the same token as the import (ingest.token).
+# AlertService explains the budget: Resend's free plan sends 100 e-mails a day.
+alerts:
+  enabled: ${ALERTS_ENABLED:false}
+  resend-api-key: ${RESEND_API_KEY:}
+  from: ${ALERTS_FROM:}
+  site-url: ${ALERTS_SITE_URL:https://www.nextpass.space}
+  send-from-hour: 15
+  max-per-email: 5
+  daily-cap: 95
+  confirmation-cap: 30
 
 # ABD-45: a free photograph for the objects that have one, from Wikidata (NORAD number to
 # Commons file) and Commons (author and licence), refreshed by the same nightly request.

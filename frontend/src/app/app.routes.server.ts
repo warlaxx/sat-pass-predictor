@@ -39,5 +39,9 @@ export const serverRoutes: ServerRoute[] = [
     // Any other name renders in the browser, and says there is no page for it.
     fallback: PrerenderFallback.Client,
   },
+  // The links of the reminder e-mails: the token is the page, so nothing to prerender,
+  // and nothing for the sitemap (ABD-42).
+  { path: 'alerts/confirm', renderMode: RenderMode.Client },
+  { path: 'alerts/unsubscribe', renderMode: RenderMode.Client },
   { path: '**', renderMode: RenderMode.Prerender },
 ];

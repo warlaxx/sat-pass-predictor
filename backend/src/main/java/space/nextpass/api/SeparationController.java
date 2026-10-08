@@ -8,13 +8,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,12 +25,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import space.nextpass.config.SeparationsProperties;
+import space.nextpass.separations.SeparationFeed;
 import space.nextpass.separations.SeparationRepository;
 import space.nextpass.separations.Separations;
 
 /**
  * What separated in orbit: the list and one event, for the separation pages (phase 3.1
- * of the roadmap).
+ * of the roadmap), and the RSS feed of the newest (phase 3.4, ABD-15).
  *
  * <p>Not a {@link PassController}: neither the API key nor the quota applies. The answer
  * changes once a night, with the import, so it is cached publicly for a quarter of an
@@ -37,6 +42,7 @@ import space.nextpass.separations.Separations;
  * type, rather than an empty list that would read as "nothing happened in orbit".
  */
 @RestController
+@EnableConfigurationProperties(SeparationsProperties.class)
 @RequestMapping("/api/separations")
 @Tag(name = "Separations", description = "Objects released by other objects in orbit")
 public class SeparationController {
@@ -48,12 +54,17 @@ public class SeparationController {
 
     private static final CacheControl CACHE = CacheControl.maxAge(Duration.ofMinutes(15)).cachePublic();
 
+    private static final MediaType RSS = new MediaType("application", "rss+xml", StandardCharsets.UTF_8);
+
     private final ObjectProvider<SeparationRepository> repository;
     private final Clock clock;
+    private final SeparationFeed feed;
 
-    public SeparationController(ObjectProvider<SeparationRepository> repository, Clock clock) {
+    public SeparationController(ObjectProvider<SeparationRepository> repository, Clock clock,
+                                SeparationsProperties properties) {
         this.repository = repository;
         this.clock = clock;
+        this.feed = new SeparationFeed(properties.siteUrl());
     }
 
     @GetMapping
@@ -86,6 +97,31 @@ public class SeparationController {
         var body = new Separations.ListResponse(
                 separations.latest(filter, limit), separations.stats(clock.instant()), separations.updatedAt());
         return ResponseEntity.ok().cacheControl(CACHE).body(body);
+    }
+
+    /**
+     * No {@code produces}: the content type is set on the answer instead, so that a reader
+     * asking only for {@code text/xml} or {@code application/xml} still gets the feed
+     * rather than a 406. The literal path wins over {@code /{id}}.
+     */
+    @GetMapping("/feed.xml")
+    @Operation(summary = "The newest separation events, as an RSS 2.0 feed",
+            description = "In English. One item per event, linking to its page, newest first by the"
+                    + " time NextPass learnt of it, not by separation date: a separation recorded"
+                    + " years ago and catalogued last night comes first. At most 50 items.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "RSS 2.0, newest first",
+                    content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/rss+xml",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string"))),
+            @ApiResponse(responseCode = "503", description = "This instance has no database",
+                    content = @io.swagger.v3.oas.annotations.media.Content)})
+    public ResponseEntity<?> feed() {
+        SeparationRepository separations = repository.getIfAvailable();
+        if (separations == null) {
+            return unavailable();
+        }
+        byte[] body = feed.write(separations.newest(SeparationFeed.ENTRIES), separations.updatedAt());
+        return ResponseEntity.ok().cacheControl(CACHE).contentType(RSS).body(body);
     }
 
     @GetMapping("/{id}")

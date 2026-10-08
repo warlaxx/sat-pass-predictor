@@ -1,0 +1,76 @@
+@if (open() === 'error') {
+  <p class="note" role="alert" i18n>The server could not be reached to check whether e-mail reminders are open. It may be starting.</p>
+  <button type="button" class="btn outline small" (click)="check()" i18n>Try again</button>
+} @else if (open() !== true) {
+  <p class="muted" [attr.role]="open() === false ? 'status' : null" i18n>
+    E-mail reminders are coming soon: an e-mail only on the days a pass is sunlit in a dark sky, high enough, and the
+    cloud forecast clear. Until then, the calendar file above lists every pass you can see.
+  </p>
+} @else if (state() === 'sent') {
+  <p class="done" role="status" i18n>
+    <b>Check your inbox.</b> A confirmation link is on its way to {{ email() }}. Nothing will be sent until you confirm,
+    and the sign-up is deleted after 48 hours without it.
+  </p>
+  <button type="button" class="btn outline small" (click)="again()" i18n>Sign up another address</button>
+} @else {
+  <form class="form" (submit)="$event.preventDefault(); submit()">
+    <div class="group">
+      <span class="caption" id="e-email" i18n>E-mail</span>
+      <label class="field">
+        <span class="visually-hidden" i18n>E-mail address</span>
+        <input class="w-email" type="email" autocomplete="email" required aria-describedby="e-email"
+               [value]="email()" (input)="email.set($any($event.target).value)">
+      </label>
+    </div>
+
+    <div class="group">
+      <span class="caption" id="e-elevation" i18n>At least</span>
+      <label class="field">
+        <span class="visually-hidden" i18n>Minimum elevation while visible</span>
+        <select aria-describedby="e-elevation" (change)="minElevation.set(+$any($event.target).value)">
+          @for (choice of elevations; track choice) {
+            <option [value]="choice" [selected]="choice === minElevation()" i18n>{{ choice }}° high</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="group">
+      <span class="caption" id="e-sky" i18n>Sky</span>
+      <label class="field">
+        <span class="visually-hidden" i18n>Maximum cloud cover</span>
+        <select aria-describedby="e-sky" (change)="maxCloud.set(+$any($event.target).value)">
+          @for (choice of clouds; track choice) {
+            <option [value]="choice" [selected]="choice === maxCloud()">
+              @if (choice <= 25) {<ng-container i18n>Clear, {{ choice }}% cloud or less</ng-container>}
+              @else {<ng-container i18n>Mostly clear, {{ choice }}% or less</ng-container>}
+            </option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="group">
+      <span class="caption" id="e-brightness" i18n>Brightness</span>
+      <label class="field">
+        <span class="visually-hidden" i18n>Minimum brightness, when known</span>
+        <select aria-describedby="e-brightness" (change)="maxMagnitude.set($any($event.target).value)">
+          <option value="" selected i18n>Any</option>
+          <option value="0" i18n>Brighter than magnitude 0</option>
+          <option value="-2" i18n>Brighter than magnitude −2</option>
+        </select>
+      </label>
+    </div>
+
+    <button type="submit" class="btn primary" [disabled]="state() === 'sending'">
+      @if (state() === 'sending') {<ng-container i18n>Sending…</ng-container>} @else {<ng-container i18n>E-mail me</ng-container>}
+    </button>
+  </form>
+  @if (failure(); as text) { <p class="error" role="alert">{{ text }}</p> }
+  <p class="muted" i18n>
+    For NORAD {{ noradId() }} over {{ lat() | number: '1.2-2' }}, {{ lon() | number: '1.2-2' }}, the satellite and place
+    chosen above. At most one e-mail a day, around 3 pm your time, only when a pass is sunlit in a dark sky, high
+    enough, and the forecast clear (MET Norway). Brightness is only known for the ISS. Unsubscribe in one click from
+    any e-mail; what is kept is described in the <a routerLink="/legal" fragment="privacy">privacy policy</a>.
+  </p>
+}

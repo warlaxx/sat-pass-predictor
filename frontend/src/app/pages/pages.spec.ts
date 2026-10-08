@@ -218,6 +218,8 @@ describe('AlertsPage', () => {
 
   async function search(response: PassesResponse) {
     const fixture = await render(AlertsPage);
+    // The e-mail section asks whether the backend takes sign-ups (ABD-42).
+    TestBed.inject(HttpTestingController).expectOne('/api/alerts').flush({ enabled: false });
     await settleAnsweringClouds(fixture);
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit', { cancelable: true }));
     TestBed.tick();

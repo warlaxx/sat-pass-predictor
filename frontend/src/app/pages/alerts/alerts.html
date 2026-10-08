@@ -2,8 +2,8 @@
   <span class="kicker" i18n>Pass reminders</span>
   <h1 id="alerts-title" i18n>Never miss the next bright pass</h1>
   <p class="lede" i18n>
-    Choose a satellite and a place. You get a calendar file with one event per pass you can actually see (sunlit satellite, dark sky) and a reminder ten minutes before it comes
-    into view. It works in any calendar, with no account, even with this page closed.
+    Choose a satellite and a place. Get an e-mail on the days a pass is worth going out for, sunlit in a dark sky
+    under a clear forecast, or a calendar file with one event per pass you can actually see. No account either way.
   </p>
 </section>
 
@@ -105,6 +105,18 @@
         in a few days for the best timings.
       </p>
     }
+  }
+</section>
+
+<section class="page-section wrap" appReveal aria-labelledby="email-title">
+  <div class="section-head">
+    <h2 id="email-title" i18n>By e-mail, only when it is worth it</h2>
+    <span i18n>Checked against the cloud forecast</span>
+  </div>
+  @if (satelliteResolved()) {
+    <app-email-alerts [noradId]="form().noradId" [lat]="form().lat" [lon]="form().lon" />
+  } @else {
+    <p class="muted" i18n>Choose a satellite from the suggestions above, or type its NORAD number.</p>
   }
 </section>
 
