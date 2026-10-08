@@ -161,6 +161,11 @@ gcat:
   # Per read, not for the whole 19 MB: a stalled transfer fails, a slow one finishes.
   read-timeout: 60s
 
+# ABD-15: the public site the separations RSS feed links to. The feed is served from it
+# too, under /api/, which the site forwards to this backend.
+separations:
+  site-url: ${SITE_URL:https://www.nextpass.space}
+
 # ABD-36: the cloud cover during a pass, from MET Norway's Locationforecast (CC BY 4.0),
 # asked by the server for a place rounded to 0.1 degree and kept until MET's Expires.
 # CloudCoverService explains the budget, which keeps an open endpoint from getting us banned.

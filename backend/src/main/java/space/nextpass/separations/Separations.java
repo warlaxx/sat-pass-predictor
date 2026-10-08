@@ -80,6 +80,26 @@ public final class Separations {
             Orbit orbit,
             boolean inOrbit) {}
 
+    /**
+     * One item of the RSS feed (ABD-15): what its title and description need, and when
+     * NextPass published it.
+     *
+     * @param parentName     the parent's name, null when the catalogue has no row or no name for it
+     * @param parentId       the parent's record identifier, the title's fallback
+     * @param firstChildName the name of the object with the event's identifier, null when it has none
+     * @param publishedAt    when NextPass first saw the event's newest object; for an event
+     *                       wholly from the first import, its separation date instead
+     */
+    public record FeedEntry(
+            String id,
+            Kind kind,
+            Date date,
+            String parentName,
+            String parentId,
+            String firstChildName,
+            int children,
+            Instant publishedAt) {}
+
     /** Events per month of the current year, for the chart above the list. */
     public record Month(String month, int releases, int fragmentations) {}
 

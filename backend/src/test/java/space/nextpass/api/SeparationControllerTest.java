@@ -1,6 +1,9 @@
 package space.nextpass.api;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -20,6 +23,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import space.nextpass.access.AccessService;
+import space.nextpass.access.AccessWebConfiguration;
 import space.nextpass.separations.SeparationRepository;
 import space.nextpass.separations.Separations;
 
@@ -97,6 +102,55 @@ class SeparationControllerTest {
         }
     }
 
+    /** ABD-15: the RSS feed of the newest separations, in English only. */
+    @Nested
+    @WebMvcTest(controllers = SeparationController.class)
+    @Import({FixedClock.class, AccessWebConfiguration.class})
+    class Feed {
+        @Autowired MockMvc mvc;
+        @MockitoBean SeparationRepository repository;
+        /** Would refuse a request without a key, if the feed were ever metered. */
+        @MockitoBean AccessService access;
+
+        static Separations.FeedEntry usa667SeenTonight() {
+            return new Separations.FeedEntry("S100685", Separations.Kind.RELEASE, usa667().date(),
+                    "USA 396", "S60322", "USA 667", 1, Instant.parse("2026-10-02T03:12:00Z"));
+        }
+
+        @Test void servesRssWithoutAKeyAndCachesItPublicly() throws Exception {
+            when(repository.newest(50)).thenReturn(List.of(usa667SeenTonight()));
+            when(repository.updatedAt()).thenReturn(Instant.parse("2026-10-02T03:15:00Z"));
+
+            mvc.perform(get("/api/separations/feed.xml"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Content-Type", "application/rss+xml;charset=UTF-8"))
+                    .andExpect(header().string("Cache-Control", "max-age=900, public"))
+                    .andExpect(xpath("/rss/@version").string("2.0"))
+                    .andExpect(xpath("/rss/channel/title").string("NextPass · New separations in orbit"))
+                    .andExpect(xpath("/rss/channel/lastBuildDate").string("Fri, 2 Oct 2026 03:15:00 GMT"))
+                    .andExpect(xpath("count(/rss/channel/item)").number(1.0))
+                    .andExpect(xpath("/rss/channel/item[1]/title").string("USA 396 released USA 667"))
+                    .andExpect(xpath("/rss/channel/item[1]/link").string("https://www.nextpass.space/separations/S100685"))
+                    .andExpect(xpath("/rss/channel/item[1]/pubDate").string("Fri, 2 Oct 2026 03:12:00 GMT"));
+            verifyNoInteractions(access);
+        }
+
+        @Test void aReaderAskingForPlainXmlStillGetsTheFeed() throws Exception {
+            when(repository.newest(50)).thenReturn(List.of());
+
+            mvc.perform(get("/api/separations/feed.xml").header("Accept", "text/xml"))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Content-Type", "application/rss+xml;charset=UTF-8"));
+        }
+
+        @Test void feedXmlIsNotTakenForARecord() throws Exception {
+            when(repository.newest(50)).thenReturn(List.of());
+
+            mvc.perform(get("/api/separations/feed.xml")).andExpect(status().isOk());
+            verify(repository, never()).event(anyString());
+        }
+    }
+
     @Nested
     @WebMvcTest(controllers = SeparationController.class)
     @Import(FixedClock.class)
@@ -108,6 +162,12 @@ class SeparationControllerTest {
                     .andExpect(status().isServiceUnavailable())
                     .andExpect(jsonPath("$.type").value("https://github.com/warlaxx/sat-pass-predictor/errors/separations-unavailable"));
             mvc.perform(get("/api/separations/S100685")).andExpect(status().isServiceUnavailable());
+        }
+
+        @Test void theFeedSaysSoToo() throws Exception {
+            mvc.perform(get("/api/separations/feed.xml"))
+                    .andExpect(status().isServiceUnavailable())
+                    .andExpect(jsonPath("$.type").value("https://github.com/warlaxx/sat-pass-predictor/errors/separations-unavailable"));
         }
     }
 }

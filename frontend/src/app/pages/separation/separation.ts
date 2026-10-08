@@ -84,6 +84,10 @@ export class SeparationPage {
     return event?.parent?.name ?? parentCell(record)?.id ?? record ?? '';
   });
 
+  /**
+   * The RSS feed's item titles copy these English templates word for word
+   * (backend `space.nextpass.separations.SeparationFeed.title`): change both together.
+   */
   protected readonly heading = computed(() => {
     const event = this.event();
     if (!event) return $localize`:Heading while an event loads:Separation`;
