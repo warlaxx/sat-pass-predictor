@@ -53,8 +53,11 @@ chaque passage.
 
 ## Méthode
 
-1. Lis `CLAUDE.md`, puis `README.md`, `ROADMAP.md` et `docs/`. Documente **ce qui est
-   sur `main`** (`git fetch origin main`), c'est-à-dire la production. Ce qui n'est que
+1. Documente **ce qui est sur `main`**, c'est-à-dire la production : `git fetch origin
+   main`, puis lis tout (`CLAUDE.md`, `README.md`, `ROADMAP.md`, `docs/`, le code) dans
+   un worktree détaché sur `origin/main` (`git worktree add --detach <dossier temporaire>
+   origin/main`, supprimé à la fin), jamais dans la copie de travail courante, qui peut
+   être sur `dev` ou une branche de PR. Ce qui n'est que
    sur `dev` ou dans une PR n'existe pas encore pour la doc ; tu peux le citer dans la
    Feuille de route comme « à venir ».
 2. Lis le Journal pour savoir quel commit a été documenté la dernière fois, puis
