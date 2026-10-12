@@ -15,6 +15,7 @@ s'écrit ici ou dans Linear. Ce qui n'est écrit nulle part est perdu.
 | Claire (Copilote) | [`copilote.md`](../.claude/agents/copilote.md) | le propriétaire ; Routine chaque matin à 8 h 52 (Paris) | point du matin, revue hebdo le lundi, conseils, relais des validations |
 | Hugo (Rédacteur) | [`redacteur.md`](../.claude/agents/redacteur.md) | le Copilote, à la demande | un ticket Linear détaillé, label `À valider` |
 | Léa (Worker) | [`worker.md`](../.claude/agents/worker.md) | le Copilote, à la demande | une PR vers `dev` pour un ticket `Prêt pour agent` |
+| Documentaliste | [`documentaliste.md`](../.claude/agents/documentaliste.md) | le Copilote ou le propriétaire, après une mise en production | la documentation Notion sous la page « Nextpass.space », synchronisée sur `main` |
 
 Le Rédacteur et le Worker sont des **sous-agents** que le Copilote lance depuis sa
 session (outil Agent, type `redacteur` ou `worker`, le Worker dans un worktree isolé),
