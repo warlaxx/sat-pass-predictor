@@ -151,6 +151,19 @@ describe('SeparationsPage', () => {
     expect(page.querySelector('.facts')!.textContent).toContain('28,364');
   });
 
+  it('links to the RSS feed from the root, even when the list cannot be loaded', async () => {
+    const fixture = await render(SeparationsPage);
+    TestBed.inject(HttpTestingController).expectOne((r) => r.url === '/api/separations').flush(
+      { title: 'Service unavailable', status: 503 }, { status: 503, statusText: 'Service Unavailable' });
+    await settle();
+
+    const page = fixture.nativeElement as HTMLElement;
+    expect(page.querySelector('[role="alert"]')).not.toBeNull();
+    const link = page.querySelector<HTMLAnchorElement>('.page-hero a[type="application/rss+xml"]')!;
+    expect(link.getAttribute('href')).toBe('/api/separations/feed.xml');
+    expect(link.textContent?.trim()).toBe('Subscribe to the RSS feed');
+  });
+
   describe('counts what readers do, for the phase 3.2 decision', () => {
     const sendBeacon = vi.fn(() => true);
     beforeEach(() => { sendBeacon.mockClear(); vi.stubGlobal('navigator', { ...navigator, sendBeacon }); });
@@ -200,6 +213,8 @@ describe('SeparationPage', () => {
     expect(page.querySelector('.compare')!.textContent).toContain('382 km');
     expect(page.querySelector('.record')!.textContent).toContain('2026 May 29 1120');
     expect(page.querySelectorAll('app-pass-table tbody tr')).toHaveLength(1);
+    // The event's own title must not drop the feed the route announced (ABD-55).
+    expect(document.head.querySelectorAll('link[rel="alternate"][type="application/rss+xml"]')).toHaveLength(1);
   });
 
   it('says there is no public orbit rather than guessing', async () => {

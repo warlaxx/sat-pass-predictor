@@ -196,7 +196,7 @@ export class SeparationPage {
       // The event's own preview exists only for the prerendered pages, which is where
       // a crawler reads the tag: in the browser the site's image stays (ABD-33).
       if (event) this.seo.apply(this.router.url, {
-        title: this.heading(), description: this.description(event),
+        title: this.heading(), description: this.description(event), rssFeed: true,
         ...(this.browser ? {} : { image: previewPath(event.id, this.language), imageAlt: this.heading() }),
       });
     });

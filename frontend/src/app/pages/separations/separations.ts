@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { ProblemDetail } from '../../api/passes.model';
 import { SeparationKind, SeparationsResponse } from '../../api/separations.model';
 import { Reveal } from '../../motion/reveal';
+import { SEPARATIONS_FEED } from '../../shared/seo';
 import { countUsage } from '../../shared/usage';
 import { EventRow, eventRow } from './separation-format';
 
@@ -30,6 +31,8 @@ const BAR_UNIT = 32;
   styleUrl: './separations.scss',
 })
 export class SeparationsPage {
+  /** A plain link from the root: the French build's base is /fr/, and the feed has no French version. */
+  protected readonly feed = SEPARATIONS_FEED;
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly locale = inject(LOCALE_ID);
 

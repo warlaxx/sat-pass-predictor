@@ -56,6 +56,22 @@ describe('Seo', () => {
     expect(document.head.querySelector('script#structured-data')!.textContent).not.toContain('</script>');
   });
 
+  it('announces the separations feed once, without a language, and drops it on the next page', () => {
+    const feeds = () => document.head.querySelectorAll('link[rel="alternate"][type="application/rss+xml"]');
+    seo.apply('/separations', { title: 'What separated in orbit', rssFeed: true });
+    expect(feeds()).toHaveLength(1);
+    expect(feeds()[0].getAttribute('href')).toBe('/api/separations/feed.xml');
+    expect(feeds()[0].getAttribute('title')).toBe('NextPass · New separations in orbit');
+    expect(feeds()[0].hasAttribute('hreflang')).toBe(false);
+
+    // The event page applies its tags twice: the route's, then the event's own title.
+    seo.apply('/separations/S69328', { title: 'Shenzhou 22', rssFeed: true });
+    expect(feeds()).toHaveLength(1);
+
+    seo.apply('/satellites', { title: 'Satellites' });
+    expect(feeds()).toHaveLength(0);
+  });
+
   it('keeps every featured satellite description within what a result shows', () => {
     for (const satellite of FEATURED.flatMap((group) => group.satellites)) {
       expect(satelliteDescription(satellite.name, satellite.blurb).length, satellite.name).toBeLessThanOrEqual(160);
