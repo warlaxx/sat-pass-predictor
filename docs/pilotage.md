@@ -15,7 +15,7 @@ s'écrit ici ou dans Linear. Ce qui n'est écrit nulle part est perdu.
 | Claire (Copilote) | [`copilote.md`](../.claude/agents/copilote.md) | le propriétaire ; Routine chaque matin à 8 h 52 (Paris) | point du matin, revue hebdo le lundi, conseils, relais des validations |
 | Hugo (Rédacteur) | [`redacteur.md`](../.claude/agents/redacteur.md) | le Copilote, à la demande | un ticket Linear détaillé, label `À valider` |
 | Léa (Worker) | [`worker.md`](../.claude/agents/worker.md) | le Copilote, à la demande | une PR vers `dev` pour un ticket `Prêt pour agent` |
-| Documentaliste | [`documentaliste.md`](../.claude/agents/documentaliste.md) | le Copilote ou le propriétaire, après une mise en production | la documentation Notion sous la page « Nextpass.space », synchronisée sur `main` |
+| Inès (Documentaliste) | [`documentaliste.md`](../.claude/agents/documentaliste.md) | le Copilote, après une mise en production ou à la demande du propriétaire | la documentation Notion sous la page « Nextpass.space », synchronisée sur `main` |
 
 Le Rédacteur et le Worker sont des **sous-agents** que le Copilote lance depuis sa
 session (outil Agent, type `redacteur` ou `worker`, le Worker dans un worktree isolé),
@@ -90,6 +90,9 @@ Le Copilote ajoute une ligne par décision du propriétaire (date, ticket, déci
 | 2026-10-08 | ABD-15 | Validé, en anglais seulement ; blocage par ABD-10 levé ; confié à Léa (Worker) | Peu coûteux, bon test du pipeline ; le public RSS lit l'anglais |
 | 2026-10-08 | ABD-41 | Clos (Canceled) : remplacé par des retours Reddit | 2 retours exploitables : être prévenu des beaux passages (ABD-42, ABD-52) et des séparations au-dessus de chez soi (ABD-53) |
 | 2026-10-08 | ABD-53 | Priorité basse → haute | Besoin exprimé spontanément sur Reddit ; relie séparations et passages visibles |
+| 2026-10-14 | ABD-56 | Le Documentaliste s'appelle Inès et n'est lancé que par le Copilote | Un seul interlocuteur pour le propriétaire |
+| 2026-10-14 | ABD-55 | Accepté : à faire rédiger par Hugo, flux anglais seul | Suite d'ABD-15 |
+| 2026-10-14 | ABD-59 | Idée acceptée : montrer sur /alerts le prochain beau passage | Un silence correct des rappels se confond avec une panne |
 
 ## Mesures du pilote
 
@@ -97,3 +100,4 @@ Le Copilote ajoute une ligne par décision du propriétaire (date, ticket, déci
 
 | Semaine | PR ouvertes par le Worker | Fusionnées sans retouche | Retouches lourdes | Remarques |
 | :--- | :---: | :---: | :---: | :--- |
+| 5 octobre 2026 | 1 (#129, ABD-15) | 1 | 0 | Premier ticket mené de bout en bout ; trop tôt pour conclure |
