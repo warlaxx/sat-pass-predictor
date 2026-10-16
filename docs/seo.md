@@ -56,6 +56,7 @@ the prerendered HTML:
 | Open Graph, `twitter:card` | Title, description, URL, locale and alternate locale |
 | `og:image`, `twitter:image` | `public/og/en.png` or `fr.png`, 1200×630, with `summary_large_image`; left out without a known origin, since the address must be absolute |
 | `robots: noindex` | The not-found page only, which a static host answers with 200 |
+| `link rel=alternate type=application/rss+xml` | The separations feed, on `/separations` and `/separations/:id` in both languages; translated `title`, no `hreflang` (see below) |
 | JSON-LD | `WebSite` (`name: NextPass`, the name Google shows above a result instead of the domain) and `WebApplication` on the home page; `BreadcrumbList` (NextPass › Satellites › …) on `/starlink` and the featured satellites' pages, which need an absolute origin |
 | Icons | `favicon-48/96/192.png` first: Google shows a favicon only if it is square and a multiple of 48 px. Then the SVG, a 16/32/48 `.ico`, the Apple icon and `site.webmanifest`. Absolute paths, since the French build's base is `/fr/` |
 | Headings | One `<h1>` per page: its own title. The brand in the header is not a heading |
@@ -156,6 +157,33 @@ while it is compact. A satellite is in CelesTrak's active group only once catalo
 usually a day or more after launch, so the first evening of a train is often missing; the
 page says so. The page is worth sharing the day after a launch, not later: that is when
 people search.
+
+## The separations feed
+
+`GET /api/separations/feed.xml` (ABD-15, `SeparationFeed.java`) is an RSS 2.0 feed of the
+50 newest separation events, **in English only**: one address,
+`https://www.nextpass.space/api/separations/feed.xml`, no `?lang`. "New" means new to
+NextPass: items are ordered by the night the import first saw them, not by separation date,
+so an old separation catalogued last night comes first. Items link to the English event
+pages. The data credit (CC BY 4.0) is given once, in the channel's `<copyright>`; no item
+repeats it.
+
+The site leads to it two ways (ABD-55):
+
+- **Discovery.** `Seo.apply` writes `<link rel="alternate" type="application/rss+xml">` on
+  the separation pages, flagged `rssFeed: true` in the routes' `data` and again in the
+  event page's second `apply`. It is in the prerendered HTML, where a feed reader looks.
+  The `href` is absolute when the origin is known, root-relative otherwise, and never under
+  `/fr/`. Its `title` is the channel's title in English; the French pages say
+  "(en anglais)". It has no `hreflang`, which would mix it with the language alternates.
+- **A visible link** in the head of `/separations`, "Subscribe to the RSS feed" /
+  "S'abonner au flux RSS (en anglais)": a plain `<a href="/api/separations/feed.xml">`,
+  outside the data block so it shows when the API is down. Never `routerLink` nor a
+  relative path: the French build's base is `/fr/`.
+
+The feed stays under `/api/`: the catch-all rewrite of `vercel.json` would serve
+`index.csr.html` for any other path. It is not in `sitemap.xml`. After a change to the
+feed, check it at <https://validator.w3.org/feed/>.
 
 ## What is not done, by order of value
 
