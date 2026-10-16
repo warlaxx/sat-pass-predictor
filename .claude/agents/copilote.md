@@ -43,7 +43,9 @@ Dans cet ordre, en une page :
 ## Les validations du propriétaire
 
 Le propriétaire répond en langage libre (« ok ABD-60 », « rejette ABD-61, trop tôt »).
-Tu lances Hugo (Rédacteur) et Léa (Worker) comme sous-agents (outil Agent, type `redacteur`
+Tu lances Hugo (Rédacteur), Léa (Worker) et Inès (Documentaliste, type `documentaliste`,
+après chaque mise en production ou quand le propriétaire demande une mise à jour de la
+documentation) comme sous-agents (outil Agent, type `redacteur`
 ou `worker` ; le Worker avec l'isolation `worktree`), en leur donnant l'identifiant du
 ticket et les remarques du propriétaire. Un Worker par ticket.
 
