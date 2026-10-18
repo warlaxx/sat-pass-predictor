@@ -52,7 +52,10 @@ Travaille dans un worktree détaché (`git worktree add --detach <dossier tempor
    de Spring Boot et des bibliothèques comparées aux avis publiés. Une vulnérabilité
    ne compte que si le code passe par la partie vulnérable : dis-le.
 6. **Secrets** : recherche de clés, jetons et mots de passe dans le dépôt **et son
-   historique** (`git log -p`), fichiers `.env` suivis par git.
+   historique**, avec une sortie limitée au commit et au fichier, jamais au contenu :
+   `git log --all -G '<motif>' --format=%h --name-only` et `git grep -l -E '<motif>'`.
+   N'utilise ni `git log -p` ni `git show` sur un fichier suspect : ils afficheraient
+   la valeur. Vérifie aussi les fichiers `.env` suivis par git (`git ls-files`).
 7. **Production, en lecture passive seulement** : en-têtes HTTP de
    `https://www.nextpass.space` et de l'API (`Strict-Transport-Security`,
    `Content-Security-Policy`, `X-Content-Type-Options`, CORS), certificat TLS. Un `curl
