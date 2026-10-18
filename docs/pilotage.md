@@ -16,6 +16,7 @@ s'écrit ici ou dans Linear. Ce qui n'est écrit nulle part est perdu.
 | Hugo (Rédacteur) | [`redacteur.md`](../.claude/agents/redacteur.md) | le Copilote, à la demande | un ticket Linear détaillé, label `À valider` |
 | Léa (Worker) | [`worker.md`](../.claude/agents/worker.md) | le Copilote, à la demande | une PR vers `dev` pour un ticket `Prêt pour agent` |
 | Inès (Documentaliste) | [`documentaliste.md`](../.claude/agents/documentaliste.md) | le Copilote, après une mise en production ou à la demande du propriétaire | la documentation Notion sous la page « Nextpass.space », synchronisée sur `main` |
+| Samir (Sécurité) | [`securite.md`](../.claude/agents/securite.md) | le Copilote, avant chaque PR `dev` → `main`, à la première revue du lundi du mois, ou à la demande du propriétaire | un rapport de sécurité au Copilote, dans la conversation ; jamais de détail de faille dans Linear ni sur GitHub |
 
 Le Rédacteur et le Worker sont des **sous-agents** que le Copilote lance depuis sa
 session (outil Agent, type `redacteur` ou `worker`, le Worker dans un worktree isolé),
@@ -74,7 +75,10 @@ celles du [CLAUDE.md](../CLAUDE.md).
 4. **Un ticket = un Worker = une PR.** Pas d'agents qui se parlent entre eux : ils
    communiquent par Linear et par les PR.
 5. **`Humain requis` n'est jamais implémenté par un agent.**
-6. Un conseil du Copilote s'appuie sur un fait vérifiable (CI, ticket, mesure, log),
+6. **Le détail d'une faille ne s'écrit jamais en public.** Le dépôt est public et les
+   tickets Linear deviennent des issues GitHub publiques : un ticket de sécurité a un
+   titre et une description neutres ; le chemin d'attaque reste dans la conversation.
+7. Un conseil du Copilote s'appuie sur un fait vérifiable (CI, ticket, mesure, log),
    pas sur une impression.
 
 ## Journal des décisions
@@ -93,6 +97,8 @@ Le Copilote ajoute une ligne par décision du propriétaire (date, ticket, déci
 | 2026-10-14 | ABD-56 | Le Documentaliste s'appelle Inès et n'est lancé que par le Copilote | Un seul interlocuteur pour le propriétaire |
 | 2026-10-14 | ABD-55 | Accepté : à faire rédiger par Hugo, flux anglais seul | Suite d'ABD-15 |
 | 2026-10-14 | ABD-59 | Idée acceptée : montrer sur /alerts le prochain beau passage | Un silence correct des rappels se confond avec une panne |
+| 2026-10-16 | ABD-55 | Validé, sans le cache Vercel ; libellé « S'abonner au flux RSS (en anglais) » ; confié à Léa (PR #139) | Le cache Vercel sert déjà le flux |
+| 2026-10-18 | ABD-62 | Ajout de Samir (Sécurité) : relecture avant chaque mise en production, audit mensuel | Demande du propriétaire ; comptes, Stripe, clés d'API et inscriptions publiques sont des surfaces réelles |
 
 ## Mesures du pilote
 
