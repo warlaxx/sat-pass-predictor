@@ -84,13 +84,13 @@ const pages: Routes = [
     path: 'separations',
     loadComponent: () => import('./pages/separations/separations').then((m) => m.SeparationsPage),
     title: $localize`:Page title:What separated in orbit`,
-    data: { description: $localize`:Meta description:Satellites releasing satellites, deployers emptying, bodies breaking apart: the latest separations in orbit, with the record behind each one and when to see the object pass over you.` },
+    data: { description: $localize`:Meta description:Satellites releasing satellites, deployers emptying, bodies breaking apart: the latest separations in orbit, with the record behind each one and when to see the object pass over you.`, rssFeed: true },
   },
   {
     path: 'separations/:id',
     loadComponent: () => import('./pages/separation/separation').then((m) => m.SeparationPage),
     title: $localize`:Page title:Separation`,
-    data: { description: $localize`:Meta description:One separation in orbit: what released what, when, both orbits, the record and when to see it pass over you.` },
+    data: { description: $localize`:Meta description:One separation in orbit: what released what, when, both orbits, the record and when to see it pass over you.`, rssFeed: true },
   },
   {
     path: 'alerts',
@@ -172,6 +172,7 @@ export class SiteTitleStrategy extends TitleStrategy {
       title: this.buildTitle(snapshot),
       description,
       noindex: route.data['noindex'] === true,
+      rssFeed: route.data['rssFeed'] === true,
       jsonLd: this.structuredData(route, snapshot.url, description),
     });
   }

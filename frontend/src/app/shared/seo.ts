@@ -15,6 +15,9 @@ export const SITE_ORIGIN: string = typeof ngSiteOrigin === 'string' ? ngSiteOrig
 
 export const SITE_NAME = 'NextPass';
 
+/** The RSS feed of new separations (ABD-15), in English only, served by the API. */
+export const SEPARATIONS_FEED = '/api/separations/feed.xml';
+
 /**
  * The preview image of every page, one per language (public/og/): 1200×630, the size
  * Facebook, LinkedIn, X and messaging apps crop to. They require an absolute address,
@@ -37,6 +40,8 @@ export interface PageMeta {
   readonly image?: string;
   /** What the page's own preview shows, for those who cannot see it. */
   readonly imageAlt?: string;
+  /** True on the separation pages, which announce the RSS feed of new separations (ABD-55). */
+  readonly rssFeed?: boolean;
 }
 
 /**
@@ -73,6 +78,7 @@ export class Seo {
     else this.meta.removeTag('name="robots"');
 
     this.links(routerUrl, page.noindex ?? false);
+    this.feed(page.rssFeed ?? false);
     this.structuredData(page.jsonLd);
   }
 
@@ -166,6 +172,24 @@ export class Seo {
     // English is the default for a reader whose language is neither.
     this.link({ rel: 'alternate', hreflang: 'x-default', href: url('en') });
     this.meta.updateTag({ property: 'og:url', content: url(this.language) });
+  }
+
+  /**
+   * The `<link rel="alternate">` a feed reader finds from the page's address. Unlike the
+   * canonical link it is set without a known origin too, root-relative, which is valid for
+   * feed discovery. One English feed for both languages, so not under `pathIn()`; no
+   * `hreflang`, which would mistake it for a language alternate.
+   */
+  private feed(announced: boolean): void {
+    this.document.head.querySelectorAll('link[rel="alternate"][type="application/rss+xml"]').forEach(link => link.remove());
+    if (!announced) return;
+    this.link({
+      rel: 'alternate',
+      type: 'application/rss+xml',
+      // The English text is SeparationFeed.TITLE, the channel's own title (backend).
+      title: $localize`:Title of the RSS feed link:NextPass · New separations in orbit`,
+      href: `${SITE_ORIGIN}${SEPARATIONS_FEED}`,
+    });
   }
 
   private link(attributes: Record<string, string>): void {
