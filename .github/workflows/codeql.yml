@@ -1,0 +1,67 @@
+name: CodeQL
+
+# Security analysis of the code itself (ABD-89). SonarQube looks at quality; CodeQL
+# follows a value from an HTTP request to the place it is used (SQL, an outgoing call, a
+# redirect) and finds the injections, SSRF and open redirects a pattern rule misses. It
+# also reads the workflows: a `${{ github.event... }}` pasted into a `run:` is a script
+# injection. Findings land in Security → Code scanning, not in the CI verdict.
+#
+# This workflow replaces the repository's CodeQL "default setup": GitHub refuses the
+# upload of an advanced workflow while default setup is on, so default setup must be
+# switched off (Settings → Code security → CodeQL analysis → Switch to advanced).
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  # Weekly, so a new query in a CodeQL release reaches code nobody has touched.
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # build-mode none: CodeQL reads the sources without compiling them, so it needs
+          # neither JDK 25 nor the 100 MB of orekit-data the build pulls in.
+          - language: java-kotlin
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+          - language: actions
+            build-mode: none
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # security-extended: the default suite plus the lower-precision security
+          # queries. Worth the extra noise on a codebase this size.
+          queries: security-extended
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
