@@ -1,0 +1,50 @@
+# Dependency updates (ABD-89). Every pull request targets dev, never main: main only
+# accepts pull requests from dev (see ci.yml's source-branch job). Updates are grouped so
+# a week brings one pull request per ecosystem, not twenty; security updates stay
+# separate so a fix is never held back behind an unrelated major version.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /backend
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      backend-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Angular's packages must move together or the build breaks.
+      angular:
+        applies-to: version-updates
+        patterns: ['@angular/*', '@angular-devkit/*', '@schematics/angular']
+      frontend-minor-and-patch:
+        applies-to: version-updates
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories: [/backend, /frontend]
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']

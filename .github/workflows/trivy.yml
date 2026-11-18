@@ -1,0 +1,104 @@
+name: Trivy
+
+# Vulnerabilities in what ships (ABD-89): the operating-system packages and libraries of
+# the two Docker images, which neither SonarQube nor CodeQL nor Dependabot look inside,
+# plus a scan of the repository for vulnerable dependencies and Dockerfile/Compose
+# misconfigurations. Findings go to Security → Code scanning; the job never fails on a
+# finding, so a CVE published overnight cannot block an unrelated pull request.
+#
+# Trivy runs from its official image pinned by digest, not through trivy-action: in
+# March 2026 the action's tags were rewritten to ship a credential stealer. A digest
+# cannot be moved. To upgrade, take a release at least two weeks old and its digest from
+# https://hub.docker.com/r/aquasec/trivy/tags.
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  # Weekly, because new CVEs are published against images that have not changed.
+  schedule:
+    - cron: '41 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: trivy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # aquasec/trivy:0.76.1
+  TRIVY_IMAGE: aquasec/trivy@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c
+  # Only what has a fix: an unfixable CVE in a base image is noise nobody can act on.
+  TRIVY_FLAGS: --severity CRITICAL,HIGH --ignore-unfixed --format sarif --exit-code 0
+
+jobs:
+  scan:
+    name: Scan (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: repository
+          # Context is the repository root (see the Dockerfile's header).
+          - target: backend
+            context: .
+            dockerfile: backend/Dockerfile
+          # Production serves the frontend from Vercel, but docker-compose ships this
+          # image; scanning it costs a few minutes a week.
+          - target: frontend
+            context: frontend
+            dockerfile: frontend/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # A shared vulnerability database between the three jobs and from one run to the
+      # next; Trivy refreshes it itself once it is older than its update interval.
+      - name: Cache the Trivy database
+        uses: actions/cache@v4
+        with:
+          path: .trivy-cache
+          key: trivy-db-${{ github.run_id }}
+          restore-keys: trivy-db-
+
+      - name: Build the image
+        if: matrix.target != 'repository'
+        run: docker build -f "$DOCKERFILE" -t "nextpass-$TARGET:scan" "$CONTEXT"
+        env:
+          DOCKERFILE: ${{ matrix.dockerfile }}
+          CONTEXT: ${{ matrix.context }}
+          TARGET: ${{ matrix.target }}
+
+      - name: Scan the image
+        if: matrix.target != 'repository'
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$PWD:/work" -w /work \
+            "$TRIVY_IMAGE" image --cache-dir /work/.trivy-cache $TRIVY_FLAGS \
+            --output trivy.sarif "nextpass-$TARGET:scan"
+        env:
+          TARGET: ${{ matrix.target }}
+
+      - name: Scan the repository
+        if: matrix.target == 'repository'
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work \
+            "$TRIVY_IMAGE" fs --cache-dir /work/.trivy-cache $TRIVY_FLAGS \
+            --scanners vuln,misconfig --skip-dirs .trivy-cache \
+            --output trivy.sarif .
+
+      - name: Upload the findings
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy.sarif
+          category: trivy-${{ matrix.target }}
