@@ -89,12 +89,16 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
 
+      # --offline-scan: reading pom.xml, Trivy otherwise fetches every parent POM and BOM
+      # from Maven Central, which answers a shared runner IP with 429 and a 30-minute ban.
+      # Nothing is lost: the backend image scan reads the built jar, whose dependency
+      # versions are already resolved, and Dependabot reads pom.xml with Maven itself.
       - name: Scan the repository
         if: matrix.target == 'repository'
         run: |
           docker run --rm -v "$PWD:/work" -w /work \
             "$TRIVY_IMAGE" fs --cache-dir /work/.trivy-cache $TRIVY_FLAGS \
-            --scanners vuln,misconfig --skip-dirs .trivy-cache \
+            --scanners vuln,misconfig --skip-dirs .trivy-cache --offline-scan \
             --output trivy.sarif .
 
       - name: Upload the findings
